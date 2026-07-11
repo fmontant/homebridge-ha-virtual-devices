@@ -1,12 +1,12 @@
 {
-  "name": "homebridge-plugin-name",
+  "name": "homebridge-ha-virtual-devices",
   "displayName": "Plugin Name",
   "type": "module",
   "version": "1.0.0",
   "private": true,
-  "description": "A short description about what your plugin does.",
+ "description": "Expose Home Assistant sensors as virtual HomeKit devices through Homebridge.",
   "author": "Your Name",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "homepage": "https://github.com/USERNAME/GITHUB_PROJECT_NAME#readme",
   "repository": {
     "type": "git",

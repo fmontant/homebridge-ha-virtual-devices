@@ -1,9 +1,15 @@
 /**
- * This is the name of the platform that users will use to register the plugin in the Homebridge config.json
+ * Nom affiché par Homebridge.
  */
-export const PLATFORM_NAME = 'ExampleHomebridgePlugin';
+export const PLATFORM_NAME = 'HAVirtualDevices';
 
 /**
- * This must match the name of your plugin as defined the package.json `name` property
+ * Nom du package npm.
+ * Il doit correspondre exactement au champ "name" du package.json.
  */
-export const PLUGIN_NAME = 'homebridge-plugin-name';
+export const PLUGIN_NAME = 'homebridge-ha-virtual-devices';
+
+/**
+ * Nom convivial du plugin.
+ */
+export const PLATFORM_DISPLAY_NAME = 'HA Virtual Devices';
