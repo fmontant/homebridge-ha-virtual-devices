@@ -1,17 +1,43 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "HAVirtualDevices",
   "pluginType": "platform",
   "singular": true,
-  "strictValidation": false,
+  "strictValidation": true,
   "schema": {
     "type": "object",
-    "required": ["name"],
+    "required": [
+      "name",
+      "haUrl",
+      "token"
+    ],
     "additionalProperties": false,
     "properties": {
       "name": {
-        "title": "Name",
+        "title": "Nom",
         "type": "string",
-        "default": "Example Dynamic Platform"
+        "default": "HA Virtual Devices"
+      },
+      "haUrl": {
+        "title": "Adresse de Home Assistant",
+        "type": "string",
+        "default": "http://192.168.190.75:8123",
+        "description": "Adresse complète de Home Assistant, sans barre oblique finale."
+      },
+      "token": {
+        "title": "Jeton d'accès longue durée",
+        "type": "string",
+        "format": "password",
+        "description": "Jeton créé dans le profil Home Assistant."
+      },
+      "debug": {
+        "title": "Activer les journaux détaillés",
+        "type": "boolean",
+        "default": false
+      },
+      "autoDiscovery": {
+        "title": "Découverte automatique des capteurs",
+        "type": "boolean",
+        "default": true
       }
     }
   }

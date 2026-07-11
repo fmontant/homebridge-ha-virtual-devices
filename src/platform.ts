@@ -70,25 +70,14 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
     // EXAMPLE ONLY
     // A real plugin you would discover accessories from the local network, cloud services
     // or a user-defined array in the platform config.
-    const exampleDevices = [
-      {
-        exampleUniqueId: 'ABCD',
-        exampleDisplayName: 'Bedroom',
-      },
-      {
-        exampleUniqueId: 'EFGH',
-        exampleDisplayName: 'Kitchen',
-      },
-      {
-        // This is an example of a device which uses a Custom Service
-        exampleUniqueId: 'IJKL',
-        exampleDisplayName: 'Backyard',
-        CustomService: 'AirPressureSensor',
-      },
-    ];
+    const devices: Array<{
+  exampleUniqueId: string;
+  exampleDisplayName: string;
+  CustomService?: string;
+}> = [];
 
     // loop over the discovered devices and register each one if it has not already been registered
-    for (const device of exampleDevices) {
+    for (const device of devices) {
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
