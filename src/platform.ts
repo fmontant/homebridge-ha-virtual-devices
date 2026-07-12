@@ -4,6 +4,7 @@ import { ThermostatAccessory } from './accessories/thermostatAccessory.js';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 import { HomeAssistantClient } from './homeassistant/client.js';
 import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
+import { AccessoryFactory } from './factories/accessoryFactory.js';
 
 // This is only required when using Custom Services and Characteristics not support by HomeKit
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
@@ -18,6 +19,7 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   public readonly Characteristic: typeof Characteristic;
   private readonly homeAssistantClient: HomeAssistantClient;
   private readonly homeAssistantWebSocketClient: HomeAssistantWebSocketClient;
+  private readonly accessoryFactory: AccessoryFactory;
   
 
   // this is used to track restored cached accessories
@@ -25,6 +27,7 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   private readonly deviceAccessories:
   Map<string, ThermostatAccessory> = new Map();
   public readonly discoveredCacheUUIDs: string[] = [];
+ 
 
   // This is only required when using Custom Services and Characteristics not support by HomeKit
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,7 +58,7 @@ this.homeAssistantWebSocketClient = new HomeAssistantWebSocketClient(
   },
   this.log,
 );
-
+this.accessoryFactory = new AccessoryFactory(this);
     // This is only required when using Custom Services and Characteristics not support by HomeKit
     this.CustomServices = new EveHomeKitTypes(this.api).Services;
     this.CustomCharacteristics = new EveHomeKitTypes(this.api).Characteristics;
@@ -92,6 +95,13 @@ this.homeAssistantWebSocketClient = new HomeAssistantWebSocketClient(
     `${temperatureSensors.length} capteurs de température détectés`,
   );
 
+const humiditySensors =
+  await this.homeAssistantClient.getHumiditySensorModels();
+
+this.log.info(
+  `${humiditySensors.length} capteurs d'humidité détectés`,
+);
+
   for (const sensor of temperatureSensors) {
   const uuid = this.api.hap.uuid.generate(sensor.entityId);
   const existingAccessory = this.accessories.get(uuid);
@@ -103,9 +113,15 @@ this.homeAssistantWebSocketClient = new HomeAssistantWebSocketClient(
     this.api.updatePlatformAccessories([existingAccessory]);
 
    const deviceAccessory =
-  new ThermostatAccessory(this, existingAccessory);
+  this.accessoryFactory.createThermostat(
+    sensor,
+    existingAccessory,
+  );
 
-this.deviceAccessories.set(sensor.entityId, deviceAccessory);
+this.deviceAccessories.set(
+  sensor.entityId,
+  deviceAccessory,
+);
   } else {
     this.log.info(`Création de l’accessoire : ${sensor.name}`);
 
@@ -117,7 +133,10 @@ this.deviceAccessories.set(sensor.entityId, deviceAccessory);
     accessory.context.device = sensor;
 
     const deviceAccessory =
-  new ThermostatAccessory(this, accessory);
+  this.accessoryFactory.createThermostat(
+    sensor,
+    accessory,
+  );
 
 this.deviceAccessories.set(
   sensor.entityId,

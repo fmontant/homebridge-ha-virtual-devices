@@ -1,5 +1,6 @@
 import type { TemperatureSensor } from '../models/temperatureSensor.js';
 import type { Logging } from 'homebridge';
+import type { HumiditySensor } from '../models/humiditySensor.js';
 
 import type { HomeAssistantConfig } from './config.js';
 
@@ -69,6 +70,31 @@ public async getTemperatureSensorModels(): Promise<TemperatureSensor[]> {
         : '',
   }));
 }
+ public async getHumiditySensorModels(): Promise<HumiditySensor[]> {
+  const states = await this.getStates();
+
+  return states
+    .filter(state =>
+      state.entity_id.startsWith('sensor.') &&
+      (
+        state.entity_id.toLowerCase().includes('humidity') ||
+        state.attributes.device_class === 'humidity'
+      ),
+    )
+    .map(state => ({
+      entityId: state.entity_id,
+      name:
+        typeof state.attributes.friendly_name === 'string'
+          ? state.attributes.friendly_name
+          : state.entity_id,
+      humidity: Number(state.state),
+      unit:
+        typeof state.attributes.unit_of_measurement === 'string'
+          ? state.attributes.unit_of_measurement
+          : '%',
+    }))
+    .filter(sensor => Number.isFinite(sensor.humidity));
+} 
 
   private async request<T>(path: string): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
