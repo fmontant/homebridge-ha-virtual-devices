@@ -2,6 +2,7 @@ import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAcces
 
 import { ExamplePlatformAccessory } from './platformAccessory.js';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
+import { HomeAssistantClient } from './homeassistant/client.js';
 
 // This is only required when using Custom Services and Characteristics not support by HomeKit
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
@@ -14,6 +15,7 @@ import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
 export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
+  private readonly homeAssistantClient: HomeAssistantClient;
 
   // this is used to track restored cached accessories
   public readonly accessories: Map<string, PlatformAccessory> = new Map();
@@ -32,6 +34,14 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   ) {
     this.Service = api.hap.Service;
     this.Characteristic = api.hap.Characteristic;
+    this.homeAssistantClient = new HomeAssistantClient(
+  {
+    haUrl: String(this.config.haUrl ?? ''),
+    token: String(this.config.token ?? ''),
+    debug: Boolean(this.config.debug),
+  },
+  this.log,
+);
 
     // This is only required when using Custom Services and Characteristics not support by HomeKit
     this.CustomServices = new EveHomeKitTypes(this.api).Services;
@@ -43,11 +53,26 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
     // Dynamic Platform plugins should only register new accessories after this event was fired,
     // in order to ensure they weren't added to homebridge already. This event can also be used
     // to start discovery of new accessories.
-    this.api.on('didFinishLaunching', () => {
-      log.debug('Executed didFinishLaunching callback');
-      // run the method to discover / register your devices as accessories
-      this.discoverDevices();
-    });
+    this.api.on('didFinishLaunching', async () => {
+
+  this.log.info('HA Virtual Devices démarré');
+
+  this.log.info('Test de connexion à Home Assistant...');
+
+  const connected = await this.homeAssistantClient.testConnection();
+
+  if (!connected) {
+    this.log.error('Impossible de se connecter à Home Assistant');
+    return;
+  }
+
+  this.log.info('Connexion réussie');
+
+  const states = await this.homeAssistantClient.getStates();
+
+this.log.info(`${states.length} entités Home Assistant détectées`);
+
+});
   }
 
   /**
