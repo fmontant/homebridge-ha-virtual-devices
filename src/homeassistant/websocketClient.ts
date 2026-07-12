@@ -4,10 +4,16 @@ import type { HomeAssistantConfig } from './config.js';
 
 export class HomeAssistantWebSocketClient {
     private socket?: WebSocket;
+    private eventCallback?: (event: unknown) => void;
   constructor(
     private readonly config: HomeAssistantConfig,
     private readonly log: Logging,
   ) {}
+public onEvent(
+  callback: (event: unknown) => void,
+): void {
+  this.eventCallback = callback;
+}
 
  public connect(): void {
   const websocketUrl = this.config.haUrl
@@ -42,15 +48,42 @@ export class HomeAssistantWebSocketClient {
       }
 
       if (message.type === 'auth_ok') {
-        this.log.info('Authentification WebSocket réussie');
-        return;
-      }
+  this.log.info('Authentification WebSocket réussie');
+
+  this.socket?.send(JSON.stringify({
+    id: 1,
+    type: 'subscribe_events',
+    event_type: 'state_changed',
+  }));
+
+  return;
+}
 
       if (message.type === 'auth_invalid') {
         this.log.error(
           `Authentification WebSocket refusée : ${message.message ?? 'jeton invalide'}`,
         );
       }
+      if (message.type === 'event') {
+  const eventMessage = message as {
+    type: 'event';
+    event?: {
+      event_type?: string;
+      data?: {
+        entity_id?: string;
+        old_state?: {
+          state?: string;
+        } | null;
+        new_state?: {
+          state?: string;
+          attributes?: Record<string, unknown>;
+        } | null;
+      };
+    };
+  };
+
+  this.eventCallback?.(eventMessage);
+}
     } catch (error) {
       this.log.error(
         `Message WebSocket illisible : ${

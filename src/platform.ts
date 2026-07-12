@@ -79,7 +79,7 @@ this.homeAssistantWebSocketClient = new HomeAssistantWebSocketClient(
   }
 
   this.log.info('Connexion réussie');
-  this.homeAssistantWebSocketClient.connect();
+  
 
   const states = await this.homeAssistantClient.getStates();
 
@@ -131,6 +131,46 @@ this.deviceAccessories.set(
     );
   }
 }
+this.homeAssistantWebSocketClient.onEvent(event => {
+  const message = event as {
+    event?: {
+      data?: {
+        entity_id?: string;
+        new_state?: {
+          state?: string;
+          attributes?: Record<string, unknown>;
+        } | null;
+      };
+    };
+  };
+
+  const entityId = message.event?.data?.entity_id;
+  const newState = message.event?.data?.new_state;
+
+  if (!entityId || !newState) {
+    return;
+  }
+
+  const deviceAccessory = this.deviceAccessories.get(entityId);
+
+  if (!deviceAccessory) {
+    return;
+  }
+
+  const temperature = Number(newState.state);
+
+  if (!Number.isFinite(temperature)) {
+    return;
+  }
+
+  deviceAccessory.updateTemperature(temperature);
+
+  this.log.info(
+    `Mise à jour temps réel : ${entityId} = ${temperature} °C`,
+  );
+});
+
+this.homeAssistantWebSocketClient.connect();
 });
 }
   /**
