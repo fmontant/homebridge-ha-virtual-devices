@@ -1,3 +1,4 @@
+import type { TemperatureSensor } from '../models/temperatureSensor.js';
 import type { Logging } from 'homebridge';
 
 import type { HomeAssistantConfig } from './config.js';
@@ -51,6 +52,22 @@ export class HomeAssistantClient {
       state.attributes.device_class === 'temperature'
     ),
   );
+}
+public async getTemperatureSensorModels(): Promise<TemperatureSensor[]> {
+  const states = await this.getTemperatureSensors();
+
+  return states.map(state => ({
+    entityId: state.entity_id,
+    name:
+      typeof state.attributes.friendly_name === 'string'
+        ? state.attributes.friendly_name
+        : state.entity_id,
+    temperature: Number(state.state),
+    unit:
+      typeof state.attributes.unit_of_measurement === 'string'
+        ? state.attributes.unit_of_measurement
+        : '',
+  }));
 }
 
   private async request<T>(path: string): Promise<T> {

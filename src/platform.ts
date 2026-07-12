@@ -74,24 +74,14 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   this.log.info(`${states.length} entités Home Assistant détectées`);
 
   const temperatureSensors =
-    await this.homeAssistantClient.getTemperatureSensors();
+  await this.homeAssistantClient.getTemperatureSensorModels();
 
   this.log.info(
     `${temperatureSensors.length} capteurs de température détectés`,
-  );
+);
 
-  for (const sensor of temperatureSensors) {
-const name =
-typeof sensor.attributes.friendly_name === 'string'
-? sensor.attributes.friendly_name
-: sensor.entity_id;
-
-const unit =
-typeof sensor.attributes.unit_of_measurement === 'string'
-? sensor.attributes.unit_of_measurement
-: '';
-
-this.log.info(`${name} : ${sensor.state} ${unit}`);
+for (const sensor of temperatureSensors) {
+  this.log.info(`${sensor.name} : ${sensor.temperature} ${sensor.unit}`);
 }
 
 });
