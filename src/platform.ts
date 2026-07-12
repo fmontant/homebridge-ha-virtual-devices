@@ -55,9 +55,7 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
     // to start discovery of new accessories.
     // this.discoverDevices();
     this.api.on('didFinishLaunching', async () => {
-
   this.log.info('HA Virtual Devices démarré');
-
   this.log.info('Test de connexion à Home Assistant...');
 
   const connected = await this.homeAssistantClient.testConnection();
@@ -74,19 +72,57 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   this.log.info(`${states.length} entités Home Assistant détectées`);
 
   const temperatureSensors =
-  await this.homeAssistantClient.getTemperatureSensorModels();
+    await this.homeAssistantClient.getTemperatureSensorModels();
 
   this.log.info(
     `${temperatureSensors.length} capteurs de température détectés`,
-);
+  );
 
-for (const sensor of temperatureSensors) {
-  this.log.info(`${sensor.name} : ${sensor.temperature} ${sensor.unit}`);
-}
+  const terraceSensor = temperatureSensors.find(
+    sensor =>
+      sensor.entityId ===
+      'sensor.timmerflotte_temp_hmd_sensor_temperature_7',
+  );
 
+  if (!terraceSensor) {
+    this.log.error('Le capteur de température Terrasse est introuvable');
+    return;
+  }
+
+  const uuid = this.api.hap.uuid.generate(terraceSensor.entityId);
+  const existingAccessory = this.accessories.get(uuid);
+
+  if (existingAccessory) {
+    this.log.info(
+      `Restauration de l’accessoire : ${terraceSensor.name}`,
+    );
+
+    existingAccessory.context.device = terraceSensor;
+    this.api.updatePlatformAccessories([existingAccessory]);
+
+    new HAVirtualDeviceAccessory(this, existingAccessory);
+  } else {
+    this.log.info(
+      `Création de l’accessoire : ${terraceSensor.name}`,
+    );
+
+    const accessory = new this.api.platformAccessory(
+      terraceSensor.name,
+      uuid,
+    );
+
+    accessory.context.device = terraceSensor;
+
+    new HAVirtualDeviceAccessory(this, accessory);
+
+    this.api.registerPlatformAccessories(
+      PLUGIN_NAME,
+      PLATFORM_NAME,
+      [accessory],
+    );
+  }
 });
 }
-
   /**
    * This function is invoked when homebridge restores cached accessories from disk at startup.
    * It should be used to set up event handlers for characteristics and update respective values.
