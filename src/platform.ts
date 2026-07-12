@@ -1,6 +1,6 @@
 import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
 
-import { ExamplePlatformAccessory } from './platformAccessory.js';
+import { HAVirtualDeviceAccessory } from './platformAccessory.js';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 import { HomeAssistantClient } from './homeassistant/client.js';
 
@@ -53,6 +53,7 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
     // Dynamic Platform plugins should only register new accessories after this event was fired,
     // in order to ensure they weren't added to homebridge already. This event can also be used
     // to start discovery of new accessories.
+    // this.discoverDevices();
     this.api.on('didFinishLaunching', async () => {
 
   this.log.info('HA Virtual Devices démarré');
@@ -80,8 +81,18 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   );
 
   for (const sensor of temperatureSensors) {
-    this.log.info(sensor.entity_id);
-  }
+const name =
+typeof sensor.attributes.friendly_name === 'string'
+? sensor.attributes.friendly_name
+: sensor.entity_id;
+
+const unit =
+typeof sensor.attributes.unit_of_measurement === 'string'
+? sensor.attributes.unit_of_measurement
+: '';
+
+this.log.info(`${name} : ${sensor.state} ${unit}`);
+}
 
 });
 }
@@ -133,7 +144,7 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
-        new ExamplePlatformAccessory(this, existingAccessory);
+       new HAVirtualDeviceAccessory(this, existingAccessory);
 
         // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, e.g.:
         // remove platform accessories when no longer present
@@ -152,7 +163,7 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        new ExamplePlatformAccessory(this, accessory);
+        new HAVirtualDeviceAccessory(this, accessory);
 
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
