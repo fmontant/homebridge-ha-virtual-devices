@@ -70,10 +70,21 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
 
   const states = await this.homeAssistantClient.getStates();
 
-this.log.info(`${states.length} entités Home Assistant détectées`);
+  this.log.info(`${states.length} entités Home Assistant détectées`);
+
+  const temperatureSensors =
+    await this.homeAssistantClient.getTemperatureSensors();
+
+  this.log.info(
+    `${temperatureSensors.length} capteurs de température détectés`,
+  );
+
+  for (const sensor of temperatureSensors) {
+    this.log.info(sensor.entity_id);
+  }
 
 });
-  }
+}
 
   /**
    * This function is invoked when homebridge restores cached accessories from disk at startup.

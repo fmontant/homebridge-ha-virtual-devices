@@ -41,6 +41,17 @@ export class HomeAssistantClient {
   public async getStates(): Promise<HomeAssistantState[]> {
     return this.request<HomeAssistantState[]>('/api/states');
   }
+  public async getTemperatureSensors(): Promise<HomeAssistantState[]> {
+  const states = await this.getStates();
+
+  return states.filter(state =>
+    state.entity_id.startsWith('sensor.') &&
+    (
+      state.entity_id.toLowerCase().includes('temperature') ||
+      state.attributes.device_class === 'temperature'
+    ),
+  );
+}
 
   private async request<T>(path: string): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
