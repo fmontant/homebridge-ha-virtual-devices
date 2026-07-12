@@ -1,9 +1,9 @@
 import type { PlatformAccessory, Service } from 'homebridge';
 
-import type { TemperatureSensor } from './models/temperatureSensor.js';
-import type { HAVirtualDevicesPlatform } from './platform.js';
+import type { TemperatureSensor } from '../models/temperatureSensor.js';
+import type { HAVirtualDevicesPlatform } from '../platform.js';
 
-export class HAVirtualDeviceAccessory {
+export class ThermostatAccessory {
   private readonly service: Service;
   private readonly sensor: TemperatureSensor;
 

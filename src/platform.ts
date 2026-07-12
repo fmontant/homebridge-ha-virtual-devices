@@ -1,6 +1,6 @@
 import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
 
-import { HAVirtualDeviceAccessory } from './platformAccessory.js';
+import { ThermostatAccessory } from './accessories/thermostatAccessory.js';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 import { HomeAssistantClient } from './homeassistant/client.js';
 import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
@@ -23,7 +23,7 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   // this is used to track restored cached accessories
   public readonly accessories: Map<string, PlatformAccessory> = new Map();
   private readonly deviceAccessories:
-  Map<string, HAVirtualDeviceAccessory> = new Map();
+  Map<string, ThermostatAccessory> = new Map();
   public readonly discoveredCacheUUIDs: string[] = [];
 
   // This is only required when using Custom Services and Characteristics not support by HomeKit
@@ -103,7 +103,7 @@ this.homeAssistantWebSocketClient = new HomeAssistantWebSocketClient(
     this.api.updatePlatformAccessories([existingAccessory]);
 
    const deviceAccessory =
-  new HAVirtualDeviceAccessory(this, existingAccessory);
+  new ThermostatAccessory(this, existingAccessory);
 
 this.deviceAccessories.set(sensor.entityId, deviceAccessory);
   } else {
@@ -117,7 +117,7 @@ this.deviceAccessories.set(sensor.entityId, deviceAccessory);
     accessory.context.device = sensor;
 
     const deviceAccessory =
-  new HAVirtualDeviceAccessory(this, accessory);
+  new ThermostatAccessory(this, accessory);
 
 this.deviceAccessories.set(
   sensor.entityId,
