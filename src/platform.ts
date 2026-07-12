@@ -3,6 +3,7 @@ import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAcces
 import { HAVirtualDeviceAccessory } from './platformAccessory.js';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 import { HomeAssistantClient } from './homeassistant/client.js';
+import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
 
 // This is only required when using Custom Services and Characteristics not support by HomeKit
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
@@ -16,6 +17,8 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
   private readonly homeAssistantClient: HomeAssistantClient;
+  private readonly homeAssistantWebSocketClient: HomeAssistantWebSocketClient;
+  
 
   // this is used to track restored cached accessories
   public readonly accessories: Map<string, PlatformAccessory> = new Map();
@@ -35,6 +38,14 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
     this.Service = api.hap.Service;
     this.Characteristic = api.hap.Characteristic;
     this.homeAssistantClient = new HomeAssistantClient(
+  {
+    haUrl: String(this.config.haUrl ?? ''),
+    token: String(this.config.token ?? ''),
+    debug: Boolean(this.config.debug),
+  },
+  this.log,
+);
+this.homeAssistantWebSocketClient = new HomeAssistantWebSocketClient(
   {
     haUrl: String(this.config.haUrl ?? ''),
     token: String(this.config.token ?? ''),
@@ -66,6 +77,7 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   }
 
   this.log.info('Connexion réussie');
+  this.homeAssistantWebSocketClient.connect();
 
   const states = await this.homeAssistantClient.getStates();
 
