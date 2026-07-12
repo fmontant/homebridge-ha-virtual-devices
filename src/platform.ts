@@ -78,40 +78,26 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
     `${temperatureSensors.length} capteurs de température détectés`,
   );
 
-  const terraceSensor = temperatureSensors.find(
-    sensor =>
-      sensor.entityId ===
-      'sensor.timmerflotte_temp_hmd_sensor_temperature_7',
-  );
-
-  if (!terraceSensor) {
-    this.log.error('Le capteur de température Terrasse est introuvable');
-    return;
-  }
-
-  const uuid = this.api.hap.uuid.generate(terraceSensor.entityId);
+  for (const sensor of temperatureSensors) {
+  const uuid = this.api.hap.uuid.generate(sensor.entityId);
   const existingAccessory = this.accessories.get(uuid);
 
   if (existingAccessory) {
-    this.log.info(
-      `Restauration de l’accessoire : ${terraceSensor.name}`,
-    );
+    this.log.info(`Restauration de l’accessoire : ${sensor.name}`);
 
-    existingAccessory.context.device = terraceSensor;
+    existingAccessory.context.device = sensor;
     this.api.updatePlatformAccessories([existingAccessory]);
 
     new HAVirtualDeviceAccessory(this, existingAccessory);
   } else {
-    this.log.info(
-      `Création de l’accessoire : ${terraceSensor.name}`,
-    );
+    this.log.info(`Création de l’accessoire : ${sensor.name}`);
 
     const accessory = new this.api.platformAccessory(
-      terraceSensor.name,
+      sensor.name,
       uuid,
     );
 
-    accessory.context.device = terraceSensor;
+    accessory.context.device = sensor;
 
     new HAVirtualDeviceAccessory(this, accessory);
 
@@ -121,6 +107,7 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
       [accessory],
     );
   }
+}
 });
 }
   /**

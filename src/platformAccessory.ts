@@ -31,18 +31,36 @@ export class HAVirtualDeviceAccessory {
         this.platform.Characteristic.SerialNumber,
         this.sensor.entityId,
       );
+const previousTemperatureService =
+  this.accessory.getService(this.platform.Service.TemperatureSensor);
 
+if (previousTemperatureService) {
+  this.accessory.removeService(previousTemperatureService);
+}
     this.service =
-      this.accessory.getService(this.platform.Service.TemperatureSensor) ||
+      this.accessory.getService(this.platform.Service.Thermostat) ||
       this.accessory.addService(
-        this.platform.Service.TemperatureSensor,
+        this.platform.Service.Thermostat,
         this.sensor.name,
       );
 
-    this.service.setCharacteristic(
-      this.platform.Characteristic.Name,
-      this.sensor.name,
-    );
+    this.service
+  .setCharacteristic(
+    this.platform.Characteristic.CurrentHeatingCoolingState,
+    this.platform.Characteristic.CurrentHeatingCoolingState.OFF,
+  )
+  .setCharacteristic(
+    this.platform.Characteristic.TargetHeatingCoolingState,
+    this.platform.Characteristic.TargetHeatingCoolingState.OFF,
+  )
+  .setCharacteristic(
+    this.platform.Characteristic.TargetTemperature,
+    20,
+  )
+  .setCharacteristic(
+    this.platform.Characteristic.TemperatureDisplayUnits,
+    this.platform.Characteristic.TemperatureDisplayUnits.CELSIUS,
+  );
 
     this.updateTemperature(this.sensor.temperature);
   }
