@@ -1,78 +1,392 @@
-import type { PlatformAccessory, Service } from 'homebridge';
+import type {
+  PlatformAccessory,
+  Service,
+} from 'homebridge';
 
-import type { TemperatureSensor } from '../models/temperatureSensor.js';
+import type { SensorDevice } from '../models/sensorDevice.js';
 import type { HAVirtualDevicesPlatform } from '../platform.js';
 
 export class ThermostatAccessory {
-  private readonly service: Service;
-  private readonly sensor: TemperatureSensor;
+  private readonly device: SensorDevice;
+
+  private readonly thermostatService: Service;
 
   constructor(
-    
-    private readonly platform: HAVirtualDevicesPlatform,
-    private readonly accessory: PlatformAccessory,
+    private readonly platform:
+      HAVirtualDevicesPlatform,
+    private readonly accessory:
+      PlatformAccessory,
   ) {
-    this.sensor = accessory.context.device as TemperatureSensor;
-    this.platform.log.info(
-  `Création de l'accessoire HomeKit : ${this.sensor.name}`,
-);
+    this.device =
+      accessory.context.device as SensorDevice;
 
+    this.platform.log.info(
+      `Configuration de la tuile HomeKit : ${this.device.name}`,
+    );
+
+    this.configureAccessoryInformation();
+    this.removeTemperatureSensorService();
+    this.removeSeparateHumidityService();
+    this.removeSeparateBatteryService();
+
+    this.thermostatService =
+      this.configureThermostatService();
+
+    this.thermostatService
+      .setPrimaryService();
+
+    this.applyInitialValues();
+  }
+
+  public updateEntity(
+    entityId: string,
+    value: number,
+  ): void {
+    if (
+      entityId ===
+      this.device.temperatureEntity
+    ) {
+      this.updateTemperature(value);
+      return;
+    }
+
+    if (
+      entityId ===
+      this.device.humidityEntity
+    ) {
+      this.updateHumidity(value);
+      return;
+    }
+
+    if (
+      entityId ===
+      this.device.batteryEntity
+    ) {
+      this.updateBattery(value);
+    }
+  }
+
+  public updateTemperature(
+    temperature: number,
+  ): void {
+    if (!Number.isFinite(temperature)) {
+      return;
+    }
+
+    const normalizedTemperature =
+      Math.min(
+        100,
+        Math.max(
+          -270,
+          temperature,
+        ),
+      );
+
+    this.thermostatService
+      .updateCharacteristic(
+        this.platform.Characteristic
+          .CurrentTemperature,
+        normalizedTemperature,
+      );
+
+    this.platform.log.debug(
+      `${this.device.name} : ` +
+      `${normalizedTemperature} °C`,
+    );
+  }
+
+  public updateHumidity(
+    humidity: number,
+  ): void {
+    if (
+      !this.device.humidityEntity ||
+      !Number.isFinite(humidity)
+    ) {
+      return;
+    }
+
+    const normalizedHumidity =
+      Math.min(
+        100,
+        Math.max(
+          0,
+          humidity,
+        ),
+      );
+
+    this.thermostatService
+      .updateCharacteristic(
+        this.platform.Characteristic
+          .CurrentRelativeHumidity,
+        normalizedHumidity,
+      );
+
+    this.platform.log.debug(
+      `${this.device.name} : ` +
+      `${normalizedHumidity} %`,
+    );
+  }
+
+  public updateBattery(
+    batteryLevel: number,
+  ): void {
+    if (
+      !this.device.batteryEntity ||
+      !Number.isFinite(batteryLevel)
+    ) {
+      return;
+    }
+
+    const normalizedBattery =
+      Math.round(
+        Math.min(
+          100,
+          Math.max(
+            0,
+            batteryLevel,
+          ),
+        ),
+      );
+
+    const lowBatteryStatus =
+      normalizedBattery <= 20
+        ? this.platform.Characteristic
+          .StatusLowBattery
+          .BATTERY_LEVEL_LOW
+        : this.platform.Characteristic
+          .StatusLowBattery
+          .BATTERY_LEVEL_NORMAL;
+
+    this.thermostatService
+      .updateCharacteristic(
+        this.platform.Characteristic
+          .BatteryLevel,
+        normalizedBattery,
+      )
+      .updateCharacteristic(
+        this.platform.Characteristic
+          .StatusLowBattery,
+        lowBatteryStatus,
+      )
+      .updateCharacteristic(
+        this.platform.Characteristic
+          .ChargingState,
+        this.platform.Characteristic
+          .ChargingState
+          .NOT_CHARGEABLE,
+      );
+
+    this.platform.log.debug(
+      `${this.device.name} : ` +
+      `batterie intégrée ${normalizedBattery} %`,
+    );
+  }
+
+  private configureAccessoryInformation():
+  void {
     this.accessory
-      .getService(this.platform.Service.AccessoryInformation)!
+      .getService(
+        this.platform.Service
+          .AccessoryInformation,
+      )!
       .setCharacteristic(
-        this.platform.Characteristic.Manufacturer,
+        this.platform.Characteristic
+          .Manufacturer,
         'HA Virtual Devices',
       )
       .setCharacteristic(
-        this.platform.Characteristic.Model,
-        'Home Assistant Temperature Sensor',
+        this.platform.Characteristic
+          .Model,
+        'Home Assistant Temperature and Humidity Sensor',
       )
       .setCharacteristic(
-        this.platform.Characteristic.SerialNumber,
-        this.sensor.entityId,
+        this.platform.Characteristic
+          .SerialNumber,
+        this.device.id,
       );
-const previousTemperatureService =
-  this.accessory.getService(this.platform.Service.TemperatureSensor);
-
-if (previousTemperatureService) {
-  this.accessory.removeService(previousTemperatureService);
-}
-    this.service =
-      this.accessory.getService(this.platform.Service.Thermostat) ||
-      this.accessory.addService(
-        this.platform.Service.Thermostat,
-        this.sensor.name,
-      );
-
-    this.service
-  .setCharacteristic(
-    this.platform.Characteristic.CurrentHeatingCoolingState,
-    this.platform.Characteristic.CurrentHeatingCoolingState.OFF,
-  )
-  .setCharacteristic(
-    this.platform.Characteristic.TargetHeatingCoolingState,
-    this.platform.Characteristic.TargetHeatingCoolingState.OFF,
-  )
-  .setCharacteristic(
-    this.platform.Characteristic.TargetTemperature,
-    20,
-  )
-  .setCharacteristic(
-    this.platform.Characteristic.TemperatureDisplayUnits,
-    this.platform.Characteristic.TemperatureDisplayUnits.CELSIUS,
-  );
-
-    this.updateTemperature(this.sensor.temperature);
   }
 
-  public updateTemperature(temperature: number): void {
-    this.service.updateCharacteristic(
-      this.platform.Characteristic.CurrentTemperature,
-      temperature,
+  private configureThermostatService():
+  Service {
+    const service =
+      this.accessory.getService(
+        this.platform.Service.Thermostat,
+      ) ??
+      this.accessory.addService(
+        this.platform.Service.Thermostat,
+        this.device.name,
+        'thermostat',
+      );
+
+    service
+      .setCharacteristic(
+        this.platform.Characteristic.Name,
+        this.device.name,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .CurrentHeatingCoolingState,
+        this.platform.Characteristic
+          .CurrentHeatingCoolingState.OFF,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .TargetHeatingCoolingState,
+        this.platform.Characteristic
+          .TargetHeatingCoolingState.OFF,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .TargetTemperature,
+        20,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .TemperatureDisplayUnits,
+        this.platform.Characteristic
+          .TemperatureDisplayUnits.CELSIUS,
+      );
+
+    if (this.device.humidityEntity) {
+      service.addOptionalCharacteristic(
+        this.platform.Characteristic
+          .CurrentRelativeHumidity,
+      );
+
+      service.getCharacteristic(
+        this.platform.Characteristic
+          .CurrentRelativeHumidity,
+      );
+    }
+
+    if (this.device.batteryEntity) {
+      service.addOptionalCharacteristic(
+        this.platform.Characteristic
+          .BatteryLevel,
+      );
+
+      service.addOptionalCharacteristic(
+        this.platform.Characteristic
+          .StatusLowBattery,
+      );
+
+      service.addOptionalCharacteristic(
+        this.platform.Characteristic
+          .ChargingState,
+      );
+
+      service.getCharacteristic(
+        this.platform.Characteristic
+          .BatteryLevel,
+      );
+
+      service.getCharacteristic(
+        this.platform.Characteristic
+          .StatusLowBattery,
+      );
+
+      service.getCharacteristic(
+        this.platform.Characteristic
+          .ChargingState,
+      );
+
+      this.platform.log.info(
+        `Caractéristiques batterie intégrées au thermostat : ${this.device.name}`,
+      );
+    }
+
+    return service;
+  }
+
+  private removeTemperatureSensorService():
+  void {
+    const temperatureService =
+      this.accessory.getService(
+        this.platform.Service
+          .TemperatureSensor,
+      );
+
+    if (!temperatureService) {
+      return;
+    }
+
+    this.accessory.removeService(
+      temperatureService,
     );
 
-    this.platform.log.debug(
-      `${this.sensor.name} mis à jour : ${temperature} ${this.sensor.unit}`,
+    this.platform.log.info(
+      `Ancien service TemperatureSensor supprimé : ${this.device.name}`,
     );
+  }
+
+  private removeSeparateHumidityService():
+  void {
+    const humidityService =
+      this.accessory.getService(
+        this.platform.Service
+          .HumiditySensor,
+      );
+
+    if (!humidityService) {
+      return;
+    }
+
+    this.accessory.removeService(
+      humidityService,
+    );
+
+    this.platform.log.info(
+      `Ancien service HumiditySensor supprimé : ${this.device.name}`,
+    );
+  }
+
+  private removeSeparateBatteryService():
+  void {
+    const batteryService =
+      this.accessory.getService(
+        this.platform.Service.Battery,
+      );
+
+    if (!batteryService) {
+      return;
+    }
+
+    this.accessory.removeService(
+      batteryService,
+    );
+
+    this.platform.log.info(
+      `Ancien service Battery supprimé : ${this.device.name}`,
+    );
+  }
+
+  private applyInitialValues():
+  void {
+    if (
+      typeof this.device.temperature ===
+      'number'
+    ) {
+      this.updateTemperature(
+        this.device.temperature,
+      );
+    }
+
+    if (
+      typeof this.device.humidity ===
+      'number'
+    ) {
+      this.updateHumidity(
+        this.device.humidity,
+      );
+    }
+
+    if (
+      typeof this.device.batteryLevel ===
+      'number'
+    ) {
+      this.updateBattery(
+        this.device.batteryLevel,
+      );
+    }
   }
 }

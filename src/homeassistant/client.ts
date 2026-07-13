@@ -44,57 +44,57 @@ export class HomeAssistantClient {
     return this.request<HomeAssistantState[]>('/api/states');
   }
   public async getTemperatureSensors(): Promise<HomeAssistantState[]> {
-  const states = await this.getStates();
+    const states = await this.getStates();
 
-  return states.filter(state =>
-    state.entity_id.startsWith('sensor.') &&
+    return states.filter(state =>
+      state.entity_id.startsWith('sensor.') &&
     (
       state.entity_id.toLowerCase().includes('temperature') ||
       state.attributes.device_class === 'temperature'
     ),
-  );
-}
-public async getTemperatureSensorModels(): Promise<TemperatureSensor[]> {
-  const states = await this.getTemperatureSensors();
+    );
+  }
+  public async getTemperatureSensorModels(): Promise<TemperatureSensor[]> {
+    const states = await this.getTemperatureSensors();
 
-  return states.map(state => ({
-    entityId: state.entity_id,
-    name:
+    return states.map(state => ({
+      entityId: state.entity_id,
+      name:
       typeof state.attributes.friendly_name === 'string'
         ? state.attributes.friendly_name
         : state.entity_id,
-    temperature: Number(state.state),
-    unit:
+      temperature: Number(state.state),
+      unit:
       typeof state.attributes.unit_of_measurement === 'string'
         ? state.attributes.unit_of_measurement
         : '',
-  }));
-}
- public async getHumiditySensorModels(): Promise<HumiditySensor[]> {
-  const states = await this.getStates();
+    }));
+  }
+  public async getHumiditySensorModels(): Promise<HumiditySensor[]> {
+    const states = await this.getStates();
 
-  return states
-    .filter(state =>
-      state.entity_id.startsWith('sensor.') &&
+    return states
+      .filter(state =>
+        state.entity_id.startsWith('sensor.') &&
       (
         state.entity_id.toLowerCase().includes('humidity') ||
         state.attributes.device_class === 'humidity'
       ),
-    )
-    .map(state => ({
-      entityId: state.entity_id,
-      name:
+      )
+      .map(state => ({
+        entityId: state.entity_id,
+        name:
         typeof state.attributes.friendly_name === 'string'
           ? state.attributes.friendly_name
           : state.entity_id,
-      humidity: Number(state.state),
-      unit:
+        humidity: Number(state.state),
+        unit:
         typeof state.attributes.unit_of_measurement === 'string'
           ? state.attributes.unit_of_measurement
           : '%',
-    }))
-    .filter(sensor => Number.isFinite(sensor.humidity));
-} 
+      }))
+      .filter(sensor => Number.isFinite(sensor.humidity));
+  } 
 
   private async request<T>(path: string): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {

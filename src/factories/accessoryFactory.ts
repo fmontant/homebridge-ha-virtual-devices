@@ -1,26 +1,24 @@
 import type { PlatformAccessory } from 'homebridge';
 
-import type { HAVirtualDevicesPlatform } from '../platform.js';
-import type { TemperatureSensor } from '../models/temperatureSensor.js';
 import { ThermostatAccessory } from '../accessories/thermostatAccessory.js';
-import type { HumiditySensor } from '../models/humiditySensor.js';
+import type { SensorDevice } from '../models/sensorDevice.js';
+import type { HAVirtualDevicesPlatform } from '../platform.js';
 
 export class AccessoryFactory {
-
   constructor(
-    private readonly platform: HAVirtualDevicesPlatform,
+    private readonly platform:
+      HAVirtualDevicesPlatform,
   ) {}
 
   public createThermostat(
-  sensor: TemperatureSensor,
-  accessory: PlatformAccessory,
-): ThermostatAccessory {
-  accessory.context.device = sensor;
+    device: SensorDevice,
+    accessory: PlatformAccessory,
+  ): ThermostatAccessory {
+    accessory.context.device = device;
 
-  return new ThermostatAccessory(
-    this.platform,
-    accessory,
-  );
-}
-
+    return new ThermostatAccessory(
+      this.platform,
+      accessory,
+    );
+  }
 }

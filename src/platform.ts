@@ -1,48 +1,75 @@
-import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
+import type {
+  API,
+  Characteristic,
+  DynamicPlatformPlugin,
+  Logging,
+  PlatformAccessory,
+  PlatformConfig,
+  Service,
+} from 'homebridge';
 
-import { ThermostatAccessory } from './accessories/thermostatAccessory.js';
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
-import { HomeAssistantClient } from './homeassistant/client.js';
-import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
-import { AccessoryFactory } from './factories/accessoryFactory.js';
-import type { EntityRegistryEntry } from './models/entityRegistryEntry.js';
-import { ClimateDeviceBuilder } from './builders/climateDeviceBuilder.js';
-import type { DeviceRegistryEntry } from './models/deviceRegistryEntry.js';
-
-// This is only required when using Custom Services and Characteristics not support by HomeKit
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
 
-/**
- * HomebridgePlatform
- * This class is the main constructor for your plugin, this is where you should
- * parse the user config and discover/register accessories with Homebridge.
- */
+import { ThermostatAccessory } from './accessories/thermostatAccessory.js';
+import { ClimateDeviceBuilder } from './builders/climateDeviceBuilder.js';
+import { AccessoryFactory } from './factories/accessoryFactory.js';
+import { HomeAssistantClient } from './homeassistant/client.js';
+import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
+import type { ClimateDevice } from './models/climateDevice.js';
+import type { DeviceRegistryEntry } from './models/deviceRegistryEntry.js';
+import type { EntityRegistryEntry } from './models/entityRegistryEntry.js';
+import type { SensorDevice } from './models/sensorDevice.js';
+import {
+  PLATFORM_NAME,
+  PLUGIN_NAME,
+} from './settings.js';
 
+interface HomeAssistantState {
+  entity_id: string;
+  state: string;
+}
 
-
-export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
+export class HAVirtualDevicesPlatform
+implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
-  public readonly Characteristic: typeof Characteristic;
 
-  private entityRegistry: EntityRegistryEntry[] = [];
+  public readonly Characteristic:
+    typeof Characteristic;
 
-  private deviceRegistry: DeviceRegistryEntry[] = [];
+  public readonly accessories:
+    Map<string, PlatformAccessory> =
+      new Map();
 
-  private readonly homeAssistantClient: HomeAssistantClient;
-  private readonly homeAssistantWebSocketClient: HomeAssistantWebSocketClient;
-  private readonly accessoryFactory: AccessoryFactory;
-  
+  public readonly discoveredCacheUUIDs:
+    string[] = [];
 
-  // this is used to track restored cached accessories
-  public readonly accessories: Map<string, PlatformAccessory> = new Map();
-  private readonly deviceAccessories:
-  Map<string, ThermostatAccessory> = new Map();
-  public readonly discoveredCacheUUIDs: string[] = [];
- 
+  private readonly homeAssistantClient:
+    HomeAssistantClient;
 
-  // This is only required when using Custom Services and Characteristics not support by HomeKit
+  private readonly homeAssistantWebSocketClient:
+    HomeAssistantWebSocketClient;
+
+  private readonly accessoryFactory:
+    AccessoryFactory;
+
+  private readonly thermostatAccessories:
+    Map<string, ThermostatAccessory> =
+      new Map();
+
+  private readonly initialStates:
+    Map<string, string> =
+      new Map();
+
+  private readonly activeAccessoryUUIDs:
+    Set<string> =
+      new Set();
+
+  private deviceRegistry:
+    DeviceRegistryEntry[] = [];
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public readonly CustomServices: any;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public readonly CustomCharacteristics: any;
 
@@ -51,259 +78,467 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
-    this.Service = api.hap.Service;
-    this.Characteristic = api.hap.Characteristic;
-    this.homeAssistantClient = new HomeAssistantClient(
-    
-  {
-    haUrl: String(this.config.haUrl ?? ''),
-    token: String(this.config.token ?? ''),
-    debug: Boolean(this.config.debug),
-  },
-  
-  this.log,
-);
-this.homeAssistantWebSocketClient = new HomeAssistantWebSocketClient(
-  {
-    haUrl: String(this.config.haUrl ?? ''),
-    token: String(this.config.token ?? ''),
-    debug: Boolean(this.config.debug),
-  },
-  this.log,
-);
+    this.Service =
+      api.hap.Service;
 
+    this.Characteristic =
+      api.hap.Characteristic;
 
-this.homeAssistantWebSocketClient.onEntityRegistry(entries => {
-  this.entityRegistry = entries;
-  if (this.deviceRegistry.length === 0) {
-    return;
-  }
-});
+    const homeAssistantConfig = {
+      haUrl: String(
+        this.config.haUrl ?? '',
+      ),
+      token: String(
+        this.config.token ?? '',
+      ),
+      debug: Boolean(
+        this.config.debug,
+      ),
+    };
 
-this.homeAssistantWebSocketClient.onDeviceRegistry(devices => {
-  this.deviceRegistry = devices;
+    this.homeAssistantClient =
+      new HomeAssistantClient(
+        homeAssistantConfig,
+        this.log,
+      );
 
-  this.homeAssistantWebSocketClient.getEntityRegistry();
-});
+    this.homeAssistantWebSocketClient =
+      new HomeAssistantWebSocketClient(
+        homeAssistantConfig,
+        this.log,
+      );
 
+    this.accessoryFactory =
+      new AccessoryFactory(this);
 
-this.accessoryFactory = new AccessoryFactory(this);
-    // This is only required when using Custom Services and Characteristics not support by HomeKit
-    this.CustomServices = new EveHomeKitTypes(this.api).Services;
-    this.CustomCharacteristics = new EveHomeKitTypes(this.api).Characteristics;
+    const eveHomeKitTypes =
+      new EveHomeKitTypes(this.api);
 
-    this.log.debug('Finished initializing platform:', this.config.name);
+    this.CustomServices =
+      eveHomeKitTypes.Services;
 
-    // When this event is fired it means Homebridge has restored all cached accessories from disk.
-    // Dynamic Platform plugins should only register new accessories after this event was fired,
-    // in order to ensure they weren't added to homebridge already. This event can also be used
-    // to start discovery of new accessories.
-    // this.discoverDevices();
-    this.api.on('didFinishLaunching', async () => {
-  this.log.info('HA Virtual Devices démarré');
-  this.log.info('Test de connexion à Home Assistant...');
+    this.CustomCharacteristics =
+      eveHomeKitTypes.Characteristics;
 
-  const connected = await this.homeAssistantClient.testConnection();
+    this.configureWebSocketListeners();
 
-  if (!connected) {
-    this.log.error('Impossible de se connecter à Home Assistant');
-    return;
+    this.api.on(
+      'didFinishLaunching',
+      async () => {
+        await this.didFinishLaunching();
+      },
+    );
   }
 
-  this.log.info('Connexion réussie');
-  
+  private async didFinishLaunching():
+  Promise<void> {
+    this.log.info(
+      'HA Virtual Devices démarré',
+    );
 
-  const states = await this.homeAssistantClient.getStates();
+    this.log.info(
+      'Test de connexion à Home Assistant...',
+    );
 
-  this.log.info(`${states.length} entités Home Assistant détectées`);
+    const connected =
+      await this.homeAssistantClient
+        .testConnection();
 
-  const temperatureSensors =
-    await this.homeAssistantClient.getTemperatureSensorModels();
+    if (!connected) {
+      this.log.error(
+        'Impossible de se connecter à Home Assistant',
+      );
 
-  this.log.info(
-    `${temperatureSensors.length} capteurs de température détectés`,
-  );
+      return;
+    }
 
-const humiditySensors =
-  await this.homeAssistantClient.getHumiditySensorModels();
+    this.log.info(
+      'Connexion réussie',
+    );
 
-this.log.info(
-  `${humiditySensors.length} capteurs d'humidité détectés`,
-);
+    const states =
+      await this.homeAssistantClient
+        .getStates();
 
-  for (const sensor of temperatureSensors) {
-  const uuid = this.api.hap.uuid.generate(sensor.entityId);
-  const existingAccessory = this.accessories.get(uuid);
+    const homeAssistantStates =
+      states as HomeAssistantState[];
 
-  if (existingAccessory) {
-    this.log.info(`Restauration de l’accessoire : ${sensor.name}`);
+    for (
+      const state of
+      homeAssistantStates
+    ) {
+      this.initialStates.set(
+        state.entity_id,
+        state.state,
+      );
+    }
 
-    existingAccessory.context.device = sensor;
-    this.api.updatePlatformAccessories([existingAccessory]);
+    this.log.info(
+      `${states.length} entités Home Assistant détectées`,
+    );
 
-   const deviceAccessory =
-  this.accessoryFactory.createThermostat(
-    sensor,
-    existingAccessory,
-  );
+    this.homeAssistantWebSocketClient
+      .connect();
+  }
 
-this.deviceAccessories.set(
-  sensor.entityId,
-  deviceAccessory,
-);
-  } else {
-    this.log.info(`Création de l’accessoire : ${sensor.name}`);
+  private configureWebSocketListeners():
+  void {
+    this.homeAssistantWebSocketClient
+      .onEvent(event => {
+        this.handleHomeAssistantEvent(
+          event,
+        );
+      });
 
-    const accessory = new this.api.platformAccessory(
-      sensor.name,
+    this.homeAssistantWebSocketClient
+      .onDeviceRegistry(devices => {
+        this.deviceRegistry =
+          devices;
+
+        this.homeAssistantWebSocketClient
+          .getEntityRegistry();
+      });
+
+    this.homeAssistantWebSocketClient
+      .onEntityRegistry(entries => {
+        this.handleEntityRegistry(
+          entries,
+        );
+      });
+  }
+
+  private handleEntityRegistry(
+    entries: EntityRegistryEntry[],
+  ): void {
+    if (
+      this.deviceRegistry.length === 0
+    ) {
+      return;
+    }
+
+    const climateDevices =
+      new ClimateDeviceBuilder().build(
+        entries,
+        this.deviceRegistry,
+      );
+
+    this.log.info(
+      `${climateDevices.length} capteurs climatiques construits`,
+    );
+
+    for (
+      const climateDevice of
+      climateDevices
+    ) {
+      const sensorDevice =
+        this.prepareSensorDevice(
+          climateDevice,
+        );
+
+      this.registerThermostatAccessory(
+        sensorDevice,
+      );
+    }
+
+    this.removeObsoleteAccessories();
+  }
+
+  private prepareSensorDevice(
+    device: ClimateDevice,
+  ): SensorDevice {
+    return {
+      id: device.id,
+
+      name:
+        this.normalizeDeviceName(
+          device.name,
+        ),
+
+      temperatureEntity:
+        device.temperatureEntity,
+
+      humidityEntity:
+        device.humidityEntity,
+
+      batteryEntity:
+        device.batteryEntity,
+
+      temperature:
+        this.readNumericState(
+          device.temperatureEntity,
+        ),
+
+      humidity:
+        device.humidityEntity
+          ? this.readNumericState(
+            device.humidityEntity,
+          )
+          : undefined,
+
+      batteryLevel:
+        device.batteryEntity
+          ? this.readNumericState(
+            device.batteryEntity,
+          )
+          : undefined,
+    };
+  }
+
+  private normalizeDeviceName(
+    name: string,
+  ): string {
+    const normalizedName =
+      name
+        .replace(
+          /^(température|temperature)\s+/i,
+          '',
+        )
+        .replace(
+          /\s+(température|temperature)$/i,
+          '',
+        )
+        .trim();
+
+    if (
+      normalizedName.length === 0
+    ) {
+      return name;
+    }
+
+    return (
+      normalizedName
+        .charAt(0)
+        .toUpperCase() +
+      normalizedName.slice(1)
+    );
+  }
+
+  private readNumericState(
+    entityId: string,
+  ): number | undefined {
+    const rawValue =
+      this.initialStates.get(
+        entityId,
+      );
+
+    if (
+      rawValue === undefined
+    ) {
+      return undefined;
+    }
+
+    const value =
+      Number(rawValue);
+
+    return Number.isFinite(value)
+      ? value
+      : undefined;
+  }
+
+  private registerThermostatAccessory(
+    device: SensorDevice,
+  ): void {
+    const uuid =
+      this.api.hap.uuid.generate(
+        `sensor-v2:${device.id}`,
+      );
+
+    this.activeAccessoryUUIDs.add(
       uuid,
     );
 
-    accessory.context.device = sensor;
+    const existingAccessory =
+      this.accessories.get(
+        uuid,
+      );
 
-    const deviceAccessory =
-  this.accessoryFactory.createThermostat(
-    sensor,
-    accessory,
-  );
+    let accessory:
+      PlatformAccessory;
 
-this.deviceAccessories.set(
-  sensor.entityId,
-  deviceAccessory,
-);
+    if (existingAccessory) {
+      this.log.info(
+        `Restauration de la tuile : ${device.name}`,
+      );
 
-    this.api.registerPlatformAccessories(
-      PLUGIN_NAME,
-      PLATFORM_NAME,
-      [accessory],
+      accessory =
+        existingAccessory;
+
+      accessory.context.device =
+        device;
+
+      this.api
+        .updatePlatformAccessories([
+          accessory,
+        ]);
+    } else {
+      this.log.info(
+        `Création de la tuile : ${device.name}`,
+      );
+
+      accessory =
+        new this.api.platformAccessory(
+          device.name,
+          uuid,
+        );
+
+      accessory.context.device =
+        device;
+
+      this.api
+        .registerPlatformAccessories(
+          PLUGIN_NAME,
+          PLATFORM_NAME,
+          [accessory],
+        );
+
+      this.accessories.set(
+        accessory.UUID,
+        accessory,
+      );
+    }
+
+    const thermostatAccessory =
+      this.accessoryFactory
+        .createThermostat(
+          device,
+          accessory,
+        );
+
+    this.thermostatAccessories.set(
+      device.temperatureEntity,
+      thermostatAccessory,
     );
+
+    if (device.humidityEntity) {
+      this.thermostatAccessories.set(
+        device.humidityEntity,
+        thermostatAccessory,
+      );
+    }
+
+    if (device.batteryEntity) {
+      this.thermostatAccessories.set(
+        device.batteryEntity,
+        thermostatAccessory,
+      );
+    }
   }
-}
-this.homeAssistantWebSocketClient.onEvent(event => {
-  const message = event as {
-    event?: {
-      data?: {
-        entity_id?: string;
-        new_state?: {
-          state?: string;
-          attributes?: Record<string, unknown>;
-        } | null;
+
+  private removeObsoleteAccessories():
+  void {
+    for (
+      const [
+        uuid,
+        accessory,
+      ] of this.accessories
+    ) {
+      if (
+        this.activeAccessoryUUIDs.has(
+          uuid,
+        )
+      ) {
+        continue;
+      }
+
+      const device =
+        accessory.context
+          .device as
+          Partial<SensorDevice> |
+          undefined;
+
+      if (
+        !device?.temperatureEntity
+      ) {
+        continue;
+      }
+
+      this.log.info(
+        `Suppression de l’accessoire obsolète : ${accessory.displayName}`,
+      );
+
+      this.api
+        .unregisterPlatformAccessories(
+          PLUGIN_NAME,
+          PLATFORM_NAME,
+          [accessory],
+        );
+
+      this.accessories.delete(
+        uuid,
+      );
+    }
+  }
+
+  private handleHomeAssistantEvent(
+    event: unknown,
+  ): void {
+    const message =
+      event as {
+        event?: {
+          data?: {
+            entity_id?: string;
+            new_state?: {
+              state?: string;
+            } | null;
+          };
+        };
       };
-    };
-  };
 
-  const entityId = message.event?.data?.entity_id;
-  const newState = message.event?.data?.new_state;
+    const entityId =
+      message.event?.data
+        ?.entity_id;
 
-  if (!entityId || !newState) {
-    return;
-  }
+    const rawState =
+      message.event?.data
+        ?.new_state?.state;
 
-  const deviceAccessory = this.deviceAccessories.get(entityId);
+    if (
+      !entityId ||
+      rawState === undefined
+    ) {
+      return;
+    }
 
-  if (!deviceAccessory) {
-    return;
-  }
+    const value =
+      Number(rawState);
 
-  const temperature = Number(newState.state);
+    if (
+      !Number.isFinite(value)
+    ) {
+      return;
+    }
 
-  if (!Number.isFinite(temperature)) {
-    return;
-  }
+    const thermostatAccessory =
+      this.thermostatAccessories.get(
+        entityId,
+      );
 
-  deviceAccessory.updateTemperature(temperature);
+    if (!thermostatAccessory) {
+      return;
+    }
 
-  this.log.info(
-    `Mise à jour temps réel : ${entityId} = ${temperature} °C`,
-  );
-});
+    thermostatAccessory.updateEntity(
+      entityId,
+      value,
+    );
 
-this.homeAssistantWebSocketClient.onEntityRegistry(entries => {
-  this.entityRegistry = entries;
-
-  if (this.deviceRegistry.length === 0) {
-    return;
-  }
-
-  this.log.info(
-    `Registre reçu : ${entries.length} entités`,
-  );
-
-  const climateDeviceIds = new Set(
-    entries
-      .filter(entry =>
-        entry.deviceId &&
-        (
-          entry.entityId.includes('temperature') ||
-          entry.entityId.includes('humidite') ||
-          entry.entityId.includes('humidity')
-        ),
-      )
-      .map(entry => entry.deviceId as string),
-  );
-
-  const climateEntries = entries.filter(entry =>
-    entry.deviceId &&
-    climateDeviceIds.has(entry.deviceId) &&
-    (
-      /_temperature(_\d+)?$/.test(entry.entityId) ||
-      /_(humidite|humidity)(_\d+)?$/.test(entry.entityId) ||
-      (
-        /_(batterie|battery)(_\d+)?$/.test(entry.entityId) &&
-        entry.translationKey !== 'battery_voltage' &&
-        entry.translationKey !== 'battery_replacement_description'
-      )
-    ),
-  );
-
-  this.log.info(
-    `${climateDeviceIds.size} appareils climatiques détectés`,
-  );
-
-  this.log.info(
-    `${climateEntries.length} entités climatiques associées`,
-  );
-
-  const climateDevices = new ClimateDeviceBuilder().build(
-    climateEntries,
-    this.deviceRegistry,
-  );
-
-  this.log.info(
-    `${climateDevices.length} ClimateDevice construits`,
-  );
-
-  for (const device of climateDevices) {
-    this.log.info(
-      `${device.name} (${device.id}) : ${device.entities.length} entités`,
+    this.log.debug(
+      'Mise à jour temps réel : ' +
+      `${entityId} = ${value}`,
     );
   }
-});
 
-this.homeAssistantWebSocketClient.onDeviceRegistry(devices => {
-  this.deviceRegistry = devices;
-  this.homeAssistantWebSocketClient.getEntityRegistry();
-});
+  configureAccessory(
+    accessory: PlatformAccessory,
+  ): void {
+    this.log.info(
+      'Chargement depuis le cache :',
+      accessory.displayName,
+    );
 
-this.homeAssistantWebSocketClient.connect();
-});
-}
-
-  /**
-   * This function is invoked when homebridge restores cached accessories from disk at startup.
-   * It should be used to set up event handlers for characteristics and update respective values.
-   */
-  configureAccessory(accessory: PlatformAccessory) {
-    this.log.info('Loading accessory from cache:', accessory.displayName);
-
-    // add the restored accessory to the accessories cache, so we can track if it has already been registered
-    this.accessories.set(accessory.UUID, accessory);
+    this.accessories.set(
+      accessory.UUID,
+      accessory,
+    );
   }
- }
-  /**
-   * This is an example method showing how to register discovered accessories.
-   * Accessories must only be registered once, previously created accessories
-   * must not be registered again to prevent "duplicate UUID" errors.
-   */
-  
-  
+}
