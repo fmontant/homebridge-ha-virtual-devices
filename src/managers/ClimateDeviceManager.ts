@@ -1,14 +1,14 @@
 import type { Logging } from 'homebridge';
 
+
 import type { ClimateDevice } from '../models/climateDevice.js';
-import type { SensorDevice } from '../models/sensorDevice.js';
 
 export interface HomeAssistantState {
   entity_id: string;
   state: string;
 }
 
-export class SensorDeviceManager {
+export class ClimateDeviceManager {
   private readonly initialStates:
     Map<string, string> =
       new Map();
@@ -34,9 +34,9 @@ export class SensorDeviceManager {
     );
   }
 
-  public prepareSensorDevice(
+  public prepareClimateDevice(
     device: ClimateDevice,
-  ): SensorDevice {
+  ): ClimateDevice {
     return {
       id: device.id,
 

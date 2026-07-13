@@ -4,62 +4,45 @@ import type {
   PlatformAccessory,
 } from 'homebridge';
 
-import type { ThermostatAccessory } from '../accessories/thermostatAccessory.js';
+import type { ClimateAccessory } from '../accessories/climateAccessory.js';
 import type { AccessoryFactory } from '../factories/accessoryFactory.js';
-import type { SensorDevice } from '../models/sensorDevice.js';
+import type { ClimateDevice } from '../models/climateDevice.js';
 import {
   PLATFORM_NAME,
   PLUGIN_NAME,
 } from '../settings.js';
 
 export class AccessoryManager {
-  private readonly activeAccessoryUUIDs:
-    Set<string> =
-      new Set();
+  private readonly activeAccessoryUUIDs =
+    new Set<string>();
 
-  private readonly thermostatAccessories:
-    Map<string, ThermostatAccessory> =
-      new Map();
+  private readonly climateAccessories =
+    new Map<string, ClimateAccessory>();
 
   constructor(
     private readonly api: API,
     private readonly log: Logging,
-    private readonly accessoryFactory:
-      AccessoryFactory,
-    private readonly accessories:
-      Map<string, PlatformAccessory>,
+    private readonly accessoryFactory: AccessoryFactory,
+    private readonly accessories: Map<string, PlatformAccessory>,
   ) {}
 
-  public registerThermostatAccessory(
-    device: SensorDevice,
+  public registerClimateAccessory(
+    device: ClimateDevice,
   ): void {
-    const uuid =
-      this.api.hap.uuid.generate(
-        `sensor-v2:${device.id}`,
-      );
-
-    this.activeAccessoryUUIDs.add(
-      uuid,
+    const uuid = this.api.hap.uuid.generate(
+      `sensor-v2:${device.id}`,
     );
 
-    const existingAccessory =
-      this.accessories.get(
-        uuid,
-      );
+    this.activeAccessoryUUIDs.add(uuid);
 
-    let accessory:
-      PlatformAccessory;
+    let accessory = this.accessories.get(uuid);
 
-    if (existingAccessory) {
+    if (accessory) {
       this.log.info(
         `Restauration de la tuile : ${device.name}`,
       );
 
-      accessory =
-        existingAccessory;
-
-      accessory.context.device =
-        device;
+      accessory.context.device = device;
 
       this.api.updatePlatformAccessories([
         accessory,
@@ -69,14 +52,12 @@ export class AccessoryManager {
         `Création de la tuile : ${device.name}`,
       );
 
-      accessory =
-        new this.api.platformAccessory(
-          device.name,
-          uuid,
-        );
+      accessory = new this.api.platformAccessory(
+        device.name,
+        uuid,
+      );
 
-      accessory.context.device =
-        device;
+      accessory.context.device = device;
 
       this.api.registerPlatformAccessories(
         PLUGIN_NAME,
@@ -90,29 +71,25 @@ export class AccessoryManager {
       );
     }
 
-    const thermostatAccessory =
-      this.accessoryFactory
-        .createThermostat(
-          device,
-          accessory,
-        );
+    const climateAccessory =
+      this.accessoryFactory.createClimateAccessory(
+        device,
+        accessory,
+      );
 
-    this.registerEntity(
+    const entityIds = [
       device.temperatureEntity,
-      thermostatAccessory,
+      device.humidityEntity,
+      device.batteryEntity,
+    ].filter(
+      (entityId): entityId is string =>
+        Boolean(entityId),
     );
 
-    if (device.humidityEntity) {
+    for (const entityId of entityIds) {
       this.registerEntity(
-        device.humidityEntity,
-        thermostatAccessory,
-      );
-    }
-
-    if (device.batteryEntity) {
-      this.registerEntity(
-        device.batteryEntity,
-        thermostatAccessory,
+        entityId,
+        climateAccessory,
       );
     }
   }
@@ -121,16 +98,14 @@ export class AccessoryManager {
     entityId: string,
     value: number,
   ): boolean {
-    const thermostatAccessory =
-      this.thermostatAccessories.get(
-        entityId,
-      );
+    const accessory =
+      this.climateAccessories.get(entityId);
 
-    if (!thermostatAccessory) {
+    if (!accessory) {
       return false;
     }
 
-    thermostatAccessory.updateEntity(
+    accessory.updateEntity(
       entityId,
       value,
     );
@@ -138,29 +113,9 @@ export class AccessoryManager {
     return true;
   }
 
-  public removeObsoleteAccessories():
-  void {
-    for (
-      const [
-        uuid,
-        accessory,
-      ] of this.accessories
-    ) {
-      if (
-        this.activeAccessoryUUIDs.has(
-          uuid,
-        )
-      ) {
-        continue;
-      }
-
-      const device =
-        accessory.context
-          .device as
-          Partial<SensorDevice> |
-          undefined;
-
-      if (!device?.temperatureEntity) {
+  public removeObsoleteAccessories(): void {
+    for (const [uuid, accessory] of this.accessories) {
+      if (this.activeAccessoryUUIDs.has(uuid)) {
         continue;
       }
 
@@ -174,21 +129,20 @@ export class AccessoryManager {
         [accessory],
       );
 
-      this.accessories.delete(
-        uuid,
-      );
+      this.accessories.delete(uuid);
     }
   }
 
   public clearDiscoveryState(): void {
     this.activeAccessoryUUIDs.clear();
+    this.climateAccessories.clear();
   }
 
   private registerEntity(
     entityId: string,
-    accessory: ThermostatAccessory,
+    accessory: ClimateAccessory,
   ): void {
-    this.thermostatAccessories.set(
+    this.climateAccessories.set(
       entityId,
       accessory,
     );

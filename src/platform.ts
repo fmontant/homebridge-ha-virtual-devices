@@ -19,8 +19,8 @@ import { EventManager } from './managers/eventManager.js';
 import { RegistryManager } from './managers/registryManager.js';
 import {
   type HomeAssistantState,
-  SensorDeviceManager,
-} from './managers/sensorDeviceManager.js';
+  ClimateDeviceManager,
+} from './managers/ClimateDeviceManager.js';
 
 export class HAVirtualDevicesPlatform
 implements DynamicPlatformPlugin {
@@ -55,8 +55,8 @@ implements DynamicPlatformPlugin {
   private readonly eventManager:
     EventManager;
 
-  private readonly sensorDeviceManager:
-    SensorDeviceManager;
+  private readonly climateDeviceManager:
+    ClimateDeviceManager;
 
   private readonly registryManager:
     RegistryManager;
@@ -124,15 +124,15 @@ implements DynamicPlatformPlugin {
         this.log,
       );
 
-    this.sensorDeviceManager =
-      new SensorDeviceManager(
+    this.climateDeviceManager =
+      new ClimateDeviceManager(
         this.log,
       );
 
     this.registryManager =
       new RegistryManager(
         this.discoveryManager,
-        this.sensorDeviceManager,
+        this.climateDeviceManager,
         this.accessoryManager,
         this.log,
       );
@@ -188,7 +188,7 @@ implements DynamicPlatformPlugin {
       await this.homeAssistantClient
         .getStates();
 
-    this.sensorDeviceManager
+    this.climateDeviceManager
       .loadInitialStates(
         states as HomeAssistantState[],
       );

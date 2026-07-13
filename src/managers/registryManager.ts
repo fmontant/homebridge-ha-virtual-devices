@@ -2,7 +2,7 @@ import type { Logging } from 'homebridge';
 
 import type { AccessoryManager } from './accessoryManager.js';
 import type { DiscoveryManager } from './discoveryManager.js';
-import type { SensorDeviceManager } from './sensorDeviceManager.js';
+import type { ClimateDeviceManager } from './ClimateDeviceManager.js';
 import type { DeviceRegistryEntry } from '../models/deviceRegistryEntry.js';
 import type { EntityRegistryEntry } from '../models/entityRegistryEntry.js';
 
@@ -13,8 +13,8 @@ export class RegistryManager {
   constructor(
     private readonly discoveryManager:
       DiscoveryManager,
-    private readonly sensorDeviceManager:
-      SensorDeviceManager,
+    private readonly climateDeviceManager:
+      ClimateDeviceManager,
     private readonly accessoryManager:
       AccessoryManager,
     private readonly log: Logging,
@@ -58,16 +58,16 @@ export class RegistryManager {
       const climateDevice of
       climateDevices
     ) {
-      const sensorDevice =
-        this.sensorDeviceManager
-          .prepareSensorDevice(
-            climateDevice,
-          );
+      const preparedClimateDevice =
+  this.climateDeviceManager
+    .prepareClimateDevice(
+      climateDevice,
+    );
 
       this.accessoryManager
-        .registerThermostatAccessory(
-          sensorDevice,
-        );
+  .registerClimateAccessory(
+    preparedClimateDevice,
+  );
     }
 
     this.accessoryManager

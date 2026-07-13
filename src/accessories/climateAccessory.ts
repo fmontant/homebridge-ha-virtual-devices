@@ -3,11 +3,11 @@ import type {
   Service,
 } from 'homebridge';
 
-import type { SensorDevice } from '../models/sensorDevice.js';
+import type { ClimateDevice } from '../models/climateDevice.js';
 import type { HAVirtualDevicesPlatform } from '../platform.js';
 
-export class ThermostatAccessory {
-  private readonly device: SensorDevice;
+export class ClimateAccessory {
+  private readonly device: ClimateDevice;
 
   private readonly thermostatService: Service;
 
@@ -18,7 +18,7 @@ export class ThermostatAccessory {
       PlatformAccessory,
   ) {
     this.device =
-      accessory.context.device as SensorDevice;
+      accessory.context.device as ClimateDevice;
 
     this.platform.log.info(
       `Configuration de la tuile HomeKit : ${this.device.name}`,
