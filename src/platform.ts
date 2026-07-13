@@ -5,6 +5,9 @@ import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 import { HomeAssistantClient } from './homeassistant/client.js';
 import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
 import { AccessoryFactory } from './factories/accessoryFactory.js';
+import type { EntityRegistryEntry } from './models/entityRegistryEntry.js';
+import { ClimateDeviceBuilder } from './builders/climateDeviceBuilder.js';
+import type { DeviceRegistryEntry } from './models/deviceRegistryEntry.js';
 
 // This is only required when using Custom Services and Characteristics not support by HomeKit
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
@@ -14,9 +17,17 @@ import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
  * This class is the main constructor for your plugin, this is where you should
  * parse the user config and discover/register accessories with Homebridge.
  */
+
+
+
 export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
+
+  private entityRegistry: EntityRegistryEntry[] = [];
+
+  private deviceRegistry: DeviceRegistryEntry[] = [];
+
   private readonly homeAssistantClient: HomeAssistantClient;
   private readonly homeAssistantWebSocketClient: HomeAssistantWebSocketClient;
   private readonly accessoryFactory: AccessoryFactory;
@@ -43,11 +54,13 @@ export class HAVirtualDevicesPlatform implements DynamicPlatformPlugin {
     this.Service = api.hap.Service;
     this.Characteristic = api.hap.Characteristic;
     this.homeAssistantClient = new HomeAssistantClient(
+    
   {
     haUrl: String(this.config.haUrl ?? ''),
     token: String(this.config.token ?? ''),
     debug: Boolean(this.config.debug),
   },
+  
   this.log,
 );
 this.homeAssistantWebSocketClient = new HomeAssistantWebSocketClient(
@@ -58,6 +71,22 @@ this.homeAssistantWebSocketClient = new HomeAssistantWebSocketClient(
   },
   this.log,
 );
+
+
+this.homeAssistantWebSocketClient.onEntityRegistry(entries => {
+  this.entityRegistry = entries;
+  if (this.deviceRegistry.length === 0) {
+    return;
+  }
+});
+
+this.homeAssistantWebSocketClient.onDeviceRegistry(devices => {
+  this.deviceRegistry = devices;
+
+  this.homeAssistantWebSocketClient.getEntityRegistry();
+});
+
+
 this.accessoryFactory = new AccessoryFactory(this);
     // This is only required when using Custom Services and Characteristics not support by HomeKit
     this.CustomServices = new EveHomeKitTypes(this.api).Services;
@@ -189,9 +218,77 @@ this.homeAssistantWebSocketClient.onEvent(event => {
   );
 });
 
+this.homeAssistantWebSocketClient.onEntityRegistry(entries => {
+  this.entityRegistry = entries;
+
+  if (this.deviceRegistry.length === 0) {
+    return;
+  }
+
+  this.log.info(
+    `Registre reçu : ${entries.length} entités`,
+  );
+
+  const climateDeviceIds = new Set(
+    entries
+      .filter(entry =>
+        entry.deviceId &&
+        (
+          entry.entityId.includes('temperature') ||
+          entry.entityId.includes('humidite') ||
+          entry.entityId.includes('humidity')
+        ),
+      )
+      .map(entry => entry.deviceId as string),
+  );
+
+  const climateEntries = entries.filter(entry =>
+    entry.deviceId &&
+    climateDeviceIds.has(entry.deviceId) &&
+    (
+      /_temperature(_\d+)?$/.test(entry.entityId) ||
+      /_(humidite|humidity)(_\d+)?$/.test(entry.entityId) ||
+      (
+        /_(batterie|battery)(_\d+)?$/.test(entry.entityId) &&
+        entry.translationKey !== 'battery_voltage' &&
+        entry.translationKey !== 'battery_replacement_description'
+      )
+    ),
+  );
+
+  this.log.info(
+    `${climateDeviceIds.size} appareils climatiques détectés`,
+  );
+
+  this.log.info(
+    `${climateEntries.length} entités climatiques associées`,
+  );
+
+  const climateDevices = new ClimateDeviceBuilder().build(
+    climateEntries,
+    this.deviceRegistry,
+  );
+
+  this.log.info(
+    `${climateDevices.length} ClimateDevice construits`,
+  );
+
+  for (const device of climateDevices) {
+    this.log.info(
+      `${device.name} (${device.id}) : ${device.entities.length} entités`,
+    );
+  }
+});
+
+this.homeAssistantWebSocketClient.onDeviceRegistry(devices => {
+  this.deviceRegistry = devices;
+  this.homeAssistantWebSocketClient.getEntityRegistry();
+});
+
 this.homeAssistantWebSocketClient.connect();
 });
 }
+
   /**
    * This function is invoked when homebridge restores cached accessories from disk at startup.
    * It should be used to set up event handlers for characteristics and update respective values.
