@@ -61,9 +61,6 @@ implements DynamicPlatformPlugin {
   private readonly registryManager:
     RegistryManager;
 
-  private registryRefreshTimer?:
-    ReturnType<typeof setInterval>;
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public readonly CustomServices: any;
 
@@ -159,13 +156,6 @@ implements DynamicPlatformPlugin {
         await this.didFinishLaunching();
       },
     );
-
-    this.api.on(
-      'shutdown',
-      () => {
-        this.stopRegistryRefresh();
-      },
-    );
   }
 
   private async didFinishLaunching():
@@ -209,8 +199,6 @@ implements DynamicPlatformPlugin {
 
     this.homeAssistantWebSocketClient
       .connect();
-
-    this.startRegistryRefresh();
   }
 
   private configureWebSocketListeners():
@@ -239,36 +227,6 @@ implements DynamicPlatformPlugin {
             entries,
           );
       });
-  }
-
-  private startRegistryRefresh(): void {
-    this.stopRegistryRefresh();
-
-    this.registryRefreshTimer =
-      setInterval(
-        () => {
-          this.log.info(
-            'Actualisation automatique des registres Home Assistant',
-          );
-
-          this.homeAssistantWebSocketClient
-            .getDeviceRegistry();
-        },
-        5 * 60 * 1000,
-      );
-  }
-
-  private stopRegistryRefresh(): void {
-    if (!this.registryRefreshTimer) {
-      return;
-    }
-
-    clearInterval(
-      this.registryRefreshTimer,
-    );
-
-    this.registryRefreshTimer =
-      undefined;
   }
 
   configureAccessory(
