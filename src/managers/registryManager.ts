@@ -10,6 +10,9 @@ export class RegistryManager {
   private deviceRegistry:
     DeviceRegistryEntry[] = [];
 
+  private readonly ignoredDevices:
+    Set<string>;
+
   constructor(
     private readonly discoveryManager:
       DiscoveryManager,
@@ -18,7 +21,21 @@ export class RegistryManager {
     private readonly accessoryManager:
       AccessoryManager,
     private readonly log: Logging,
-  ) {}
+    ignoredDevices: string[],
+  ) {
+    this.ignoredDevices =
+      new Set(
+        ignoredDevices
+          .map(value =>
+            value
+              .trim()
+              .toLowerCase(),
+          )
+          .filter(value =>
+            value.length > 0,
+          ),
+      );
+  }
 
   public handleDeviceRegistry(
     devices: DeviceRegistryEntry[],
@@ -54,27 +71,79 @@ export class RegistryManager {
           this.deviceRegistry,
         );
 
+    let ignoredDeviceCount = 0;
+    let registeredDeviceCount = 0;
+
     for (
       const climateDevice of
       climateDevices
     ) {
       const preparedClimateDevice =
-  this.climateDeviceManager
-    .prepareClimateDevice(
-      climateDevice,
-    );
+        this.climateDeviceManager
+          .prepareClimateDevice(
+            climateDevice,
+          );
+
+      if (
+        this.isIgnoredDevice(
+          preparedClimateDevice.id,
+          preparedClimateDevice.name,
+        )
+      ) {
+        ignoredDeviceCount += 1;
+
+        this.log.info(
+          `Appareil ignoré : ${preparedClimateDevice.name}`,
+        );
+
+        continue;
+      }
 
       this.accessoryManager
-  .registerClimateAccessory(
-    preparedClimateDevice,
-  );
+        .registerClimateAccessory(
+          preparedClimateDevice,
+        );
+
+      registeredDeviceCount += 1;
     }
 
     this.accessoryManager
       .removeObsoleteAccessories();
 
     this.log.info(
-      `${climateDevices.length} accessoires climatiques traités`,
+      `${registeredDeviceCount} accessoires climatiques traités`,
+    );
+
+    if (
+      ignoredDeviceCount > 0
+    ) {
+      this.log.info(
+        `${ignoredDeviceCount} appareils ignorés par la configuration`,
+      );
+    }
+  }
+
+  private isIgnoredDevice(
+    deviceId: string,
+    deviceName: string,
+  ): boolean {
+    const normalizedId =
+      deviceId
+        .trim()
+        .toLowerCase();
+
+    const normalizedName =
+      deviceName
+        .trim()
+        .toLowerCase();
+
+    return (
+      this.ignoredDevices.has(
+        normalizedId,
+      ) ||
+      this.ignoredDevices.has(
+        normalizedName,
+      )
     );
   }
 }

@@ -20,7 +20,7 @@
       "haUrl": {
         "title": "Adresse de Home Assistant",
         "type": "string",
-       "default": "http://192.168.1.100:8123",
+        "default": "http://192.168.1.100:8123",
         "description": "Adresse complète de Home Assistant, sans barre oblique finale."
       },
       "token": {
@@ -29,15 +29,34 @@
         "format": "password",
         "description": "Jeton créé dans le profil Home Assistant."
       },
-      "debug": {
-        "title": "Activer les journaux détaillés",
-        "type": "boolean",
-        "default": false
-      },
       "autoDiscovery": {
         "title": "Découverte automatique des capteurs",
         "type": "boolean",
         "default": true
+      },
+      "includeHumidity": {
+        "title": "Afficher l'humidité",
+        "type": "boolean",
+        "default": true
+      },
+      "includeBattery": {
+        "title": "Afficher la batterie",
+        "type": "boolean",
+        "default": true
+      },
+      "ignoredDevices": {
+        "title": "Appareils à ignorer",
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": [],
+        "description": "Nom ou identifiant Home Assistant des appareils à ne pas créer dans HomeKit."
+      },
+      "debug": {
+        "title": "Activer les journaux détaillés",
+        "type": "boolean",
+        "default": false
       }
     }
   }

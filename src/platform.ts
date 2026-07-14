@@ -23,7 +23,7 @@ import {
 } from './managers/ClimateDeviceManager.js';
 
 export class HAVirtualDevicesPlatform
-implements DynamicPlatformPlugin {
+  implements DynamicPlatformPlugin {
   public readonly Service:
     typeof Service;
 
@@ -32,7 +32,7 @@ implements DynamicPlatformPlugin {
 
   public readonly accessories:
     Map<string, PlatformAccessory> =
-      new Map();
+    new Map();
 
   public readonly discoveredCacheUUIDs:
     string[] = [];
@@ -90,6 +90,9 @@ implements DynamicPlatformPlugin {
       ),
     };
 
+    const ignoredDevices =
+      this.readIgnoredDevices();
+
     this.homeAssistantClient =
       new HomeAssistantClient(
         homeAssistantConfig,
@@ -135,6 +138,7 @@ implements DynamicPlatformPlugin {
         this.climateDeviceManager,
         this.accessoryManager,
         this.log,
+        ignoredDevices,
       );
 
     const eveHomeKitTypes =
@@ -159,7 +163,7 @@ implements DynamicPlatformPlugin {
   }
 
   private async didFinishLaunching():
-  Promise<void> {
+    Promise<void> {
     this.log.info(
       'HA Virtual Devices démarré',
     );
@@ -202,7 +206,7 @@ implements DynamicPlatformPlugin {
   }
 
   private configureWebSocketListeners():
-  void {
+    void {
     this.homeAssistantWebSocketClient
       .onEvent(event => {
         this.eventManager
@@ -227,6 +231,30 @@ implements DynamicPlatformPlugin {
             entries,
           );
       });
+  }
+
+  private readIgnoredDevices():
+    string[] {
+    const configuredValue =
+      this.config.ignoredDevices;
+
+    if (!Array.isArray(configuredValue)) {
+      return [];
+    }
+
+    return configuredValue
+      .filter(
+        (
+          value,
+        ): value is string =>
+          typeof value === 'string',
+      )
+      .map(value =>
+        value.trim(),
+      )
+      .filter(value =>
+        value.length > 0,
+      );
   }
 
   configureAccessory(
