@@ -1,6 +1,5 @@
 import type { Logging } from 'homebridge';
 
-
 import type { ClimateDevice } from '../models/climateDevice.js';
 
 export interface HomeAssistantState {
@@ -72,6 +71,21 @@ export class ClimateDeviceManager {
             device.batteryEntity,
           )
           : undefined,
+
+      manufacturer:
+        device.manufacturer,
+
+      model:
+        device.model,
+
+      softwareVersion:
+        device.softwareVersion,
+
+      hardwareVersion:
+        device.hardwareVersion,
+
+      serialNumber:
+        device.serialNumber,
     };
   }
 

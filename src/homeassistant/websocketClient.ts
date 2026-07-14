@@ -42,6 +42,11 @@ interface DeviceRegistryResponse {
   id: string;
   name: string;
   name_by_user?: string;
+  manufacturer?: string;
+  model?: string;
+  sw_version?: string;
+  hw_version?: string;
+  serial_number?: string;
 }
 
 type PendingRequest =
@@ -128,10 +133,11 @@ export class HomeAssistantWebSocketClient {
   }
 
   public connect(): void {
-    const websocketUrl = this.config.haUrl
-      .replace(/^http:/, 'ws:')
-      .replace(/^https:/, 'wss:')
-      .replace(/\/+$/, '');
+    const websocketUrl =
+      this.config.haUrl
+        .replace(/^http:/, 'ws:')
+        .replace(/^https:/, 'wss:')
+        .replace(/\/+$/, '');
 
     const endpoint =
       `${websocketUrl}/api/websocket`;
@@ -140,7 +146,8 @@ export class HomeAssistantWebSocketClient {
       `Ouverture de la connexion WebSocket vers ${endpoint}`,
     );
 
-    this.socket = new WebSocket(endpoint);
+    this.socket =
+      new WebSocket(endpoint);
 
     this.socket.addEventListener(
       'open',
@@ -184,9 +191,10 @@ export class HomeAssistantWebSocketClient {
     event: MessageEvent,
   ): void {
     try {
-      const message = JSON.parse(
-        String(event.data),
-      ) as WebSocketMessage;
+      const message =
+        JSON.parse(
+          String(event.data),
+        ) as WebSocketMessage;
 
       if (
         message.type ===
@@ -491,8 +499,10 @@ export class HomeAssistantWebSocketClient {
       > = {
         subscribe_state_events:
           'Abonnement aux changements d’état actif',
+
         subscribe_entity_registry_events:
           'Abonnement aux modifications du registre des entités actif',
+
         subscribe_device_registry_events:
           'Abonnement aux modifications du registre des appareils actif',
       };
@@ -545,13 +555,24 @@ export class HomeAssistantWebSocketClient {
         result,
       );
 
-    const devices =
+    const devices:
+      DeviceRegistryEntry[] =
       rawDevices.map(
         device => ({
           id: device.id,
           name: device.name,
           nameByUser:
             device.name_by_user,
+          manufacturer:
+            device.manufacturer,
+          model:
+            device.model,
+          softwareVersion:
+            device.sw_version,
+          hardwareVersion:
+            device.hw_version,
+          serialNumber:
+            device.serial_number,
         }),
       );
 
@@ -575,12 +596,16 @@ export class HomeAssistantWebSocketClient {
       > = {
         subscribe_state_events:
           'abonnement aux changements d’état',
+
         subscribe_entity_registry_events:
           'abonnement au registre des entités',
+
         subscribe_device_registry_events:
           'abonnement au registre des appareils',
+
         device_registry:
           'registre des appareils',
+
         entity_registry:
           'registre des entités',
       };

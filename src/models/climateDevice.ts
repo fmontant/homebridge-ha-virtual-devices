@@ -1,10 +1,18 @@
-export interface ClimateDevice {
-  id: string;
-  name: string;
+import type { Device } from './device.js';
+
+export interface ClimateDevice
+extends Device {
   temperatureEntity: string;
   humidityEntity?: string;
   batteryEntity?: string;
+
   temperature?: number;
   humidity?: number;
   batteryLevel?: number;
+
+  manufacturer?: string;
+  model?: string;
+  softwareVersion?: string;
+  hardwareVersion?: string;
+  serialNumber?: string;
 }

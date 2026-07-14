@@ -184,6 +184,26 @@ export class ClimateAccessory {
 
   private configureAccessoryInformation():
   void {
+    const manufacturer =
+      this.device.manufacturer ??
+      'HA Virtual Devices';
+
+    const model =
+      this.device.model ??
+      'Home Assistant Climate Sensor';
+
+    const serialNumber =
+      this.device.serialNumber ??
+      this.device.id;
+
+    const softwareVersion =
+      this.device.softwareVersion ??
+      'Non renseignée';
+
+    const hardwareVersion =
+      this.device.hardwareVersion ??
+      'Non renseignée';
+
     this.accessory
       .getService(
         this.platform.Service
@@ -192,18 +212,35 @@ export class ClimateAccessory {
       .setCharacteristic(
         this.platform.Characteristic
           .Manufacturer,
-        'HA Virtual Devices',
+        manufacturer,
       )
       .setCharacteristic(
         this.platform.Characteristic
           .Model,
-        'Home Assistant Temperature and Humidity Sensor',
+        model,
       )
       .setCharacteristic(
         this.platform.Characteristic
           .SerialNumber,
-        this.device.id,
+        serialNumber,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .FirmwareRevision,
+        softwareVersion,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .HardwareRevision,
+        hardwareVersion,
       );
+
+    this.platform.log.info(
+      `${this.device.name} : ` +
+      `${manufacturer}, ${model}, ` +
+      `logiciel ${softwareVersion}, ` +
+      `matériel ${hardwareVersion}`,
+    );
   }
 
   private configureThermostatService():
