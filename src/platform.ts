@@ -23,7 +23,7 @@ import {
 } from './managers/ClimateDeviceManager.js';
 
 export class HAVirtualDevicesPlatform
-  implements DynamicPlatformPlugin {
+implements DynamicPlatformPlugin {
   public readonly Service:
     typeof Service;
 
@@ -32,7 +32,7 @@ export class HAVirtualDevicesPlatform
 
   public readonly accessories:
     Map<string, PlatformAccessory> =
-    new Map();
+      new Map();
 
   public readonly discoveredCacheUUIDs:
     string[] = [];

@@ -14,7 +14,7 @@ export class ClimateDeviceManager {
 
   constructor(
     private readonly log: Logging,
-  ) {}
+  ) { }
 
   public loadInitialStates(
     states: HomeAssistantState[],
@@ -94,6 +94,7 @@ export class ClimateDeviceManager {
   ): string {
     const normalizedName =
       name
+        .replace(/_/g, ' ')
         .replace(
           /^(température|temperature)\s+/i,
           '',
@@ -104,16 +105,12 @@ export class ClimateDeviceManager {
         )
         .trim();
 
-    if (
-      normalizedName.length === 0
-    ) {
+    if (normalizedName.length === 0) {
       return name;
     }
 
     return (
-      normalizedName
-        .charAt(0)
-        .toUpperCase() +
+      normalizedName.charAt(0).toUpperCase() +
       normalizedName.slice(1)
     );
   }

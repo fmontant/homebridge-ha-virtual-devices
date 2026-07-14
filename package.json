@@ -3,7 +3,7 @@
   "displayName": "HA Virtual Devices",
   "type": "module",
   "version": "1.0.0",
- "description": "Expose Home Assistant sensors as virtual HomeKit devices through Homebridge.",
+  "description": "Expose Home Assistant sensors as virtual HomeKit devices through Homebridge.",
   "author": "fmontant",
   "license": "MIT",
   "homepage": "https://github.com/USERNAME/GITHUB_PROJECT_NAME#readme",
@@ -18,6 +18,13 @@
     "homebridge-plugin"
   ],
   "main": "dist/index.js",
+  "files": [
+    "dist",
+    "config.schema.json",
+    "README.md",
+    "README.fr.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": "^22.10.0 || ^24.0.0",
     "homebridge": "^1.8.0 || ^2.0.0"
