@@ -1,17 +1,62 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "HAVirtualDevices",
   "pluginType": "platform",
   "singular": true,
-  "strictValidation": false,
+  "strictValidation": true,
   "schema": {
     "type": "object",
-    "required": ["name"],
+    "required": [
+      "name",
+      "haUrl",
+      "token"
+    ],
     "additionalProperties": false,
     "properties": {
       "name": {
-        "title": "Name",
+        "title": "Nom",
         "type": "string",
-        "default": "Example Dynamic Platform"
+        "default": "HA Virtual Devices"
+      },
+      "haUrl": {
+        "title": "Adresse de Home Assistant",
+        "type": "string",
+        "default": "http://192.168.1.100:8123",
+        "description": "Adresse complète de Home Assistant, sans barre oblique finale."
+      },
+      "token": {
+        "title": "Jeton d'accès longue durée",
+        "type": "string",
+        "format": "password",
+        "description": "Jeton créé dans le profil Home Assistant."
+      },
+      "autoDiscovery": {
+        "title": "Découverte automatique des capteurs",
+        "type": "boolean",
+        "default": true
+      },
+      "includeHumidity": {
+        "title": "Afficher l'humidité",
+        "type": "boolean",
+        "default": true
+      },
+      "includeBattery": {
+        "title": "Afficher la batterie",
+        "type": "boolean",
+        "default": true
+      },
+      "ignoredDevices": {
+        "title": "Appareils à ignorer",
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": [],
+        "description": "Nom ou identifiant Home Assistant des appareils à ne pas créer dans HomeKit."
+      },
+      "debug": {
+        "title": "Activer les journaux détaillés",
+        "type": "boolean",
+        "default": false
       }
     }
   }
