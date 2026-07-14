@@ -20,7 +20,7 @@
       "haUrl": {
         "title": "Adresse de Home Assistant",
         "type": "string",
-       "default": "http://192.168.1.100:8123"
+       "default": "http://192.168.1.100:8123",
         "description": "Adresse complète de Home Assistant, sans barre oblique finale."
       },
       "token": {

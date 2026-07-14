@@ -2,25 +2,52 @@
 
 set -e
 
-TARGET="/Volumes/public/homebridge/homebridge-ha-virtual-devices"
-ARCHIVE_NAME="homebridge-ha-virtual-devices-1.0.0.tgz"
-ARCHIVE_TARGET="/Volumes/public/homebridge/$ARCHIVE_NAME"
+SERVER="TNASFAB"
+SHARE="public"
+
+SHARE_ROOT="/Volumes/$SHARE"
+HOMEBRIDGE_ROOT="$SHARE_ROOT/homebridge"
+TARGET="$HOMEBRIDGE_ROOT/homebridge-ha-virtual-devices"
+
+if [ ! -d "$SHARE_ROOT" ] || ! ls "$SHARE_ROOT" >/dev/null 2>&1; then
+  echo "Connexion au TerraMaster..."
+
+  osascript -e "mount volume \"smb://$SERVER/$SHARE\"" >/dev/null 2>&1 || true
+
+  sleep 3
+fi
+
+if [ ! -d "$HOMEBRIDGE_ROOT" ] || ! ls "$HOMEBRIDGE_ROOT" >/dev/null 2>&1; then
+  echo "Erreur : impossible d'accéder au partage TerraMaster."
+  exit 1
+fi
+
+if [ ! -d "$TARGET" ]; then
+  echo "Erreur : dossier cible introuvable :"
+  echo "$TARGET"
+  exit 1
+fi
 
 echo "Compilation..."
 npm run build
 
-echo "Création du paquet..."
-npm pack --silent
-
-echo "Copie vers le TerraMaster..."
-cp "$ARCHIVE_NAME" "$ARCHIVE_TARGET"
-
 echo "Mise à jour du plugin..."
-rm -rf "$TARGET/dist"
 
-tar -xzf "$ARCHIVE_TARGET" \
-  -C "$TARGET" \
-  --strip-components=1
+echo "Synchronisation du dist..."
+mkdir -p "$TARGET/dist"
+time rsync -rt --inplace --delete dist/ "$TARGET/dist/"
+
+echo "Copie du package.json..."
+time cp package.json "$TARGET/package.json"
+
+echo "Copie du config.schema.json..."
+time cp config.schema.json "$TARGET/config.schema.json"
+
+echo "Copie du README.md..."
+time cp README.md "$TARGET/README.md"
+
+echo "Copie du LICENSE..."
+time cp LICENSE "$TARGET/LICENSE"
 
 echo "Déploiement terminé."
 echo "Il reste à redémarrer le conteneur Homebridge."
