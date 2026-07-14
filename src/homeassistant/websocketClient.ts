@@ -16,23 +16,6 @@ interface WebSocketMessage {
   message?: string;
   result?: unknown;
   error?: HomeAssistantError;
-}
-
-interface EntityRegistryResponse {
-  ei: string;
-  di?: string;
-  en?: string;
-  tk?: string;
-}
-
-interface DeviceRegistryResponse {
-  id: string;
-  name: string;
-  name_by_user?: string;
-}
-
-interface HomeAssistantEventMessage {
-  type: 'event';
   event?: {
     event_type?: string;
     data?: {
@@ -48,8 +31,23 @@ interface HomeAssistantEventMessage {
   };
 }
 
+interface EntityRegistryResponse {
+  ei: string;
+  di?: string;
+  en?: string;
+  tk?: string;
+}
+
+interface DeviceRegistryResponse {
+  id: string;
+  name: string;
+  name_by_user?: string;
+}
+
 type PendingRequest =
-  | 'subscribe_events'
+  | 'subscribe_state_events'
+  | 'subscribe_entity_registry_events'
+  | 'subscribe_device_registry_events'
   | 'device_registry'
   | 'entity_registry';
 
@@ -60,6 +58,9 @@ export class HomeAssistantWebSocketClient {
 
   private readonly pendingRequests =
     new Map<number, PendingRequest>();
+
+  private registryRefreshTimer?:
+    ReturnType<typeof setTimeout>;
 
   private eventCallback?: (
     event: unknown,
@@ -174,6 +175,7 @@ export class HomeAssistantWebSocketClient {
         );
 
         this.pendingRequests.clear();
+        this.clearRegistryRefreshTimer();
       },
     );
   }
@@ -194,7 +196,10 @@ export class HomeAssistantWebSocketClient {
         return;
       }
 
-      if (message.type === 'auth_ok') {
+      if (
+        message.type ===
+        'auth_ok'
+      ) {
         this.handleAuthenticationSuccess();
         return;
       }
@@ -212,10 +217,11 @@ export class HomeAssistantWebSocketClient {
       }
 
       if (
-        message.type === 'event'
+        message.type ===
+        'event'
       ) {
-        this.eventCallback?.(
-          message as HomeAssistantEventMessage,
+        this.handleEventMessage(
+          message,
         );
 
         return;
@@ -228,7 +234,9 @@ export class HomeAssistantWebSocketClient {
         return;
       }
 
-      this.handleResultMessage(message);
+      this.handleResultMessage(
+        message,
+      );
     } catch (error) {
       this.log.error(
         'Message WebSocket illisible : ' +
@@ -241,10 +249,41 @@ export class HomeAssistantWebSocketClient {
     }
   }
 
+  private handleEventMessage(
+    message: WebSocketMessage,
+  ): void {
+    const eventType =
+      message.event?.event_type;
+
+    if (
+      eventType ===
+        'entity_registry_updated' ||
+      eventType ===
+        'device_registry_updated'
+    ) {
+      this.scheduleRegistryRefresh(
+        eventType,
+      );
+
+      return;
+    }
+
+    if (
+      eventType ===
+      'state_changed'
+    ) {
+      this.eventCallback?.(
+        message,
+      );
+    }
+  }
+
   private handleResultMessage(
     message: WebSocketMessage,
   ): void {
-    if (message.id === undefined) {
+    if (
+      message.id === undefined
+    ) {
       return;
     }
 
@@ -258,8 +297,9 @@ export class HomeAssistantWebSocketClient {
     }
 
     if (
-      requestType !==
-      'subscribe_events'
+      !this.isSubscriptionRequest(
+        requestType,
+      )
     ) {
       this.pendingRequests.delete(
         message.id,
@@ -297,14 +337,9 @@ export class HomeAssistantWebSocketClient {
       return;
     }
 
-    if (
-      requestType ===
-      'subscribe_events'
-    ) {
-      this.log.info(
-        'Abonnement aux événements Home Assistant actif',
-      );
-    }
+    this.logSubscriptionSuccess(
+      requestType,
+    );
   }
 
   private authenticate(): void {
@@ -315,7 +350,8 @@ export class HomeAssistantWebSocketClient {
     this.socket.send(
       JSON.stringify({
         type: 'auth',
-        access_token: this.config.token,
+        access_token:
+          this.config.token,
       }),
     );
   }
@@ -327,10 +363,28 @@ export class HomeAssistantWebSocketClient {
     );
 
     this.sendCommand(
-      'subscribe_events',
+      'subscribe_state_events',
       {
         type: 'subscribe_events',
         event_type: 'state_changed',
+      },
+    );
+
+    this.sendCommand(
+      'subscribe_entity_registry_events',
+      {
+        type: 'subscribe_events',
+        event_type:
+          'entity_registry_updated',
+      },
+    );
+
+    this.sendCommand(
+      'subscribe_device_registry_events',
+      {
+        type: 'subscribe_events',
+        event_type:
+          'device_registry_updated',
       },
     );
 
@@ -353,7 +407,8 @@ export class HomeAssistantWebSocketClient {
       return;
     }
 
-    const id = this.nextMessageId;
+    const id =
+      this.nextMessageId;
 
     this.nextMessageId += 1;
 
@@ -370,19 +425,108 @@ export class HomeAssistantWebSocketClient {
     );
   }
 
+  private scheduleRegistryRefresh(
+    eventType: string,
+  ): void {
+    this.clearRegistryRefreshTimer();
+
+    this.log.info(
+      `Modification détectée dans Home Assistant : ${eventType}`,
+    );
+
+    this.registryRefreshTimer =
+      setTimeout(
+        () => {
+          this.registryRefreshTimer =
+            undefined;
+
+          this.log.info(
+            'Actualisation immédiate des registres Home Assistant',
+          );
+
+          this.getDeviceRegistry();
+        },
+        500,
+      );
+  }
+
+  private clearRegistryRefreshTimer():
+  void {
+    if (
+      !this.registryRefreshTimer
+    ) {
+      return;
+    }
+
+    clearTimeout(
+      this.registryRefreshTimer,
+    );
+
+    this.registryRefreshTimer =
+      undefined;
+  }
+
+  private isSubscriptionRequest(
+    requestType: PendingRequest,
+  ): boolean {
+    return (
+      requestType ===
+        'subscribe_state_events' ||
+      requestType ===
+        'subscribe_entity_registry_events' ||
+      requestType ===
+        'subscribe_device_registry_events'
+    );
+  }
+
+  private logSubscriptionSuccess(
+    requestType: PendingRequest,
+  ): void {
+    const subscriptionNames:
+      Partial<
+        Record<
+          PendingRequest,
+          string
+        >
+      > = {
+        subscribe_state_events:
+          'Abonnement aux changements d’état actif',
+        subscribe_entity_registry_events:
+          'Abonnement aux modifications du registre des entités actif',
+        subscribe_device_registry_events:
+          'Abonnement aux modifications du registre des appareils actif',
+      };
+
+    const message =
+      subscriptionNames[
+        requestType
+      ];
+
+    if (message) {
+      this.log.info(
+        message,
+      );
+    }
+  }
+
   private handleEntityRegistryResponse(
     result: unknown,
   ): void {
     const rawEntries =
-      this.extractEntityEntries(result);
+      this.extractEntityEntries(
+        result,
+      );
 
     const entries =
-      rawEntries.map(entity => ({
-        entityId: entity.ei,
-        deviceId: entity.di,
-        name: entity.en,
-        translationKey: entity.tk,
-      }));
+      rawEntries.map(
+        entity => ({
+          entityId: entity.ei,
+          deviceId: entity.di,
+          name: entity.en,
+          translationKey:
+            entity.tk,
+        }),
+      );
 
     this.log.info(
       `${entries.length} entités reçues du registre Home Assistant`,
@@ -397,15 +541,19 @@ export class HomeAssistantWebSocketClient {
     result: unknown,
   ): void {
     const rawDevices =
-      this.extractDeviceEntries(result);
+      this.extractDeviceEntries(
+        result,
+      );
 
     const devices =
-      rawDevices.map(device => ({
-        id: device.id,
-        name: device.name,
-        nameByUser:
-          device.name_by_user,
-      }));
+      rawDevices.map(
+        device => ({
+          id: device.id,
+          name: device.name,
+          nameByUser:
+            device.name_by_user,
+        }),
+      );
 
     this.log.info(
       `${devices.length} appareils reçus du registre Home Assistant`,
@@ -421,9 +569,16 @@ export class HomeAssistantWebSocketClient {
     message: WebSocketMessage,
   ): void {
     const requestNames:
-      Record<PendingRequest, string> = {
-        subscribe_events:
-          'abonnement aux événements',
+      Record<
+        PendingRequest,
+        string
+      > = {
+        subscribe_state_events:
+          'abonnement aux changements d’état',
+        subscribe_entity_registry_events:
+          'abonnement au registre des entités',
+        subscribe_device_registry_events:
+          'abonnement au registre des appareils',
         device_registry:
           'registre des appareils',
         entity_registry:
@@ -448,15 +603,21 @@ export class HomeAssistantWebSocketClient {
   private extractEntityEntries(
     result: unknown,
   ): EntityRegistryResponse[] {
-    if (Array.isArray(result)) {
-      return result as EntityRegistryResponse[];
+    if (
+      Array.isArray(result)
+    ) {
+      return result as
+        EntityRegistryResponse[];
     }
 
     if (
       this.isObject(result) &&
-      Array.isArray(result.entities)
+      Array.isArray(
+        result.entities,
+      )
     ) {
-      return result.entities as EntityRegistryResponse[];
+      return result.entities as
+        EntityRegistryResponse[];
     }
 
     this.log.warn(
@@ -469,15 +630,21 @@ export class HomeAssistantWebSocketClient {
   private extractDeviceEntries(
     result: unknown,
   ): DeviceRegistryResponse[] {
-    if (Array.isArray(result)) {
-      return result as DeviceRegistryResponse[];
+    if (
+      Array.isArray(result)
+    ) {
+      return result as
+        DeviceRegistryResponse[];
     }
 
     if (
       this.isObject(result) &&
-      Array.isArray(result.devices)
+      Array.isArray(
+        result.devices,
+      )
     ) {
-      return result.devices as DeviceRegistryResponse[];
+      return result.devices as
+        DeviceRegistryResponse[];
     }
 
     this.log.warn(
@@ -489,9 +656,13 @@ export class HomeAssistantWebSocketClient {
 
   private isObject(
     value: unknown,
-  ): value is Record<string, unknown> {
+  ): value is Record<
+    string,
+    unknown
+  > {
     return (
-      typeof value === 'object' &&
+      typeof value ===
+        'object' &&
       value !== null
     );
   }
