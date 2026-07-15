@@ -1,21 +1,34 @@
 {
   "name": "homebridge-ha-virtual-devices",
-  "displayName": "HA Virtual Devices",
+  "displayName": "Homebridge HA Virtual Devices",
   "type": "module",
   "version": "1.0.0",
-  "description": "Expose Home Assistant sensors as virtual HomeKit devices through Homebridge.",
-  "author": "fmontant",
+  "description": "Automatically exposes Home Assistant environmental sensors as read-only HomeKit thermostat accessories through Homebridge.",
+  "author": {
+    "name": "Fabrice Montant"
+  },
   "license": "MIT",
-  "homepage": "https://github.com/USERNAME/GITHUB_PROJECT_NAME#readme",
+  "homepage": "https://github.com/fmontant/homebridge-ha-virtual-devices#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "git+https://github.com/fmontant/homebridge-ha-virtual-devices.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/fmontant/homebridge-ha-virtual-devices/issues"
   },
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "homebridge",
+    "homekit",
+    "home-assistant",
+    "homeassistant",
+    "apple-home",
+    "thermostat",
+    "temperature",
+    "humidity",
+    "environmental-sensor",
+    "websocket",
+    "smart-home"
   ],
   "main": "dist/index.js",
   "files": [
