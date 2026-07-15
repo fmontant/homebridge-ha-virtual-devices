@@ -1,119 +1,119 @@
 # Homebridge HA Virtual Devices
 
-Expose automatiquement les capteurs environnementaux compatibles de Home Assistant sous forme d'accessoires Thermostat natifs dans Apple Maison.
+[![Build](https://github.com/fmontant/homebridge-ha-virtual-devices/actions/workflows/build.yml/badge.svg)](https://github.com/fmontant/homebridge-ha-virtual-devices/actions/workflows/build.yml)
+[![npm version](https://img.shields.io/npm/v/homebridge-ha-virtual-devices.svg)](https://www.npmjs.com/package/homebridge-ha-virtual-devices)
+[![Homebridge](https://img.shields.io/badge/Homebridge-2.x-orange)](https://homebridge.io/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Compatible-41BDF5)](https://www.home-assistant.io/)
+[![Node.js](https://img.shields.io/badge/Node.js-22%2B-green)](https://nodejs.org/)
+[![Licence MIT](https://img.shields.io/badge/Licence-MIT-green.svg)](LICENSE)
 
-Homebridge HA Virtual Devices détecte automatiquement les capteurs environnementaux compatibles de Home Assistant et les expose sous forme d'accessoires Thermostat natifs dans Apple Maison.
+Expose automatiquement les capteurs environnementaux compatibles de Home Assistant sous forme de thermostats natifs Apple Maison grâce à Homebridge.
 
-Au lieu d'afficher plusieurs accessoires indépendants pour la température, l'humidité ou le niveau de batterie, Apple Maison présente un unique Thermostat regroupant les informations environnementales les plus utiles.
+Au lieu d'afficher séparément les capteurs de température, d'humidité et de batterie, le plugin regroupe intelligemment les mesures d'un même appareil dans une unique tuile Thermostat native.
 
-Aucun mappage manuel.
-
-Aucun accessoire dupliqué.
+Aucune configuration manuelle.
 
 Aucun polling.
 
-Une expérience Apple Maison entièrement native.
+Aucun accessoire dupliqué.
+
+Une expérience Apple Maison simple, propre et totalement native.
 
 > La réalité avant tout.
-> Toutes les captures d'écran présentées dans cette documentation proviennent d'une installation réelle du plugin. Les informations personnelles ont été anonymisées lorsque cela était nécessaire.
+> Toutes les captures d'écran présentées ci-dessous proviennent d'une installation réelle du plugin. Seules les informations personnelles ont été anonymisées.
 
-![Bannière](docs/images/banner.png)
+![Banner](docs/images/banner.png)
 
 ---
 
-## Pourquoi ce plugin ?
+# Pourquoi ce plugin ?
 
-Home Assistant est une excellente plateforme pour collecter les données provenant de nombreux capteurs environnementaux.
+Home Assistant excelle dans la collecte des données provenant de centaines d'appareils.
 
 Apple Maison offre l'une des meilleures expériences utilisateur pour piloter son habitation au quotidien.
 
-Homebridge HA Virtual Devices relie automatiquement ces deux écosystèmes en regroupant les mesures compatibles dans des accessoires HomeKit entièrement natifs.
+Ce plugin réunit les deux.
 
-Le résultat est une interface Apple Maison plus propre, plus lisible et parfaitement intégrée.
+Les capteurs environnementaux compatibles sont découverts automatiquement, regroupés intelligemment puis exposés sous forme de thermostats HomeKit natifs, sans aucune configuration complexe.
 
 ---
 
-## Fonctionnalités
+# Fonctionnalités
 
-### Découverte automatique
+## Découverte automatique
 
-- Détection automatique des appareils compatibles Home Assistant
-- Aucun mappage manuel
-- Création automatique des accessoires
+- Découverte automatique des appareils compatibles Home Assistant
+- Création automatique des accessoires HomeKit
 - Regroupement automatique des mesures d'un même appareil
+- Aucune configuration manuelle
 
-### Intégration HomeKit native
+## Intégration native Apple Maison
 
-- Accessoires Thermostat natifs Apple Maison
-- Température et humidité regroupées dans un seul accessoire
-- Mise à jour en temps réel
-- Expérience utilisateur entièrement native
+- Thermostats HomeKit natifs
+- Température et humidité réunies dans une seule tuile
+- Niveau de batterie optionnel
+- Mise à jour en temps réel via l'API WebSocket de Home Assistant
 
-### Informations sur les appareils
+## Informations de l'appareil
 
-- Détection automatique du fabricant
-- Détection automatique du modèle
-- Détection automatique de la version du firmware
-- Informations natives dans Apple Maison
+- Fabricant
+- Modèle
+- Version du firmware
+- Version matérielle
+- Numéro de série
 
-### Configuration
+## Configuration
 
 - Configuration minimale
-- Exclusion de certains appareils
+- Liste d'exclusion des appareils
 - Synchronisation automatique
 
 ---
 
-## Capteurs pris en charge
+# Capteurs pris en charge
 
-Actuellement pris en charge :
+Actuellement
 
 - Température
 - Humidité
 - Niveau de batterie
 
-Prise en charge prévue dans les prochaines versions :
+Prévu prochainement
 
 - Qualité de l'air
 - CO₂
-- COV (VOC)
+- COV
 - Pression atmosphérique
 - Luminosité
 - Autres capteurs environnementaux
 
 ---
 
-## Pourquoi utiliser un Thermostat ?
+# Pourquoi utiliser un thermostat ?
 
-Apple Maison ne propose pas d'accessoire natif permettant de regrouper simultanément la température, l'humidité et le niveau de batterie d'un appareil environnemental.
+Apple Maison ne propose actuellement aucun type d'accessoire natif dédié aux capteurs environnementaux.
 
-L'accessoire Thermostat constitue aujourd'hui la représentation native la plus intuitive et la plus élégante pour afficher ces informations tout en respectant l'expérience utilisateur Apple.
+Parmi tous les accessoires HomeKit disponibles, le thermostat offre aujourd'hui la présentation la plus intuitive pour afficher les informations environnementales tout en respectant parfaitement les conventions d'interface d'Apple.
 
-Le plugin ne crée aucun accessoire personnalisé.
+Le plugin ne crée jamais d'accessoires personnalisés.
 
-Il s'appuie exclusivement sur les services HomeKit natifs.
+Tous les accessoires exposés sont entièrement natifs HomeKit.
 
 ---
 
-## Captures d'écran
+# Captures d'écran
 
-Le plugin s'intègre naturellement dans Apple Maison tout en conservant l'apparence et le fonctionnement natifs de HomeKit.
+Le plugin s'intègre naturellement dans Apple Maison.
 
-La température et l'humidité sont regroupées dans un seul accessoire Thermostat, offrant une interface plus claire que plusieurs capteurs indépendants.
+Au lieu de créer plusieurs accessoires indépendants, les différentes mesures sont regroupées dans une seule tuile Thermostat.
 
-| Vue générale Apple Maison | Accessoire Thermostat | Informations de l'accessoire |
-|:-------------------------:|:---------------------:|:----------------------------:|
+| Vue d'ensemble | Thermostat | Informations |
+|:--------------:|:----------:|:------------:|
 | ![Vue générale](docs/screenshots/apple-home-overview.png) | ![Thermostat](docs/screenshots/apple-home-thermostat.png) | ![Informations](docs/screenshots/apple-home-accessory-info.png) |
 
-Toutes les captures d'écran proviennent d'une installation réelle du plugin.
-
-Seules les informations personnelles ont été anonymisées.
-
-L'interface Apple Maison n'a fait l'objet d'aucune modification.
-
 ---
 
-## Architecture
+# Architecture
 
 ```mermaid
 flowchart LR
@@ -126,78 +126,84 @@ HA --> HB
 HB --> HK
 ```
 
-Le plugin détecte automatiquement les capteurs environnementaux compatibles, regroupe les mesures associées puis les expose sous forme d'accessoires HomeKit natifs.
+Le plugin découvre automatiquement les capteurs environnementaux compatibles, regroupe les différentes mesures puis les expose sous forme d'accessoires natifs Apple Maison.
 
 ---
 
-## Installation
+# Installation
 
-Installe le plugin globalement :
+Installation globale :
 
 ```bash
 npm install -g homebridge-ha-virtual-devices
 ```
 
-Redémarre ensuite Homebridge.
+Redémarre Homebridge.
+
+Configure le plugin.
+
+Profite d'une intégration entièrement automatique.
 
 ---
 
-## Configuration
+# Configuration
 
-Exemple de configuration :
+Exemple :
 
 ```json
 {
   "platform": "HAVirtualDevices",
   "name": "HA Virtual Devices",
   "host": "http://homeassistant.local:8123",
-  "token": "VOTRE_LONG_LIVED_ACCESS_TOKEN"
+  "token": "YOUR_LONG_LIVED_ACCESS_TOKEN"
 }
 ```
 
-Deux paramètres sont nécessaires :
+Deux paramètres sont obligatoires :
 
-- L'URL de Home Assistant
-- Un Long-Lived Access Token Home Assistant
+- L'adresse de Home Assistant
+- Un Long-Lived Access Token
 
-Après le redémarrage de Homebridge, les appareils compatibles sont détectés automatiquement.
+Après le redémarrage de Homebridge, les accessoires sont créés automatiquement.
 
 ---
 
-## Compatibilité
+# Compatibilité
 
-- Homebridge 1.8 ou supérieur
+- Homebridge 2.x
+- Node.js 22 ou supérieur
 - Home Assistant 2024.6 ou supérieur
 - Apple Maison
 - iOS 16 ou supérieur
 - macOS 13 ou supérieur
-- Installations Home Assistant compatibles Matter
 
 ---
 
-## Feuille de route
+# Feuille de route
 
-Les prochaines versions incluront notamment :
+Les prochaines versions intégreront notamment :
 
-- De nouveaux capteurs environnementaux
-- Les accessoires de qualité de l'air
-- Des options avancées de découverte
-- Un filtrage plus évolué
-- Des métadonnées enrichies
-- Des outils de diagnostic améliorés
+- Capteurs CO₂
+- Capteurs de qualité de l'air
+- Capteurs COV
+- Capteurs de luminosité
+- Capteurs de pression atmosphérique
+- Découverte via Matter
+- Options de filtrage avancées
+- Diagnostics enrichis
 
 ---
 
-## Contribuer
+# Contribuer
 
 Les contributions sont les bienvenues.
 
-Les rapports de bugs, propositions d'amélioration et Pull Requests sont encouragés.
-
-Merci de consulter le guide `CONTRIBUTING.md` avant toute contribution.
+N'hésite pas à proposer des idées, signaler un problème ou ouvrir une Pull Request.
 
 ---
 
-## Licence
+# Licence
 
-Distribué sous licence Apache 2.0.
+Ce projet est distribué sous licence MIT.
+
+Consulte le fichier `LICENSE` pour plus d'informations.

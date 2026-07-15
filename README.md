@@ -1,78 +1,84 @@
 # Homebridge HA Virtual Devices
 
-Automatically expose compatible Home Assistant environmental sensors as native Apple Home Thermostat accessories.
+[![Build](https://github.com/fmontant/homebridge-ha-virtual-devices/actions/workflows/build.yml/badge.svg)](https://github.com/fmontant/homebridge-ha-virtual-devices/actions/workflows/build.yml)
+[![npm version](https://img.shields.io/npm/v/homebridge-ha-virtual-devices.svg)](https://www.npmjs.com/package/homebridge-ha-virtual-devices)
+[![Homebridge](https://img.shields.io/badge/Homebridge-2.x-orange)](https://homebridge.io/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Compatible-41BDF5)](https://www.home-assistant.io/)
+[![Node.js](https://img.shields.io/badge/Node.js-22%2B-green)](https://nodejs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Homebridge HA Virtual Devices automatically discovers compatible environmental sensors from Home Assistant and exposes them as native Apple Home Thermostat accessories.
+Expose compatible Home Assistant environmental sensors as native Apple Home thermostat accessories through Homebridge.
 
-Instead of displaying multiple independent Temperature, Humidity and Battery sensors, Apple Home presents a single elegant Thermostat tile containing the most useful environmental information.
+Instead of displaying separate Temperature, Humidity and Battery accessories, the plugin intelligently groups related measurements into a single native Apple Home thermostat tile.
 
 No manual mapping.
 
-No duplicated accessories.
-
 No polling.
 
-A clean and native Apple Home experience.
+No duplicated accessories.
+
+Just a clean, native Apple Home experience.
 
 > Reality first.
-> Every screenshot in this documentation comes from a real installation of the plugin. Personal information has been anonymized where necessary.
+> Every screenshot shown below comes from a real installation of the plugin. Only personal information has been anonymized.
 
 ![Banner](docs/images/banner.png)
 
 ---
 
-## Why this plugin?
+# Why this plugin?
 
-Home Assistant is excellent at collecting environmental information from a wide range of devices.
+Home Assistant excels at collecting data from hundreds of devices.
 
-Apple Home provides one of the best user experiences for interacting with your home every day.
+Apple Home excels at presenting that information in a clean and intuitive interface.
 
-Homebridge HA Virtual Devices bridges both ecosystems by automatically grouping compatible measurements into native HomeKit accessories.
+This plugin combines both worlds.
 
-The result is a cleaner Apple Home interface that feels completely native.
+Compatible environmental sensors are automatically discovered, grouped and exposed as native HomeKit thermostat accessories without requiring any manual configuration.
 
 ---
 
-## Features
+# Features
 
-### Automatic discovery
+## Automatic discovery
 
 - Automatic discovery of compatible Home Assistant devices
-- Zero manual mapping
-- Automatic accessory creation
-- Automatic device grouping
+- Automatic creation of HomeKit accessories
+- Automatic grouping of related entities
+- No manual configuration
 
-### Native HomeKit integration
+## Native Apple Home integration
 
-- Native Apple Home Thermostat accessories
-- Temperature and humidity combined into a single accessory
-- Real-time updates
-- Native HomeKit experience
+- Native HomeKit thermostat accessories
+- Temperature and humidity displayed together
+- Optional battery level
+- Real-time updates through the Home Assistant WebSocket API
 
-### Device information
+## Device information
 
-- Automatic manufacturer detection
-- Automatic model detection
-- Automatic firmware version
-- Native accessory information
+- Manufacturer
+- Model
+- Firmware version
+- Hardware version
+- Serial number
 
-### Configuration
+## Configuration
 
-- Minimal configuration
-- Device exclusion support
+- Simple configuration
+- Device exclusion list
 - Automatic synchronization
 
 ---
 
-## Supported sensors
+# Supported sensors
 
-Currently supported:
+Currently supported
 
 - Temperature
 - Humidity
 - Battery level
 
-Planned for future releases:
+Planned
 
 - Air quality
 - CO₂
@@ -83,37 +89,31 @@ Planned for future releases:
 
 ---
 
-## Why Thermostat?
+# Why thermostats?
 
-Apple Home does not provide a native accessory type dedicated to environmental sensors combining temperature, humidity and battery information.
+Apple Home currently does not provide a native accessory dedicated to environmental sensors.
 
-The native Thermostat accessory currently offers the most intuitive and elegant way to present environmental information while preserving the Apple Home user experience.
+Among all native HomeKit accessory types, the thermostat provides the most natural user experience for displaying environmental information while preserving Apple's interface conventions.
 
-The plugin does not emulate custom accessories.
+The plugin never creates custom accessories.
 
-It relies exclusively on native HomeKit services.
-
----
-
-## Screenshots
-
-The plugin integrates seamlessly into Apple Home while preserving the native Apple experience.
-
-Temperature and humidity are combined into a single Thermostat accessory, providing a cleaner and more intuitive interface than exposing multiple independent sensors.
-
-| Apple Home overview | Thermostat accessory | Accessory information |
-|:-------------------:|:--------------------:|:---------------------:|
-| ![Apple Home overview](docs/screenshots/apple-home-overview.png) | ![Thermostat](docs/screenshots/apple-home-thermostat.png) | ![Accessory information](docs/screenshots/apple-home-accessory-info.png) |
-
-All screenshots were captured from a real installation of the plugin.
-
-Only personal information has been anonymized.
-
-The Apple Home interface itself has not been modified.
+Everything exposed to Apple Home is 100% native HomeKit.
 
 ---
 
-## Architecture
+# Screenshots
+
+The plugin integrates naturally into Apple Home.
+
+Instead of creating several independent accessories, measurements are grouped into a single thermostat tile.
+
+| Apple Home overview | Thermostat | Accessory information |
+|:-------------------:|:----------:|:---------------------:|
+| ![Overview](docs/screenshots/apple-home-overview.png) | ![Thermostat](docs/screenshots/apple-home-thermostat.png) | ![Information](docs/screenshots/apple-home-accessory-info.png) |
+
+---
+
+# Architecture
 
 ```mermaid
 flowchart LR
@@ -130,21 +130,25 @@ The plugin automatically discovers compatible environmental sensors, groups rela
 
 ---
 
-## Installation
+# Installation
 
-Install the plugin globally:
+Install globally:
 
 ```bash
 npm install -g homebridge-ha-virtual-devices
 ```
 
-Restart Homebridge after installation.
+Restart Homebridge.
+
+Configure the plugin.
+
+Enjoy.
 
 ---
 
-## Configuration
+# Configuration
 
-Example configuration:
+Example configuration
 
 ```json
 {
@@ -155,49 +159,51 @@ Example configuration:
 }
 ```
 
-Only two parameters are required:
+Required parameters
 
 - Home Assistant URL
-- Home Assistant Long-Lived Access Token
+- Long-Lived Access Token
 
-After restarting Homebridge, compatible devices are discovered automatically.
+After restarting Homebridge, accessories are created automatically.
 
 ---
 
-## Compatibility
+# Compatibility
 
-- Homebridge 1.8 or newer
-- Home Assistant 2024.6 or newer
+- Homebridge 2.x
+- Node.js 22+
+- Home Assistant 2024.6+
 - Apple Home
-- iOS 16 or newer
-- macOS 13 or newer
-- Matter-compatible Home Assistant installations
+- iOS 16+
+- macOS 13+
 
 ---
 
-## Roadmap
+# Roadmap
 
-Future versions will include:
+Upcoming features include
 
-- Additional environmental sensors
-- Air quality accessories
-- Advanced discovery options
-- Enhanced filtering
-- Extended metadata
-- Improved diagnostics
+- CO₂ sensors
+- Air quality sensors
+- VOC sensors
+- Illuminance sensors
+- Pressure sensors
+- Matter discovery
+- Advanced filtering
+- Extended diagnostics
 
 ---
 
-## Contributing
+# Contributing
 
 Contributions are welcome.
 
-Bug reports, feature requests and Pull Requests are encouraged.
-
-Please read the `CONTRIBUTING.md` guide before submitting changes.
+Feel free to submit issues, ideas or pull requests.
 
 ---
 
-## License
+# License
 
-Licensed under the Apache License 2.0.
+This project is licensed under the MIT License.
+
+See the LICENSE file for details.
