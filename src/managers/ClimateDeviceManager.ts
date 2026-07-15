@@ -5,10 +5,17 @@ import type { ClimateDevice } from '../models/climateDevice.js';
 export interface HomeAssistantState {
   entity_id: string;
   state: string;
+  attributes?: {
+    friendly_name?: unknown;
+  };
 }
 
 export class ClimateDeviceManager {
   private readonly initialStates:
+    Map<string, string> =
+      new Map();
+
+  private readonly friendlyNames:
     Map<string, string> =
       new Map();
 
@@ -20,12 +27,26 @@ export class ClimateDeviceManager {
     states: HomeAssistantState[],
   ): void {
     this.initialStates.clear();
+    this.friendlyNames.clear();
 
     for (const state of states) {
       this.initialStates.set(
         state.entity_id,
         state.state,
       );
+
+      const friendlyName =
+        state.attributes?.friendly_name;
+
+      if (
+        typeof friendlyName === 'string' &&
+        friendlyName.trim().length > 0
+      ) {
+        this.friendlyNames.set(
+          state.entity_id,
+          friendlyName.trim(),
+        );
+      }
     }
 
     this.log.info(
@@ -36,12 +57,21 @@ export class ClimateDeviceManager {
   public prepareClimateDevice(
     device: ClimateDevice,
   ): ClimateDevice {
+    const temperatureFriendlyName =
+      this.friendlyNames.get(
+        device.temperatureEntity,
+      );
+
+    const resolvedName =
+      temperatureFriendlyName ??
+      device.name;
+
     return {
       id: device.id,
 
       name:
         this.normalizeDeviceName(
-          device.name,
+          resolvedName,
         ),
 
       temperatureEntity:
