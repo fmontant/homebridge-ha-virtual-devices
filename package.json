@@ -11,7 +11,7 @@
   "homepage": "https://github.com/fmontant/homebridge-ha-virtual-devices#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fmontant/homebridge-ha-virtual-devices.git"
+    "url": "https://github.com/fmontant/homebridge-ha-virtual-devices.git"
   },
   "bugs": {
     "url": "https://github.com/fmontant/homebridge-ha-virtual-devices/issues"
@@ -32,12 +32,13 @@
   ],
   "main": "dist/index.js",
   "files": [
-    "dist",
-    "config.schema.json",
-    "README.md",
-    "README.fr.md",
-    "LICENSE"
-  ],
+  "dist",
+  "docs/images/banner.png",
+  "config.schema.json",
+  "README.md",
+  "README.fr.md",
+  "LICENSE"
+],
   "engines": {
     "node": "^22.10.0 || ^24.0.0",
     "homebridge": "^1.8.0 || ^2.0.0"
