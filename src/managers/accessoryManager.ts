@@ -42,7 +42,21 @@ export class AccessoryManager {
         `Restauration de la tuile : ${device.name}`,
       );
 
-      accessory.context.device = device;
+      accessory.displayName =
+        device.name;
+
+      accessory.context.device =
+        device;
+
+      accessory
+        .getService(
+          this.api.hap.Service
+            .AccessoryInformation,
+        )
+        ?.setCharacteristic(
+          this.api.hap.Characteristic.Name,
+          device.name,
+        );
 
       this.api.updatePlatformAccessories([
         accessory,
@@ -52,12 +66,14 @@ export class AccessoryManager {
         `Création de la tuile : ${device.name}`,
       );
 
-      accessory = new this.api.platformAccessory(
-        device.name,
-        uuid,
-      );
+      accessory =
+        new this.api.platformAccessory(
+          device.name,
+          uuid,
+        );
 
-      accessory.context.device = device;
+      accessory.context.device =
+        device;
 
       this.api.registerPlatformAccessories(
         PLUGIN_NAME,
@@ -72,10 +88,11 @@ export class AccessoryManager {
     }
 
     const climateAccessory =
-      this.accessoryFactory.createClimateAccessory(
-        device,
-        accessory,
-      );
+      this.accessoryFactory
+        .createClimateAccessory(
+          device,
+          accessory,
+        );
 
     const entityIds = [
       device.temperatureEntity,
@@ -99,7 +116,9 @@ export class AccessoryManager {
     value: number,
   ): boolean {
     const accessory =
-      this.climateAccessories.get(entityId);
+      this.climateAccessories.get(
+        entityId,
+      );
 
     if (!accessory) {
       return false;
@@ -113,9 +132,17 @@ export class AccessoryManager {
     return true;
   }
 
-  public removeObsoleteAccessories(): void {
-    for (const [uuid, accessory] of this.accessories) {
-      if (this.activeAccessoryUUIDs.has(uuid)) {
+  public removeObsoleteAccessories():
+    void {
+    for (
+      const [uuid, accessory]
+      of this.accessories
+    ) {
+      if (
+        this.activeAccessoryUUIDs.has(
+          uuid,
+        )
+      ) {
         continue;
       }
 
@@ -123,11 +150,12 @@ export class AccessoryManager {
         `Suppression de l’accessoire obsolète : ${accessory.displayName}`,
       );
 
-      this.api.unregisterPlatformAccessories(
-        PLUGIN_NAME,
-        PLATFORM_NAME,
-        [accessory],
-      );
+      this.api
+        .unregisterPlatformAccessories(
+          PLUGIN_NAME,
+          PLATFORM_NAME,
+          [accessory],
+        );
 
       this.accessories.delete(uuid);
     }
