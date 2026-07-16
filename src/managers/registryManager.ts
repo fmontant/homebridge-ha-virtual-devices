@@ -1,10 +1,17 @@
 import type { Logging } from 'homebridge';
 
-import type { AccessoryManager } from './accessoryManager.js';
-import type { DiscoveryManager } from './discoveryManager.js';
-import type { ClimateDeviceManager } from './ClimateDeviceManager.js';
+import {
+  CatalogDeviceState,
+  DeviceCapability,
+  type CatalogDevice,
+} from '../catalog/catalogDevice.js';
+import type { DeviceCatalog } from '../catalog/deviceCatalog.js';
 import type { DeviceRegistryEntry } from '../models/deviceRegistryEntry.js';
 import type { EntityRegistryEntry } from '../models/entityRegistryEntry.js';
+import type { ClimateDevice } from '../models/climateDevice.js';
+import type { AccessoryManager } from './accessoryManager.js';
+import type { ClimateDeviceManager } from './ClimateDeviceManager.js';
+import type { DiscoveryManager } from './discoveryManager.js';
 
 export class RegistryManager {
   private deviceRegistry:
@@ -13,6 +20,11 @@ export class RegistryManager {
   private readonly ignoredDevices:
     Set<string>;
 
+  private catalogLoaded = false;
+
+  private initialSynchronizationCompleted =
+    false;
+
   constructor(
     private readonly discoveryManager:
       DiscoveryManager,
@@ -20,8 +32,12 @@ export class RegistryManager {
       ClimateDeviceManager,
     private readonly accessoryManager:
       AccessoryManager,
-    private readonly log: Logging,
-    ignoredDevices: string[],
+    private readonly deviceCatalog:
+      DeviceCatalog,
+    private readonly log:
+      Logging,
+    ignoredDevices:
+      string[],
   ) {
     this.ignoredDevices =
       new Set(
@@ -48,9 +64,9 @@ export class RegistryManager {
     );
   }
 
-  public handleEntityRegistry(
+  public async handleEntityRegistry(
     entries: EntityRegistryEntry[],
-  ): void {
+  ): Promise<void> {
     if (
       this.deviceRegistry.length === 0
     ) {
@@ -61,22 +77,87 @@ export class RegistryManager {
       return;
     }
 
-    this.accessoryManager
-      .clearDiscoveryState();
+    await this.loadCatalog();
 
-    const climateDevices =
+    const discoveredClimateDevices =
       this.discoveryManager
         .discoverClimateDevices(
           entries,
           this.deviceRegistry,
         );
 
+    const climateDevices =
+      this.prepareClimateDevices(
+        discoveredClimateDevices,
+      );
+
+    const catalogDevices =
+      climateDevices.map(
+        climateDevice =>
+          this.createCatalogDevice(
+            climateDevice,
+          ),
+      );
+
+    const synchronizationResult =
+      this.deviceCatalog.synchronize(
+        catalogDevices,
+      );
+
+    if (
+      !this.initialSynchronizationCompleted
+    ) {
+      this.restoreInitialAccessories(
+        climateDevices,
+      );
+
+      this.initialSynchronizationCompleted =
+        true;
+    } else {
+      this.applyIncrementalSynchronization(
+        climateDevices,
+        synchronizationResult.added,
+        synchronizationResult.updated,
+        synchronizationResult.missing,
+      );
+    }
+
+    await this.deviceCatalog.save();
+
+    this.logSynchronizationResult(
+      synchronizationResult.added.length,
+      synchronizationResult.updated.length,
+      synchronizationResult.missing.length,
+    );
+  }
+
+  private async loadCatalog():
+    Promise<void> {
+    if (this.catalogLoaded) {
+      return;
+    }
+
+    await this.deviceCatalog.load();
+
+    this.catalogLoaded =
+      true;
+
+    this.log.info(
+      `${this.deviceCatalog.getAll().length} appareils chargés depuis le catalogue`,
+    );
+  }
+
+  private prepareClimateDevices(
+    climateDevices: ClimateDevice[],
+  ): ClimateDevice[] {
+    const preparedDevices:
+      ClimateDevice[] = [];
+
     let ignoredDeviceCount = 0;
-    let registeredDeviceCount = 0;
 
     for (
-      const climateDevice of
-      climateDevices
+      const climateDevice
+      of climateDevices
     ) {
       const preparedClimateDevice =
         this.climateDeviceManager
@@ -99,20 +180,10 @@ export class RegistryManager {
         continue;
       }
 
-      this.accessoryManager
-        .registerClimateAccessory(
-          preparedClimateDevice,
-        );
-
-      registeredDeviceCount += 1;
+      preparedDevices.push(
+        preparedClimateDevice,
+      );
     }
-
-    this.accessoryManager
-      .removeObsoleteAccessories();
-
-    this.log.info(
-      `${registeredDeviceCount} accessoires climatiques traités`,
-    );
 
     if (
       ignoredDeviceCount > 0
@@ -121,6 +192,184 @@ export class RegistryManager {
         `${ignoredDeviceCount} appareils ignorés par la configuration`,
       );
     }
+
+    return preparedDevices;
+  }
+
+  private restoreInitialAccessories(
+    climateDevices: ClimateDevice[],
+  ): void {
+    this.accessoryManager
+      .clearDiscoveryState();
+
+    for (
+      const climateDevice
+      of climateDevices
+    ) {
+      this.accessoryManager
+        .registerClimateAccessory(
+          climateDevice,
+        );
+    }
+
+    this.accessoryManager
+      .removeObsoleteAccessories();
+
+    this.log.info(
+      `${climateDevices.length} accessoires climatiques restaurés`,
+    );
+  }
+
+  private applyIncrementalSynchronization(
+    climateDevices: ClimateDevice[],
+    addedDevices: CatalogDevice[],
+    updatedDevices: CatalogDevice[],
+    missingDevices: CatalogDevice[],
+  ): void {
+    const climateDevicesById =
+      new Map<string, ClimateDevice>();
+
+    for (
+      const climateDevice
+      of climateDevices
+    ) {
+      climateDevicesById.set(
+        climateDevice.id,
+        climateDevice,
+      );
+    }
+
+    const devicesToRegister = [
+      ...addedDevices,
+      ...updatedDevices,
+    ];
+
+    for (
+      const catalogDevice
+      of devicesToRegister
+    ) {
+      const climateDevice =
+        climateDevicesById.get(
+          catalogDevice.id,
+        );
+
+      if (!climateDevice) {
+        continue;
+      }
+
+      this.accessoryManager
+        .registerClimateAccessory(
+          climateDevice,
+        );
+    }
+
+    for (
+      const missingDevice
+      of missingDevices
+    ) {
+      this.accessoryManager
+        .removeClimateAccessory(
+          missingDevice.id,
+        );
+    }
+  }
+
+  private createCatalogDevice(
+    climateDevice: ClimateDevice,
+  ): CatalogDevice {
+    const now =
+      new Date().toISOString();
+
+    const capabilities:
+      DeviceCapability[] = [
+        DeviceCapability.Temperature,
+      ];
+
+    if (
+      climateDevice.humidityEntity
+    ) {
+      capabilities.push(
+        DeviceCapability.Humidity,
+      );
+    }
+
+    if (
+      climateDevice.batteryEntity
+    ) {
+      capabilities.push(
+        DeviceCapability.Battery,
+      );
+    }
+
+    return {
+      id:
+        climateDevice.id,
+      source:
+        'home-assistant',
+      sourceId:
+        climateDevice.id,
+      name:
+        climateDevice.name,
+      state:
+        CatalogDeviceState.Enabled,
+      capabilities,
+      metadata: {
+        manufacturer:
+          climateDevice.manufacturer,
+        model:
+          climateDevice.model,
+        serialNumber:
+          climateDevice.serialNumber,
+        softwareVersion:
+          climateDevice.softwareVersion,
+        hardwareVersion:
+          climateDevice.hardwareVersion,
+      },
+      preferences: {
+        enabled:
+          true,
+        favorite:
+          false,
+        hidden:
+          false,
+      },
+      timestamps: {
+        discoveredAt:
+          now,
+        lastSeen:
+          now,
+        lastUpdated:
+          now,
+      },
+    };
+  }
+
+  private logSynchronizationResult(
+    addedDeviceCount: number,
+    updatedDeviceCount: number,
+    missingDeviceCount: number,
+  ): void {
+    const totalChanges =
+      addedDeviceCount +
+      updatedDeviceCount +
+      missingDeviceCount;
+
+    if (
+      totalChanges === 0
+    ) {
+      this.log.info(
+        'Catalogue synchronisé : aucune modification',
+      );
+
+      return;
+    }
+
+    this.log.info(
+      'Catalogue synchronisé : ' +
+      `${addedDeviceCount} ajout(s), ` +
+      `${updatedDeviceCount} modification(s), ` +
+      `${missingDeviceCount} disparition(s)`,
+    );
   }
 
   private isIgnoredDevice(

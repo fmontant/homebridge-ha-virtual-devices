@@ -1,3 +1,5 @@
+import { join } from 'node:path';
+
 import type {
   API,
   Characteristic,
@@ -8,20 +10,21 @@ import type {
   Service,
 } from 'homebridge';
 
-
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
 
+import { DeviceCatalog } from './catalog/deviceCatalog.js';
+import { DeviceCatalogStore } from './catalog/deviceCatalogStore.js';
 import { AccessoryFactory } from './factories/accessoryFactory.js';
 import { HomeAssistantClient } from './homeassistant/client.js';
 import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
 import { AccessoryManager } from './managers/accessoryManager.js';
-import { DiscoveryManager } from './managers/discoveryManager.js';
-import { EventManager } from './managers/eventManager.js';
-import { RegistryManager } from './managers/registryManager.js';
 import {
   type HomeAssistantState,
   ClimateDeviceManager,
 } from './managers/ClimateDeviceManager.js';
+import { DiscoveryManager } from './managers/discoveryManager.js';
+import { EventManager } from './managers/eventManager.js';
+import { RegistryManager } from './managers/registryManager.js';
 
 export class HAVirtualDevicesPlatform
 implements DynamicPlatformPlugin {
@@ -58,6 +61,12 @@ implements DynamicPlatformPlugin {
 
   private readonly climateDeviceManager:
     ClimateDeviceManager;
+
+  private readonly deviceCatalogStore:
+    DeviceCatalogStore;
+
+  private readonly deviceCatalog:
+    DeviceCatalog;
 
   private readonly registryManager:
     RegistryManager;
@@ -107,7 +116,9 @@ implements DynamicPlatformPlugin {
       );
 
     this.accessoryFactory =
-      new AccessoryFactory(this);
+      new AccessoryFactory(
+        this,
+      );
 
     this.discoveryManager =
       new DiscoveryManager(
@@ -133,11 +144,29 @@ implements DynamicPlatformPlugin {
         this.log,
       );
 
+    const catalogFilePath =
+      join(
+        this.api.user.storagePath(),
+        'ha-virtual-devices',
+        'device-catalog.json',
+      );
+
+    this.deviceCatalogStore =
+      new DeviceCatalogStore(
+        catalogFilePath,
+      );
+
+    this.deviceCatalog =
+      new DeviceCatalog(
+        this.deviceCatalogStore,
+      );
+
     this.registryManager =
       new RegistryManager(
         this.discoveryManager,
         this.climateDeviceManager,
         this.accessoryManager,
+        this.deviceCatalog,
         this.log,
         ignoredDevices,
       );
@@ -211,7 +240,9 @@ implements DynamicPlatformPlugin {
     this.homeAssistantWebSocketClient
       .onEvent(event => {
         this.eventManager
-          .handleEvent(event);
+          .handleEvent(
+            event,
+          );
       });
 
     this.homeAssistantWebSocketClient
@@ -227,10 +258,18 @@ implements DynamicPlatformPlugin {
 
     this.homeAssistantWebSocketClient
       .onEntityRegistry(entries => {
-        this.registryManager
+        void this.registryManager
           .handleEntityRegistry(
             entries,
-          );
+          )
+          .catch(error => {
+            this.log.error(
+              'Erreur pendant la synchronisation du catalogue :',
+              error instanceof Error
+                ? error.message
+                : String(error),
+            );
+          });
       });
   }
 

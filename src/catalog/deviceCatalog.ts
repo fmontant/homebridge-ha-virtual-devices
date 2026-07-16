@@ -1,9 +1,10 @@
 import {
   CatalogDeviceState,
   type CatalogDevice,
+  type DeviceMetadata,
 } from './catalogDevice.js';
-import { DeviceCatalogStore } from './deviceCatalogStore.js';
 import { CatalogSynchronizationResult } from './catalogSynchronizationResult.js';
+import { DeviceCatalogStore } from './deviceCatalogStore.js';
 
 export class DeviceCatalog {
   private readonly devices =
@@ -36,7 +37,6 @@ export class DeviceCatalog {
   public synchronize(
     discoveredDevices: CatalogDevice[],
   ): CatalogSynchronizationResult {
-
     const result =
       new CatalogSynchronizationResult();
 
@@ -46,88 +46,106 @@ export class DeviceCatalog {
     const discoveredIds =
       new Set<string>();
 
-    for (const device of discoveredDevices) {
-
+    for (const discoveredDevice of discoveredDevices) {
       discoveredIds.add(
-        device.id,
+        discoveredDevice.id,
       );
 
-      const existing =
+      const existingDevice =
         this.devices.get(
-          device.id,
+          discoveredDevice.id,
         );
 
-      if (!existing) {
-
+      if (!existingDevice) {
         this.devices.set(
-          device.id,
-          device,
+          discoveredDevice.id,
+          discoveredDevice,
         );
 
         result.added.push(
-          device,
+          discoveredDevice,
         );
 
         continue;
       }
 
-      existing.name =
-        device.name;
+      const hasChanged =
+        this.hasDeviceChanged(
+          existingDevice,
+          discoveredDevice,
+        );
 
-      existing.metadata =
-        device.metadata;
+      const wasMissing =
+        existingDevice.state ===
+        CatalogDeviceState.Missing;
 
-      existing.capabilities =
-        device.capabilities;
-
-      existing.state =
-        device.state;
-
-      existing.timestamps.lastSeen =
+      existingDevice.timestamps.lastSeen =
         now;
 
-      existing.timestamps.lastUpdated =
+      if (!hasChanged && !wasMissing) {
+        continue;
+      }
+
+      existingDevice.source =
+        discoveredDevice.source;
+
+      existingDevice.sourceId =
+        discoveredDevice.sourceId;
+
+      existingDevice.name =
+        discoveredDevice.name;
+
+      existingDevice.state =
+        discoveredDevice.state;
+
+      existingDevice.capabilities =
+        [...discoveredDevice.capabilities];
+
+      existingDevice.metadata = {
+        ...discoveredDevice.metadata,
+      };
+
+      existingDevice.timestamps.lastUpdated =
         now;
 
-      existing.timestamps.missingSince =
+      existingDevice.timestamps.missingSince =
         undefined;
 
       result.updated.push(
-        existing,
+        existingDevice,
       );
     }
 
     for (
-      const device
+      const existingDevice
       of this.devices.values()
     ) {
-
       if (
         discoveredIds.has(
-          device.id,
+          existingDevice.id,
         )
       ) {
         continue;
       }
 
       if (
-        device.state ===
+        existingDevice.state ===
         CatalogDeviceState.Missing
       ) {
         continue;
       }
 
-      device.state =
+      existingDevice.state =
         CatalogDeviceState.Missing;
 
-      device.timestamps.missingSince ??=
+      existingDevice.timestamps.missingSince ??=
         now;
 
-      device.timestamps.lastUpdated =
+      existingDevice.timestamps.lastUpdated =
         now;
 
       result.missing.push(
-        device,
+        existingDevice,
       );
     }
 
@@ -177,5 +195,78 @@ export class DeviceCatalog {
   public clear():
     void {
     this.devices.clear();
+  }
+
+  private hasDeviceChanged(
+    existingDevice: CatalogDevice,
+    discoveredDevice: CatalogDevice,
+  ): boolean {
+    return (
+      existingDevice.source !==
+        discoveredDevice.source ||
+      existingDevice.sourceId !==
+        discoveredDevice.sourceId ||
+      existingDevice.name !==
+        discoveredDevice.name ||
+      existingDevice.state !==
+        discoveredDevice.state ||
+      !this.haveSameCapabilities(
+        existingDevice.capabilities,
+        discoveredDevice.capabilities,
+      ) ||
+      !this.haveSameMetadata(
+        existingDevice.metadata,
+        discoveredDevice.metadata,
+      )
+    );
+  }
+
+  private haveSameCapabilities(
+    existingCapabilities:
+      CatalogDevice['capabilities'],
+    discoveredCapabilities:
+      CatalogDevice['capabilities'],
+  ): boolean {
+    if (
+      existingCapabilities.length !==
+      discoveredCapabilities.length
+    ) {
+      return false;
+    }
+
+    const existingValues =
+      [...existingCapabilities]
+        .sort();
+
+    const discoveredValues =
+      [...discoveredCapabilities]
+        .sort();
+
+    return existingValues.every(
+      (
+        capability,
+        index,
+      ) =>
+        capability ===
+        discoveredValues[index],
+    );
+  }
+
+  private haveSameMetadata(
+    existingMetadata: DeviceMetadata,
+    discoveredMetadata: DeviceMetadata,
+  ): boolean {
+    return (
+      existingMetadata.manufacturer ===
+        discoveredMetadata.manufacturer &&
+      existingMetadata.model ===
+        discoveredMetadata.model &&
+      existingMetadata.serialNumber ===
+        discoveredMetadata.serialNumber &&
+      existingMetadata.softwareVersion ===
+        discoveredMetadata.softwareVersion &&
+      existingMetadata.hardwareVersion ===
+        discoveredMetadata.hardwareVersion
+    );
   }
 }

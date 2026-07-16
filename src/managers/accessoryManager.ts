@@ -19,6 +19,9 @@ export class AccessoryManager {
   private readonly climateAccessories =
     new Map<string, ClimateAccessory>();
 
+  private readonly entityIdsByAccessoryUUID =
+    new Map<string, Set<string>>();
+
   constructor(
     private readonly api: API,
     private readonly log: Logging,
@@ -29,13 +32,23 @@ export class AccessoryManager {
   public registerClimateAccessory(
     device: ClimateDevice,
   ): void {
-    const uuid = this.api.hap.uuid.generate(
-      `sensor-v2:${device.id}`,
+    const uuid =
+      this.getClimateAccessoryUUID(
+        device.id,
+      );
+
+    this.activeAccessoryUUIDs.add(
+      uuid,
     );
 
-    this.activeAccessoryUUIDs.add(uuid);
+    this.removeEntityMappings(
+      uuid,
+    );
 
-    let accessory = this.accessories.get(uuid);
+    let accessory =
+      this.accessories.get(
+        uuid,
+      );
 
     if (accessory) {
       this.log.info(
@@ -106,9 +119,60 @@ export class AccessoryManager {
     for (const entityId of entityIds) {
       this.registerEntity(
         entityId,
+        uuid,
         climateAccessory,
       );
     }
+  }
+
+  public removeClimateAccessory(
+    deviceId: string,
+  ): boolean {
+    const uuid =
+      this.getClimateAccessoryUUID(
+        deviceId,
+      );
+
+    const accessory =
+      this.accessories.get(
+        uuid,
+      );
+
+    if (!accessory) {
+      this.activeAccessoryUUIDs.delete(
+        uuid,
+      );
+
+      this.removeEntityMappings(
+        uuid,
+      );
+
+      return false;
+    }
+
+    this.log.info(
+      `Suppression de la tuile : ${accessory.displayName}`,
+    );
+
+    this.api.unregisterPlatformAccessories(
+      PLUGIN_NAME,
+      PLATFORM_NAME,
+      [accessory],
+    );
+
+    this.accessories.delete(
+      uuid,
+    );
+
+    this.activeAccessoryUUIDs.delete(
+      uuid,
+    );
+
+    this.removeEntityMappings(
+      uuid,
+    );
+
+    return true;
   }
 
   public updateEntity(
@@ -150,29 +214,86 @@ export class AccessoryManager {
         `Suppression de l’accessoire obsolète : ${accessory.displayName}`,
       );
 
-      this.api
-        .unregisterPlatformAccessories(
-          PLUGIN_NAME,
-          PLATFORM_NAME,
-          [accessory],
-        );
+      this.api.unregisterPlatformAccessories(
+        PLUGIN_NAME,
+        PLATFORM_NAME,
+        [accessory],
+      );
 
-      this.accessories.delete(uuid);
+      this.accessories.delete(
+        uuid,
+      );
+
+      this.removeEntityMappings(
+        uuid,
+      );
     }
   }
 
   public clearDiscoveryState(): void {
     this.activeAccessoryUUIDs.clear();
     this.climateAccessories.clear();
+    this.entityIdsByAccessoryUUID.clear();
+  }
+
+  private getClimateAccessoryUUID(
+    deviceId: string,
+  ): string {
+    return this.api.hap.uuid.generate(
+      `sensor-v2:${deviceId}`,
+    );
   }
 
   private registerEntity(
     entityId: string,
+    accessoryUUID: string,
     accessory: ClimateAccessory,
   ): void {
     this.climateAccessories.set(
       entityId,
       accessory,
+    );
+
+    let registeredEntityIds =
+      this.entityIdsByAccessoryUUID.get(
+        accessoryUUID,
+      );
+
+    if (!registeredEntityIds) {
+      registeredEntityIds =
+        new Set<string>();
+
+      this.entityIdsByAccessoryUUID.set(
+        accessoryUUID,
+        registeredEntityIds,
+      );
+    }
+
+    registeredEntityIds.add(
+      entityId,
+    );
+  }
+
+  private removeEntityMappings(
+    accessoryUUID: string,
+  ): void {
+    const entityIds =
+      this.entityIdsByAccessoryUUID.get(
+        accessoryUUID,
+      );
+
+    if (!entityIds) {
+      return;
+    }
+
+    for (const entityId of entityIds) {
+      this.climateAccessories.delete(
+        entityId,
+      );
+    }
+
+    this.entityIdsByAccessoryUUID.delete(
+      accessoryUUID,
     );
   }
 }
