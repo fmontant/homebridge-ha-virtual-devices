@@ -8,6 +8,7 @@ import type {
   Service,
 } from 'homebridge';
 
+
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
 
 import { AccessoryFactory } from './factories/accessoryFactory.js';
