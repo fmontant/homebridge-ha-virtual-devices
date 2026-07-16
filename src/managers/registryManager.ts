@@ -1,14 +1,10 @@
 import type { Logging } from 'homebridge';
 
-import {
-  CatalogDeviceState,
-  DeviceCapability,
-  type CatalogDevice,
-} from '../catalog/catalogDevice.js';
 import type { DeviceCatalog } from '../catalog/deviceCatalog.js';
+import { ClimateDeviceCatalogMapper } from '../mappers/climateDeviceCatalogMapper.js';
+import type { ClimateDevice } from '../models/climateDevice.js';
 import type { DeviceRegistryEntry } from '../models/deviceRegistryEntry.js';
 import type { EntityRegistryEntry } from '../models/entityRegistryEntry.js';
-import type { ClimateDevice } from '../models/climateDevice.js';
 import type { AccessoryManager } from './accessoryManager.js';
 import type { ClimateDeviceManager } from './ClimateDeviceManager.js';
 import type { DiscoveryManager } from './discoveryManager.js';
@@ -20,10 +16,14 @@ export class RegistryManager {
   private readonly ignoredDevices:
     Set<string>;
 
-  private catalogLoaded = false;
+  private catalogLoaded =
+    false;
 
   private initialSynchronizationCompleted =
     false;
+
+  private readonly climateDeviceCatalogMapper =
+    new ClimateDeviceCatalogMapper();
 
   constructor(
     private readonly discoveryManager:
@@ -91,43 +91,41 @@ export class RegistryManager {
         discoveredClimateDevices,
       );
 
-    const catalogDevices =
-      climateDevices.map(
-        climateDevice =>
-          this.createCatalogDevice(
-            climateDevice,
-          ),
-      );
+    const discoveredCatalogDevices =
+      this.climateDeviceCatalogMapper
+        .toDiscoveredCatalogDevices(
+          climateDevices,
+        );
 
     const synchronizationResult =
       this.deviceCatalog.synchronize(
-        catalogDevices,
+        discoveredCatalogDevices,
       );
 
     if (
       !this.initialSynchronizationCompleted
     ) {
-      this.restoreInitialAccessories(
-        climateDevices,
-      );
+      this.accessoryManager
+        .restoreClimateAccessories(
+          climateDevices,
+          this.deviceCatalog,
+        );
 
       this.initialSynchronizationCompleted =
         true;
     } else {
-      this.applyIncrementalSynchronization(
-        climateDevices,
-        synchronizationResult.added,
-        synchronizationResult.updated,
-        synchronizationResult.missing,
-      );
+      this.accessoryManager
+        .applyClimateSynchronization(
+          climateDevices,
+          synchronizationResult,
+          this.deviceCatalog,
+        );
     }
 
     await this.deviceCatalog.save();
 
-    this.logSynchronizationResult(
-      synchronizationResult.added.length,
-      synchronizationResult.updated.length,
-      synchronizationResult.missing.length,
+    this.log.info(
+      synchronizationResult.summary(),
     );
   }
 
@@ -194,182 +192,6 @@ export class RegistryManager {
     }
 
     return preparedDevices;
-  }
-
-  private restoreInitialAccessories(
-    climateDevices: ClimateDevice[],
-  ): void {
-    this.accessoryManager
-      .clearDiscoveryState();
-
-    for (
-      const climateDevice
-      of climateDevices
-    ) {
-      this.accessoryManager
-        .registerClimateAccessory(
-          climateDevice,
-        );
-    }
-
-    this.accessoryManager
-      .removeObsoleteAccessories();
-
-    this.log.info(
-      `${climateDevices.length} accessoires climatiques restaurés`,
-    );
-  }
-
-  private applyIncrementalSynchronization(
-    climateDevices: ClimateDevice[],
-    addedDevices: CatalogDevice[],
-    updatedDevices: CatalogDevice[],
-    missingDevices: CatalogDevice[],
-  ): void {
-    const climateDevicesById =
-      new Map<string, ClimateDevice>();
-
-    for (
-      const climateDevice
-      of climateDevices
-    ) {
-      climateDevicesById.set(
-        climateDevice.id,
-        climateDevice,
-      );
-    }
-
-    const devicesToRegister = [
-      ...addedDevices,
-      ...updatedDevices,
-    ];
-
-    for (
-      const catalogDevice
-      of devicesToRegister
-    ) {
-      const climateDevice =
-        climateDevicesById.get(
-          catalogDevice.id,
-        );
-
-      if (!climateDevice) {
-        continue;
-      }
-
-      this.accessoryManager
-        .registerClimateAccessory(
-          climateDevice,
-        );
-    }
-
-    for (
-      const missingDevice
-      of missingDevices
-    ) {
-      this.accessoryManager
-        .removeClimateAccessory(
-          missingDevice.id,
-        );
-    }
-  }
-
-  private createCatalogDevice(
-    climateDevice: ClimateDevice,
-  ): CatalogDevice {
-    const now =
-      new Date().toISOString();
-
-    const capabilities:
-      DeviceCapability[] = [
-        DeviceCapability.Temperature,
-      ];
-
-    if (
-      climateDevice.humidityEntity
-    ) {
-      capabilities.push(
-        DeviceCapability.Humidity,
-      );
-    }
-
-    if (
-      climateDevice.batteryEntity
-    ) {
-      capabilities.push(
-        DeviceCapability.Battery,
-      );
-    }
-
-    return {
-      id:
-        climateDevice.id,
-      source:
-        'home-assistant',
-      sourceId:
-        climateDevice.id,
-      name:
-        climateDevice.name,
-      state:
-        CatalogDeviceState.Enabled,
-      capabilities,
-      metadata: {
-        manufacturer:
-          climateDevice.manufacturer,
-        model:
-          climateDevice.model,
-        serialNumber:
-          climateDevice.serialNumber,
-        softwareVersion:
-          climateDevice.softwareVersion,
-        hardwareVersion:
-          climateDevice.hardwareVersion,
-      },
-      preferences: {
-        enabled:
-          true,
-        favorite:
-          false,
-        hidden:
-          false,
-      },
-      timestamps: {
-        discoveredAt:
-          now,
-        lastSeen:
-          now,
-        lastUpdated:
-          now,
-      },
-    };
-  }
-
-  private logSynchronizationResult(
-    addedDeviceCount: number,
-    updatedDeviceCount: number,
-    missingDeviceCount: number,
-  ): void {
-    const totalChanges =
-      addedDeviceCount +
-      updatedDeviceCount +
-      missingDeviceCount;
-
-    if (
-      totalChanges === 0
-    ) {
-      this.log.info(
-        'Catalogue synchronisé : aucune modification',
-      );
-
-      return;
-    }
-
-    this.log.info(
-      'Catalogue synchronisé : ' +
-      `${addedDeviceCount} ajout(s), ` +
-      `${updatedDeviceCount} modification(s), ` +
-      `${missingDeviceCount} disparition(s)`,
-    );
   }
 
   private isIgnoredDevice(

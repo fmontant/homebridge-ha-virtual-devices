@@ -39,7 +39,7 @@ export interface DeviceTimestamps {
   missingSince?: string;
 }
 
-export interface CatalogDevice {
+export interface DiscoveredCatalogDevice {
   id: string;
   source: string;
   sourceId: string;
@@ -47,6 +47,10 @@ export interface CatalogDevice {
   state: CatalogDeviceState;
   capabilities: DeviceCapability[];
   metadata: DeviceMetadata;
+}
+
+export interface CatalogDevice
+extends DiscoveredCatalogDevice {
   preferences: DevicePreferences;
   timestamps: DeviceTimestamps;
 }

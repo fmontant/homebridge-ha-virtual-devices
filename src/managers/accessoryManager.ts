@@ -5,6 +5,8 @@ import type {
 } from 'homebridge';
 
 import type { ClimateAccessory } from '../accessories/climateAccessory.js';
+import type { CatalogSynchronizationResult } from '../catalog/catalogSynchronizationResult.js';
+import type { DeviceCatalog } from '../catalog/deviceCatalog.js';
 import type { AccessoryFactory } from '../factories/accessoryFactory.js';
 import type { ClimateDevice } from '../models/climateDevice.js';
 import {
@@ -26,8 +28,130 @@ export class AccessoryManager {
     private readonly api: API,
     private readonly log: Logging,
     private readonly accessoryFactory: AccessoryFactory,
-    private readonly accessories: Map<string, PlatformAccessory>,
+    private readonly accessories:
+      Map<string, PlatformAccessory>,
   ) {}
+
+  public restoreClimateAccessories(
+    climateDevices: ClimateDevice[],
+    deviceCatalog: DeviceCatalog,
+  ): void {
+    this.clearDiscoveryState();
+
+    let publishedDeviceCount = 0;
+    let unpublishedDeviceCount = 0;
+
+    for (
+      const climateDevice
+      of climateDevices
+    ) {
+      if (
+        !deviceCatalog.shouldPublish(
+          climateDevice.id,
+        )
+      ) {
+        this.removeClimateAccessory(
+          climateDevice.id,
+        );
+
+        unpublishedDeviceCount += 1;
+
+        this.log.info(
+          `Appareil non publié selon les préférences : ${climateDevice.name}`,
+        );
+
+        continue;
+      }
+
+      this.registerClimateAccessory(
+        climateDevice,
+      );
+
+      publishedDeviceCount += 1;
+    }
+
+    this.removeObsoleteAccessories();
+
+    this.log.info(
+      `${publishedDeviceCount} accessoires climatiques restaurés`,
+    );
+
+    if (
+      unpublishedDeviceCount > 0
+    ) {
+      this.log.info(
+        `${unpublishedDeviceCount} appareils non publiés selon les préférences`,
+      );
+    }
+  }
+
+  public applyClimateSynchronization(
+    climateDevices: ClimateDevice[],
+    synchronizationResult:
+      CatalogSynchronizationResult,
+    deviceCatalog: DeviceCatalog,
+  ): void {
+    const climateDevicesById =
+      new Map<string, ClimateDevice>();
+
+    for (
+      const climateDevice
+      of climateDevices
+    ) {
+      climateDevicesById.set(
+        climateDevice.id,
+        climateDevice,
+      );
+    }
+
+    const devicesToProcess = [
+      ...synchronizationResult.added,
+      ...synchronizationResult.updated,
+    ];
+
+    for (
+      const catalogDevice
+      of devicesToProcess
+    ) {
+      const climateDevice =
+        climateDevicesById.get(
+          catalogDevice.id,
+        );
+
+      if (!climateDevice) {
+        continue;
+      }
+
+      if (
+        !deviceCatalog.shouldPublish(
+          catalogDevice.id,
+        )
+      ) {
+        this.removeClimateAccessory(
+          catalogDevice.id,
+        );
+
+        this.log.info(
+          `Appareil non publié selon les préférences : ${catalogDevice.name}`,
+        );
+
+        continue;
+      }
+
+      this.registerClimateAccessory(
+        climateDevice,
+      );
+    }
+
+    for (
+      const missingDevice
+      of synchronizationResult.missing
+    ) {
+      this.removeClimateAccessory(
+        missingDevice.id,
+      );
+    }
+  }
 
   public registerClimateAccessory(
     device: ClimateDevice,
@@ -112,11 +236,16 @@ export class AccessoryManager {
       device.humidityEntity,
       device.batteryEntity,
     ].filter(
-      (entityId): entityId is string =>
+      (
+        entityId,
+      ): entityId is string =>
         Boolean(entityId),
     );
 
-    for (const entityId of entityIds) {
+    for (
+      const entityId
+      of entityIds
+    ) {
       this.registerEntity(
         entityId,
         uuid,
@@ -230,7 +359,8 @@ export class AccessoryManager {
     }
   }
 
-  public clearDiscoveryState(): void {
+  public clearDiscoveryState():
+    void {
     this.activeAccessoryUUIDs.clear();
     this.climateAccessories.clear();
     this.entityIdsByAccessoryUUID.clear();
@@ -286,7 +416,10 @@ export class AccessoryManager {
       return;
     }
 
-    for (const entityId of entityIds) {
+    for (
+      const entityId
+      of entityIds
+    ) {
       this.climateAccessories.delete(
         entityId,
       );

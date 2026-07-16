@@ -2,6 +2,7 @@ import {
   CatalogDeviceState,
   type CatalogDevice,
   type DeviceMetadata,
+  type DiscoveredCatalogDevice,
 } from './catalogDevice.js';
 import { CatalogSynchronizationResult } from './catalogSynchronizationResult.js';
 import { DeviceCatalogStore } from './deviceCatalogStore.js';
@@ -35,7 +36,8 @@ export class DeviceCatalog {
   }
 
   public synchronize(
-    discoveredDevices: CatalogDevice[],
+    discoveredDevices:
+      DiscoveredCatalogDevice[],
   ): CatalogSynchronizationResult {
     const result =
       new CatalogSynchronizationResult();
@@ -46,7 +48,10 @@ export class DeviceCatalog {
     const discoveredIds =
       new Set<string>();
 
-    for (const discoveredDevice of discoveredDevices) {
+    for (
+      const discoveredDevice
+      of discoveredDevices
+    ) {
       discoveredIds.add(
         discoveredDevice.id,
       );
@@ -57,13 +62,19 @@ export class DeviceCatalog {
         );
 
       if (!existingDevice) {
+        const catalogDevice =
+          this.createCatalogDevice(
+            discoveredDevice,
+            now,
+          );
+
         this.devices.set(
-          discoveredDevice.id,
-          discoveredDevice,
+          catalogDevice.id,
+          catalogDevice,
         );
 
         result.added.push(
-          discoveredDevice,
+          catalogDevice,
         );
 
         continue;
@@ -82,34 +93,18 @@ export class DeviceCatalog {
       existingDevice.timestamps.lastSeen =
         now;
 
-      if (!hasChanged && !wasMissing) {
+      if (
+        !hasChanged &&
+        !wasMissing
+      ) {
         continue;
       }
 
-      existingDevice.source =
-        discoveredDevice.source;
-
-      existingDevice.sourceId =
-        discoveredDevice.sourceId;
-
-      existingDevice.name =
-        discoveredDevice.name;
-
-      existingDevice.state =
-        discoveredDevice.state;
-
-      existingDevice.capabilities =
-        [...discoveredDevice.capabilities];
-
-      existingDevice.metadata = {
-        ...discoveredDevice.metadata,
-      };
-
-      existingDevice.timestamps.lastUpdated =
-        now;
-
-      existingDevice.timestamps.missingSince =
-        undefined;
+      this.updateCatalogDevice(
+        existingDevice,
+        discoveredDevice,
+        now,
+      );
 
       result.updated.push(
         existingDevice,
@@ -175,6 +170,192 @@ export class DeviceCatalog {
     );
   }
 
+  public isEnabled(
+    id: string,
+  ): boolean {
+    return (
+      this.devices.get(
+        id,
+      )?.preferences.enabled ??
+      false
+    );
+  }
+
+  public isHidden(
+    id: string,
+  ): boolean {
+    return (
+      this.devices.get(
+        id,
+      )?.preferences.hidden ??
+      false
+    );
+  }
+
+  public isFavorite(
+    id: string,
+  ): boolean {
+    return (
+      this.devices.get(
+        id,
+      )?.preferences.favorite ??
+      false
+    );
+  }
+
+  public shouldPublish(
+    id: string,
+  ): boolean {
+    const device =
+      this.devices.get(
+        id,
+      );
+
+    if (!device) {
+      return false;
+    }
+
+    return (
+      device.preferences.enabled &&
+      !device.preferences.hidden &&
+      device.state !==
+        CatalogDeviceState.Missing
+    );
+  }
+
+  public async setEnabled(
+    id: string,
+    enabled: boolean,
+  ): Promise<boolean> {
+    const device =
+      this.devices.get(
+        id,
+      );
+
+    if (!device) {
+      return false;
+    }
+
+    if (
+      device.preferences.enabled ===
+      enabled
+    ) {
+      return true;
+    }
+
+    device.preferences.enabled =
+      enabled;
+
+    device.timestamps.lastUpdated =
+      new Date().toISOString();
+
+    await this.save();
+
+    return true;
+  }
+
+  public async setHidden(
+    id: string,
+    hidden: boolean,
+  ): Promise<boolean> {
+    const device =
+      this.devices.get(
+        id,
+      );
+
+    if (!device) {
+      return false;
+    }
+
+    if (
+      device.preferences.hidden ===
+      hidden
+    ) {
+      return true;
+    }
+
+    device.preferences.hidden =
+      hidden;
+
+    device.timestamps.lastUpdated =
+      new Date().toISOString();
+
+    await this.save();
+
+    return true;
+  }
+
+  public async setFavorite(
+    id: string,
+    favorite: boolean,
+  ): Promise<boolean> {
+    const device =
+      this.devices.get(
+        id,
+      );
+
+    if (!device) {
+      return false;
+    }
+
+    if (
+      device.preferences.favorite ===
+      favorite
+    ) {
+      return true;
+    }
+
+    device.preferences.favorite =
+      favorite;
+
+    device.timestamps.lastUpdated =
+      new Date().toISOString();
+
+    await this.save();
+
+    return true;
+  }
+
+  public async setRoom(
+    id: string,
+    room?: string,
+  ): Promise<boolean> {
+    const device =
+      this.devices.get(
+        id,
+      );
+
+    if (!device) {
+      return false;
+    }
+
+    const normalizedRoom =
+      room?.trim();
+
+    const nextRoom =
+      normalizedRoom &&
+      normalizedRoom.length > 0
+        ? normalizedRoom
+        : undefined;
+
+    if (
+      device.preferences.room ===
+      nextRoom
+    ) {
+      return true;
+    }
+
+    device.preferences.room =
+      nextRoom;
+
+    device.timestamps.lastUpdated =
+      new Date().toISOString();
+
+    await this.save();
+
+    return true;
+  }
+
   public set(
     device: CatalogDevice,
   ): void {
@@ -197,9 +378,87 @@ export class DeviceCatalog {
     this.devices.clear();
   }
 
+  private createCatalogDevice(
+    discoveredDevice:
+      DiscoveredCatalogDevice,
+    now: string,
+  ): CatalogDevice {
+    return {
+      id:
+        discoveredDevice.id,
+      source:
+        discoveredDevice.source,
+      sourceId:
+        discoveredDevice.sourceId,
+      name:
+        discoveredDevice.name,
+      state:
+        discoveredDevice.state,
+      capabilities: [
+        ...discoveredDevice.capabilities,
+      ],
+      metadata: {
+        ...discoveredDevice.metadata,
+      },
+      preferences: {
+        enabled:
+          true,
+        favorite:
+          false,
+        hidden:
+          false,
+      },
+      timestamps: {
+        discoveredAt:
+          now,
+        lastSeen:
+          now,
+        lastUpdated:
+          now,
+      },
+    };
+  }
+
+  private updateCatalogDevice(
+    existingDevice: CatalogDevice,
+    discoveredDevice:
+      DiscoveredCatalogDevice,
+    now: string,
+  ): void {
+    existingDevice.source =
+      discoveredDevice.source;
+
+    existingDevice.sourceId =
+      discoveredDevice.sourceId;
+
+    existingDevice.name =
+      discoveredDevice.name;
+
+    existingDevice.state =
+      discoveredDevice.state;
+
+    existingDevice.capabilities = [
+      ...discoveredDevice.capabilities,
+    ];
+
+    existingDevice.metadata = {
+      ...discoveredDevice.metadata,
+    };
+
+    existingDevice.timestamps.lastSeen =
+      now;
+
+    existingDevice.timestamps.lastUpdated =
+      now;
+
+    existingDevice.timestamps.missingSince =
+      undefined;
+  }
+
   private hasDeviceChanged(
     existingDevice: CatalogDevice,
-    discoveredDevice: CatalogDevice,
+    discoveredDevice:
+      DiscoveredCatalogDevice,
   ): boolean {
     return (
       existingDevice.source !==
@@ -225,7 +484,9 @@ export class DeviceCatalog {
     existingCapabilities:
       CatalogDevice['capabilities'],
     discoveredCapabilities:
-      CatalogDevice['capabilities'],
+      DiscoveredCatalogDevice[
+        'capabilities'
+      ],
   ): boolean {
     if (
       existingCapabilities.length !==
