@@ -1,11 +1,10 @@
 import type { Logging } from 'homebridge';
 
-import type { DeviceCatalog } from '../catalog/deviceCatalog.js';
-import { ClimateDeviceCatalogMapper } from '../mappers/climateDeviceCatalogMapper.js';
 import type { ClimateDevice } from '../models/climateDevice.js';
 import type { DeviceRegistryEntry } from '../models/deviceRegistryEntry.js';
 import type { EntityRegistryEntry } from '../models/entityRegistryEntry.js';
 import type { AccessoryManager } from './accessoryManager.js';
+import type { CatalogManager } from './catalogManager.js';
 import type { ClimateDeviceManager } from './ClimateDeviceManager.js';
 import type { DiscoveryManager } from './discoveryManager.js';
 
@@ -16,14 +15,8 @@ export class RegistryManager {
   private readonly ignoredDevices:
     Set<string>;
 
-  private catalogLoaded =
-    false;
-
   private initialSynchronizationCompleted =
     false;
-
-  private readonly climateDeviceCatalogMapper =
-    new ClimateDeviceCatalogMapper();
 
   constructor(
     private readonly discoveryManager:
@@ -32,8 +25,8 @@ export class RegistryManager {
       ClimateDeviceManager,
     private readonly accessoryManager:
       AccessoryManager,
-    private readonly deviceCatalog:
-      DeviceCatalog,
+    private readonly catalogManager:
+      CatalogManager,
     private readonly log:
       Logging,
     ignoredDevices:
@@ -77,8 +70,6 @@ export class RegistryManager {
       return;
     }
 
-    await this.loadCatalog();
-
     const discoveredClimateDevices =
       this.discoveryManager
         .discoverClimateDevices(
@@ -91,16 +82,15 @@ export class RegistryManager {
         discoveredClimateDevices,
       );
 
-    const discoveredCatalogDevices =
-      this.climateDeviceCatalogMapper
-        .toDiscoveredCatalogDevices(
+    const synchronizationResult =
+      await this.catalogManager
+        .synchronizeClimateDevices(
           climateDevices,
         );
 
-    const synchronizationResult =
-      this.deviceCatalog.synchronize(
-        discoveredCatalogDevices,
-      );
+    const deviceCatalog =
+      this.catalogManager
+        .getCatalog();
 
     if (
       !this.initialSynchronizationCompleted
@@ -108,7 +98,7 @@ export class RegistryManager {
       this.accessoryManager
         .restoreClimateAccessories(
           climateDevices,
-          this.deviceCatalog,
+          deviceCatalog,
         );
 
       this.initialSynchronizationCompleted =
@@ -118,30 +108,12 @@ export class RegistryManager {
         .applyClimateSynchronization(
           climateDevices,
           synchronizationResult,
-          this.deviceCatalog,
+          deviceCatalog,
         );
     }
 
-    await this.deviceCatalog.save();
-
     this.log.info(
       synchronizationResult.summary(),
-    );
-  }
-
-  private async loadCatalog():
-    Promise<void> {
-    if (this.catalogLoaded) {
-      return;
-    }
-
-    await this.deviceCatalog.load();
-
-    this.catalogLoaded =
-      true;
-
-    this.log.info(
-      `${this.deviceCatalog.getAll().length} appareils chargés depuis le catalogue`,
     );
   }
 

@@ -18,6 +18,7 @@ import { AccessoryFactory } from './factories/accessoryFactory.js';
 import { HomeAssistantClient } from './homeassistant/client.js';
 import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
 import { AccessoryManager } from './managers/accessoryManager.js';
+import { CatalogManager } from './managers/catalogManager.js';
 import {
   type HomeAssistantState,
   ClimateDeviceManager,
@@ -67,6 +68,9 @@ implements DynamicPlatformPlugin {
 
   private readonly deviceCatalog:
     DeviceCatalog;
+
+  private readonly catalogManager:
+    CatalogManager;
 
   private readonly registryManager:
     RegistryManager;
@@ -161,12 +165,18 @@ implements DynamicPlatformPlugin {
         this.deviceCatalogStore,
       );
 
+    this.catalogManager =
+      new CatalogManager(
+        this.deviceCatalog,
+        this.log,
+      );
+
     this.registryManager =
       new RegistryManager(
         this.discoveryManager,
         this.climateDeviceManager,
         this.accessoryManager,
-        this.deviceCatalog,
+        this.catalogManager,
         this.log,
         ignoredDevices,
       );
