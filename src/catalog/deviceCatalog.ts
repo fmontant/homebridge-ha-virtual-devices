@@ -227,108 +227,72 @@ export class DeviceCatalog {
     id: string,
     enabled: boolean,
   ): Promise<boolean> {
-    const device =
-      this.devices.get(
-        id,
-      );
+    return this.updatePreference(
+      id,
+      device => {
+        if (
+          device.preferences.enabled ===
+          enabled
+        ) {
+          return false;
+        }
 
-    if (!device) {
-      return false;
-    }
+        device.preferences.enabled =
+          enabled;
 
-    if (
-      device.preferences.enabled ===
-      enabled
-    ) {
-      return true;
-    }
-
-    device.preferences.enabled =
-      enabled;
-
-    device.timestamps.lastUpdated =
-      new Date().toISOString();
-
-    await this.save();
-
-    return true;
+        return true;
+      },
+    );
   }
 
   public async setHidden(
     id: string,
     hidden: boolean,
   ): Promise<boolean> {
-    const device =
-      this.devices.get(
-        id,
-      );
+    return this.updatePreference(
+      id,
+      device => {
+        if (
+          device.preferences.hidden ===
+          hidden
+        ) {
+          return false;
+        }
 
-    if (!device) {
-      return false;
-    }
+        device.preferences.hidden =
+          hidden;
 
-    if (
-      device.preferences.hidden ===
-      hidden
-    ) {
-      return true;
-    }
-
-    device.preferences.hidden =
-      hidden;
-
-    device.timestamps.lastUpdated =
-      new Date().toISOString();
-
-    await this.save();
-
-    return true;
+        return true;
+      },
+    );
   }
 
   public async setFavorite(
     id: string,
     favorite: boolean,
   ): Promise<boolean> {
-    const device =
-      this.devices.get(
-        id,
-      );
+    return this.updatePreference(
+      id,
+      device => {
+        if (
+          device.preferences.favorite ===
+          favorite
+        ) {
+          return false;
+        }
 
-    if (!device) {
-      return false;
-    }
+        device.preferences.favorite =
+          favorite;
 
-    if (
-      device.preferences.favorite ===
-      favorite
-    ) {
-      return true;
-    }
-
-    device.preferences.favorite =
-      favorite;
-
-    device.timestamps.lastUpdated =
-      new Date().toISOString();
-
-    await this.save();
-
-    return true;
+        return true;
+      },
+    );
   }
 
   public async setRoom(
     id: string,
     room?: string,
   ): Promise<boolean> {
-    const device =
-      this.devices.get(
-        id,
-      );
-
-    if (!device) {
-      return false;
-    }
-
     const normalizedRoom =
       room?.trim();
 
@@ -338,22 +302,22 @@ export class DeviceCatalog {
         ? normalizedRoom
         : undefined;
 
-    if (
-      device.preferences.room ===
-      nextRoom
-    ) {
-      return true;
-    }
+    return this.updatePreference(
+      id,
+      device => {
+        if (
+          device.preferences.room ===
+          nextRoom
+        ) {
+          return false;
+        }
 
-    device.preferences.room =
-      nextRoom;
+        device.preferences.room =
+          nextRoom;
 
-    device.timestamps.lastUpdated =
-      new Date().toISOString();
-
-    await this.save();
-
-    return true;
+        return true;
+      },
+    );
   }
 
   public set(
@@ -376,6 +340,37 @@ export class DeviceCatalog {
   public clear():
     void {
     this.devices.clear();
+  }
+
+  private async updatePreference(
+    id: string,
+    update:
+      (device: CatalogDevice) => boolean,
+  ): Promise<boolean> {
+    const device =
+      this.devices.get(
+        id,
+      );
+
+    if (!device) {
+      return false;
+    }
+
+    const changed =
+      update(
+        device,
+      );
+
+    if (!changed) {
+      return true;
+    }
+
+    device.timestamps.lastUpdated =
+      new Date().toISOString();
+
+    await this.save();
+
+    return true;
   }
 
   private createCatalogDevice(

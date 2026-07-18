@@ -1,17 +1,21 @@
-import type { Logging } from 'homebridge';
+import type {
+  Logging,
+} from 'homebridge';
 
 import type {
   CatalogDevice,
 } from '../catalog/catalogDevice.js';
+
 import type {
   CatalogSynchronizationResult,
 } from '../catalog/catalogSynchronizationResult.js';
+
 import type {
   DeviceCatalog,
 } from '../catalog/deviceCatalog.js';
-import {
-  ClimateDeviceCatalogMapper,
-} from '../mappers/climateDeviceCatalogMapper.js';
+
+import { ClimateDeviceCatalogMapper } from '../mappers/climateDeviceCatalogMapper.js';
+
 import type {
   ClimateDevice,
 } from '../models/climateDevice.js';
@@ -19,6 +23,9 @@ import type {
 export class CatalogManager {
   private catalogLoaded =
     false;
+
+  private catalogLoading:
+    Promise<void> | undefined;
 
   private readonly climateDeviceCatalogMapper =
     new ClimateDeviceCatalogMapper();
@@ -31,8 +38,7 @@ export class CatalogManager {
   ) {}
 
   public async synchronizeClimateDevices(
-    climateDevices:
-      ClimateDevice[],
+    climateDevices: ClimateDevice[],
   ): Promise<CatalogSynchronizationResult> {
     await this.load();
 
@@ -43,11 +49,20 @@ export class CatalogManager {
         );
 
     const synchronizationResult =
-      this.deviceCatalog.synchronize(
-        discoveredCatalogDevices,
-      );
+      this.deviceCatalog
+        .synchronize(
+          discoveredCatalogDevices,
+        );
 
-    await this.deviceCatalog.save();
+    await this.save();
+
+    this.log.info(
+      [
+        `${synchronizationResult.added.length} appareils ajoutés`,
+        `${synchronizationResult.updated.length} appareils mis à jour`,
+        `${synchronizationResult.missing.length} appareils absents`,
+      ].join(', '),
+    );
 
     return synchronizationResult;
   }
@@ -58,7 +73,27 @@ export class CatalogManager {
       return;
     }
 
-    await this.deviceCatalog.load();
+    if (this.catalogLoading) {
+      await this.catalogLoading;
+
+      return;
+    }
+
+    this.catalogLoading =
+      this.loadCatalog();
+
+    try {
+      await this.catalogLoading;
+    } finally {
+      this.catalogLoading =
+        undefined;
+    }
+  }
+
+  private async loadCatalog():
+    Promise<void> {
+    await this.deviceCatalog
+      .load();
 
     this.catalogLoaded =
       true;
@@ -72,77 +107,64 @@ export class CatalogManager {
     Promise<void> {
     await this.load();
 
-    await this.deviceCatalog.save();
+    await this.deviceCatalog
+      .save();
   }
 
-  public async getAll():
-    Promise<CatalogDevice[]> {
-    await this.load();
-
+  public getAll():
+    CatalogDevice[] {
     return this.deviceCatalog
       .getAll();
   }
 
-  public async get(
+  public get(
     id: string,
-  ): Promise<CatalogDevice | undefined> {
-    await this.load();
-
+  ): CatalogDevice | undefined {
     return this.deviceCatalog
       .get(
         id,
       );
   }
 
-  public async has(
+  public has(
     id: string,
-  ): Promise<boolean> {
-    await this.load();
-
+  ): boolean {
     return this.deviceCatalog
       .has(
         id,
       );
   }
 
-  public async isEnabled(
+  public isEnabled(
     id: string,
-  ): Promise<boolean> {
-    await this.load();
-
+  ): boolean {
     return this.deviceCatalog
       .isEnabled(
         id,
       );
   }
 
-  public async isHidden(
+  public isHidden(
     id: string,
-  ): Promise<boolean> {
-    await this.load();
-
+  ): boolean {
     return this.deviceCatalog
       .isHidden(
         id,
       );
   }
 
-  public async isFavorite(
+  public isFavorite(
     id: string,
-  ): Promise<boolean> {
-    await this.load();
-
+  ): boolean {
     return this.deviceCatalog
       .isFavorite(
         id,
       );
   }
 
-  public async shouldPublish(
+  public shouldPublish(
     id: string,
-  ): Promise<boolean> {
-    await this.load();
-
+  ): boolean {
     return this.deviceCatalog
       .shouldPublish(
         id,

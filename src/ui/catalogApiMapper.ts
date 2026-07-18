@@ -1,0 +1,44 @@
+import {
+  CatalogDeviceState,
+  type CatalogDevice,
+} from '../catalog/catalogDevice.js';
+
+import type {
+  CatalogApiDevice,
+} from './catalogApi.js';
+
+export class CatalogApiMapper {
+  public toApiDevice(
+    device: CatalogDevice,
+  ): CatalogApiDevice {
+    return {
+      id:
+        device.id,
+      source:
+        device.source,
+      sourceId:
+        device.sourceId,
+      name:
+        device.name,
+      state:
+        device.state,
+      capabilities: [
+        ...device.capabilities,
+      ],
+      metadata: {
+        ...device.metadata,
+      },
+      preferences: {
+        ...device.preferences,
+      },
+      timestamps: {
+        ...device.timestamps,
+      },
+      publishable:
+        device.preferences.enabled &&
+        !device.preferences.hidden &&
+        device.state !==
+          CatalogDeviceState.Missing,
+    };
+  }
+}

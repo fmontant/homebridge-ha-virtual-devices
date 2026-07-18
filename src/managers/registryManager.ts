@@ -18,6 +18,10 @@ export class RegistryManager {
   private initialSynchronizationCompleted =
     false;
 
+  private synchronizationQueue:
+    Promise<void> =
+      Promise.resolve();
+
   constructor(
     private readonly discoveryManager:
       DiscoveryManager,
@@ -50,7 +54,7 @@ export class RegistryManager {
     devices: DeviceRegistryEntry[],
   ): void {
     this.deviceRegistry =
-      devices;
+      [...devices];
 
     this.log.info(
       `${devices.length} appareils enregistrés dans le gestionnaire de registres`,
@@ -58,6 +62,24 @@ export class RegistryManager {
   }
 
   public async handleEntityRegistry(
+    entries: EntityRegistryEntry[],
+  ): Promise<void> {
+    const synchronization =
+      this.synchronizationQueue
+        .then(() =>
+          this.synchronizeEntityRegistry(
+            entries,
+          ),
+        );
+
+    this.synchronizationQueue =
+      synchronization
+        .catch(() => undefined);
+
+    await synchronization;
+  }
+
+  private async synchronizeEntityRegistry(
     entries: EntityRegistryEntry[],
   ): Promise<void> {
     if (
@@ -81,6 +103,10 @@ export class RegistryManager {
       this.prepareClimateDevices(
         discoveredClimateDevices,
       );
+
+    this.log.info(
+      `${climateDevices.length} appareils climatiques préparés pour la synchronisation`,
+    );
 
     const synchronizationResult =
       await this.catalogManager

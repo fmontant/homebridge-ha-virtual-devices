@@ -208,6 +208,23 @@ implements DynamicPlatformPlugin {
       'HA Virtual Devices démarré',
     );
 
+    try {
+      await this.deviceCatalog.load();
+
+      this.log.info(
+        `${this.deviceCatalog.getAll().length} appareils chargés depuis le catalogue`,
+      );
+    } catch (error) {
+      this.log.error(
+        'Impossible de charger le catalogue des appareils :',
+        error instanceof Error
+          ? error.message
+          : String(error),
+      );
+
+      return;
+    }
+
     this.log.info(
       'Test de connexion à Home Assistant...',
     );
@@ -268,6 +285,32 @@ implements DynamicPlatformPlugin {
 
     this.homeAssistantWebSocketClient
       .onEntityRegistry(entries => {
+        const climateEntries =
+          entries.filter(entry =>
+            entry.deviceId &&
+            (
+              entry.entityId.includes(
+                'temperature',
+              ) ||
+              entry.entityId.includes(
+                'humidite',
+              ) ||
+              entry.entityId.includes(
+                'humidity',
+              ) ||
+              entry.entityId.includes(
+                'batterie',
+              ) ||
+              entry.entityId.includes(
+                'battery',
+              )
+            ),
+          );
+
+        this.log.info(
+          `${climateEntries.length} entités climatiques détectées`,
+        );
+
         void this.registryManager
           .handleEntityRegistry(
             entries,

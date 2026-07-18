@@ -2,6 +2,7 @@
   "pluginAlias": "HAVirtualDevices",
   "pluginType": "platform",
   "singular": true,
+  "customUi": true,
   "strictValidation": true,
   "schema": {
     "type": "object",
