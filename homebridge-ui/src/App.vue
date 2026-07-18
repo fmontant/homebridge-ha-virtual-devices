@@ -7,6 +7,7 @@ import {
 } from 'vue';
 
 import { catalogApi } from './api/catalogApi';
+import DeviceDetails from './components/DeviceDetails.vue';
 import DeviceRow from './components/DeviceRow.vue';
 import {
   catalogEventListener,
@@ -31,6 +32,18 @@ const selectedDeviceId = ref<string | null>(null);
 
 const sortKey = ref<SortKey | null>(null);
 const sortDirection = ref<SortDirection>('asc');
+
+const selectedDevice = computed<CatalogDevice | null>(() => {
+  if (!selectedDeviceId.value) {
+    return null;
+  }
+
+  return devices.value.find(
+    device =>
+      device.id ===
+      selectedDeviceId.value,
+  ) ?? null;
+});
 
 const availableRooms = computed(() => {
   const rooms = devices.value
@@ -284,6 +297,24 @@ function selectDevice(
     device.id;
 }
 
+function updateDevice(
+  updatedDevice: CatalogDevice,
+): void {
+  const deviceIndex =
+    devices.value.findIndex(
+      device =>
+        device.id ===
+        updatedDevice.id,
+    );
+
+  if (deviceIndex === -1) {
+    return;
+  }
+
+  devices.value[deviceIndex] =
+    updatedDevice;
+}
+
 async function toggleFavorite(
   device: CatalogDevice,
 ): Promise<void> {
@@ -315,17 +346,9 @@ async function toggleFavorite(
   },
 );
 
-    const deviceIndex =
-      devices.value.findIndex(
-        catalogDevice =>
-          catalogDevice.id ===
-          updatedDevice.id,
-      );
-
-    if (deviceIndex !== -1) {
-      devices.value[deviceIndex] =
-        updatedDevice;
-    }
+    updateDevice(
+      updatedDevice,
+    );
   } catch (error: unknown) {
     device.favorite =
       previousFavorite;
@@ -483,7 +506,8 @@ onUnmounted(() => {
       </button>
     </section>
 
-    <section class="catalog">
+    <section class="workspace">
+      <section class="catalog">
       <div class="table-header">
         <button
           type="button"
@@ -581,6 +605,14 @@ onUnmounted(() => {
           }}
         </p>
       </template>
+      </section>
+
+      <section class="details-panel">
+        <DeviceDetails
+          :device="selectedDevice"
+          @updated="updateDevice"
+        />
+      </section>
     </section>
   </main>
 </template>
@@ -724,10 +756,24 @@ onUnmounted(() => {
   opacity: 0.65;
 }
 
-.catalog {
+.workspace {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(320px, 380px);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.catalog,
+.details-panel {
   border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.details-panel {
+  min-height: 420px;
 }
 
 .table-header {
@@ -795,6 +841,23 @@ onUnmounted(() => {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns:
+      minmax(0, 1fr)
+      320px;
+  }
+
+  .table-header {
+    grid-template-columns:
+      90px
+      40px
+      1fr
+      140px
+      110px;
   }
 }
 
