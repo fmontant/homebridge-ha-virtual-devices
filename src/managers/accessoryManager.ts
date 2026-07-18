@@ -4,11 +4,35 @@ import type {
   PlatformAccessory,
 } from 'homebridge';
 
-import type { ClimateAccessory } from '../accessories/climateAccessory.js';
-import type { CatalogSynchronizationResult } from '../catalog/catalogSynchronizationResult.js';
-import type { DeviceCatalog } from '../catalog/deviceCatalog.js';
-import type { AccessoryFactory } from '../factories/accessoryFactory.js';
-import type { ClimateDevice } from '../models/climateDevice.js';
+import {
+  DisplayNameFormatter,
+} from '../utils/displayNameFormatter.js';
+
+
+import type {
+  ClimateAccessory,
+} from '../accessories/climateAccessory.js';
+
+import type {
+  CatalogDevice,
+} from '../catalog/catalogDevice.js';
+
+import type {
+  CatalogSynchronizationResult,
+} from '../catalog/catalogSynchronizationResult.js';
+
+import type {
+  DeviceCatalog,
+} from '../catalog/deviceCatalog.js';
+
+import type {
+  AccessoryFactory,
+} from '../factories/accessoryFactory.js';
+
+import type {
+  ClimateDevice,
+} from '../models/climateDevice.js';
+
 import {
   PLATFORM_NAME,
   PLUGIN_NAME,
@@ -27,10 +51,11 @@ export class AccessoryManager {
   constructor(
     private readonly api: API,
     private readonly log: Logging,
-    private readonly accessoryFactory: AccessoryFactory,
+    private readonly accessoryFactory:
+      AccessoryFactory,
     private readonly accessories:
       Map<string, PlatformAccessory>,
-  ) {}
+  ) { }
 
   public restoreClimateAccessories(
     climateDevices: ClimateDevice[],
@@ -45,6 +70,19 @@ export class AccessoryManager {
       const climateDevice
       of climateDevices
     ) {
+      const catalogDevice =
+        deviceCatalog.get(
+          climateDevice.id,
+        );
+
+      if (!catalogDevice) {
+        this.log.warn(
+          `Appareil absent du catalogue : ${climateDevice.name}`,
+        );
+
+        continue;
+      }
+
       if (
         !deviceCatalog.shouldPublish(
           climateDevice.id,
@@ -57,14 +95,20 @@ export class AccessoryManager {
         unpublishedDeviceCount += 1;
 
         this.log.info(
-          `Appareil non publié selon les préférences : ${climateDevice.name}`,
+          `Appareil non publié selon les préférences : ${catalogDevice.name}`,
         );
 
         continue;
       }
 
+      const publishedDevice =
+        this.createPublishedClimateDevice(
+          climateDevice,
+          catalogDevice,
+        );
+
       this.registerClimateAccessory(
-        climateDevice,
+        publishedDevice,
       );
 
       publishedDeviceCount += 1;
@@ -147,8 +191,14 @@ export class AccessoryManager {
         continue;
       }
 
+      const publishedDevice =
+        this.createPublishedClimateDevice(
+          climateDevice,
+          catalogDevice,
+        );
+
       this.registerClimateAccessory(
-        climateDevice,
+        publishedDevice,
       );
 
       publishedDeviceCount += 1;
@@ -346,7 +396,7 @@ export class AccessoryManager {
 
     return true;
   }
-
+ 
   public removeObsoleteAccessories():
     void {
     const obsoleteAccessories:
@@ -399,6 +449,19 @@ export class AccessoryManager {
     this.activeAccessoryUUIDs.clear();
     this.climateAccessories.clear();
     this.entityIdsByAccessoryUUID.clear();
+  }
+
+  private createPublishedClimateDevice(
+    climateDevice: ClimateDevice,
+    catalogDevice: CatalogDevice,
+  ): ClimateDevice {
+    return {
+      ...climateDevice,
+      name:
+        DisplayNameFormatter.format(
+          catalogDevice.name,
+        ),
+    };
   }
 
   private indexClimateDevices(

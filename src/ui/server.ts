@@ -10,6 +10,10 @@ import {
   DeviceCatalogStore,
 } from '../catalog/deviceCatalogStore.js';
 
+import type {
+  CatalogApiDevice,
+} from './catalogApi.js';
+
 import {
   CatalogApiMapper,
 } from './catalogApiMapper.js';
@@ -28,9 +32,7 @@ interface FavoriteRequestPayload {
 }
 
 interface FavoriteResponsePayload {
-  success: true;
-  id: string;
-  favorite: boolean;
+  device: CatalogApiDevice;
 }
 
 export class HAVirtualDevicesUiServer
@@ -93,12 +95,9 @@ export class HAVirtualDevicesUiServer
 
   private async initialize():
     Promise<void> {
-
     try {
-
-      const
-        homebridgeStoragePath =
-          this.homebridgeStoragePath;
+      const homebridgeStoragePath =
+        this.homebridgeStoragePath;
 
       if (
         !homebridgeStoragePath
@@ -137,9 +136,7 @@ export class HAVirtualDevicesUiServer
       this.ready();
 
       await this.publishCatalog();
-
     } catch (error) {
-
       console.error(
         'Impossible d’initialiser la surveillance du catalogue :',
         error instanceof Error
@@ -153,7 +150,6 @@ export class HAVirtualDevicesUiServer
 
   private startCatalogWatcher():
     void {
-
     if (
       !this.catalogDirectoryPath
     ) {
@@ -181,7 +177,6 @@ export class HAVirtualDevicesUiServer
 
   private scheduleCatalogPublication():
     void {
-
     if (
       this.publicationTimer
     ) {
@@ -193,19 +188,17 @@ export class HAVirtualDevicesUiServer
     this.publicationTimer =
       setTimeout(
         () => {
-
           this.publicationTimer =
             undefined;
 
           void this.publishCatalog();
-
         },
         250,
       );
   }
 
-  private async loadCatalog() {
-
+  private async loadCatalog():
+    Promise<CatalogApiDevice[]> {
     if (
       !this.catalogStore
     ) {
@@ -236,7 +229,6 @@ export class HAVirtualDevicesUiServer
   private async setDeviceFavorite(
     payload: unknown,
   ): Promise<FavoriteResponsePayload> {
-
     if (
       !this.catalogStore
     ) {
@@ -278,19 +270,17 @@ export class HAVirtualDevicesUiServer
     await this.publishCatalog();
 
     return {
-      success:
-        true,
-      id:
-        request.id,
-      favorite:
-        request.favorite,
+      device:
+        this.catalogApiMapper
+          .toApiDevice(
+            device,
+          ),
     };
   }
 
   private parseFavoriteRequest(
     payload: unknown,
   ): FavoriteRequestPayload {
-
     if (
       typeof payload !==
         'object' ||
@@ -308,7 +298,7 @@ export class HAVirtualDevicesUiServer
 
     if (
       typeof request.id !==
-      'string'
+        'string'
     ) {
       throw new Error(
         'Identifiant invalide',
@@ -317,7 +307,7 @@ export class HAVirtualDevicesUiServer
 
     if (
       typeof request.favorite !==
-      'boolean'
+        'boolean'
     ) {
       throw new Error(
         'Valeur favorite invalide',
@@ -334,7 +324,6 @@ export class HAVirtualDevicesUiServer
 
   private async publishCatalog():
     Promise<void> {
-
     if (
       !this.catalogStore
     ) {
@@ -342,7 +331,6 @@ export class HAVirtualDevicesUiServer
     }
 
     try {
-
       const devices =
         await this.loadCatalog();
 
@@ -350,9 +338,7 @@ export class HAVirtualDevicesUiServer
         .publish(
           devices,
         );
-
     } catch (error) {
-
       console.error(
         'Impossible de publier la mise à jour du catalogue :',
         error instanceof Error

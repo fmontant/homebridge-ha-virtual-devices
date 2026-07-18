@@ -153,6 +153,16 @@ Promise<void> {
     const loadedDevices =
       await catalogApi
         .getDevices();
+        console.log(
+  '[Catalogue chargé]',
+  loadedDevices.map(
+    device => ({
+      id: device.id,
+      name: device.name,
+      favorite: device.favorite,
+    }),
+  ),
+);
 
     devices.value =
       loadedDevices;
@@ -296,6 +306,14 @@ async function toggleFavorite(
           device.id,
           favorite,
         );
+      console.log(
+  '[Réponse favori]',
+  {
+    id: updatedDevice.id,
+    name: updatedDevice.name,
+    favorite: updatedDevice.favorite,
+  },
+);
 
     const deviceIndex =
       devices.value.findIndex(

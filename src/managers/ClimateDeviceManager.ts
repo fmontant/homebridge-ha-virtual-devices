@@ -1,6 +1,9 @@
 import type { Logging } from 'homebridge';
 
 import type { ClimateDevice } from '../models/climateDevice.js';
+import {
+  DisplayNameFormatter,
+} from '../utils/displayNameFormatter.js';
 
 export interface HomeAssistantState {
   entity_id: string;
@@ -70,7 +73,7 @@ export class ClimateDeviceManager {
       id: device.id,
 
       name:
-        this.normalizeDeviceName(
+        DisplayNameFormatter.format(
           resolvedName,
         ),
 
@@ -117,32 +120,6 @@ export class ClimateDeviceManager {
       serialNumber:
         device.serialNumber,
     };
-  }
-
-  private normalizeDeviceName(
-    name: string,
-  ): string {
-    const normalizedName =
-      name
-        .replace(/_/g, ' ')
-        .replace(
-          /^(température|temperature)\s+/i,
-          '',
-        )
-        .replace(
-          /\s+(température|temperature)$/i,
-          '',
-        )
-        .trim();
-
-    if (normalizedName.length === 0) {
-      return name;
-    }
-
-    return (
-      normalizedName.charAt(0).toUpperCase() +
-      normalizedName.slice(1)
-    );
   }
 
   private readNumericState(
