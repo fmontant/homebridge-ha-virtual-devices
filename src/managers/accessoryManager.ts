@@ -8,9 +8,6 @@ import {
   DisplayNameFormatter,
 } from '../utils/displayNameFormatter.js';
 
-import type {
-  ClimateAccessory,
-} from '../accessories/climateAccessory.js';
 
 import type {
   CatalogDevice,
@@ -41,18 +38,16 @@ import type {
   CatalogManager,
 } from './catalogManager.js';
 
+import {
+  AccessoryEntityIndex,
+} from './accessoryEntityIndex.js';
+
 export class AccessoryManager {
   private readonly activeAccessoryUUIDs =
     new Set<string>();
 
-  private readonly climateAccessories =
-    new Map<string, ClimateAccessory>();
-
-  private readonly deviceIdsByEntityId =
-    new Map<string, string>();
-
-  private readonly entityIdsByAccessoryUUID =
-    new Map<string, Set<string>>();
+  private readonly entityIndex =
+    new AccessoryEntityIndex();
 
   constructor(
     private readonly api: API,
@@ -225,29 +220,11 @@ export class AccessoryManager {
       }
     }
 
-    if (
-      publishedDeviceCount > 0
-    ) {
-      this.log.info(
-        `${publishedDeviceCount} accessoires climatiques synchronisés`,
-      );
-    }
-
-    if (
-      unpublishedDeviceCount > 0
-    ) {
-      this.log.info(
-        `${unpublishedDeviceCount} appareils non publiés selon les préférences`,
-      );
-    }
-
-    if (
-      missingDeviceCount > 0
-    ) {
-      this.log.info(
-        `${missingDeviceCount} accessoires climatiques supprimés car absents`,
-      );
-    }
+    this.logClimateSynchronizationSummary(
+      publishedDeviceCount,
+      unpublishedDeviceCount,
+      missingDeviceCount,
+    );
   }
 
   public registerClimateAccessory(
@@ -262,7 +239,7 @@ export class AccessoryManager {
       uuid,
     );
 
-    this.removeEntityMappings(
+    this.entityIndex.removeAccessory(
       uuid,
     );
 
@@ -334,7 +311,7 @@ export class AccessoryManager {
         device,
       )
     ) {
-      this.registerEntity(
+      this.entityIndex.register(
         entityId,
         device.id,
         uuid,
@@ -360,7 +337,7 @@ export class AccessoryManager {
       uuid,
     );
 
-    this.removeEntityMappings(
+    this.entityIndex.removeAccessory(
       uuid,
     );
 
@@ -390,7 +367,7 @@ export class AccessoryManager {
     value: number,
   ): boolean {
     const accessory =
-      this.climateAccessories.get(
+      this.entityIndex.getAccessory(
         entityId,
       );
 
@@ -411,18 +388,18 @@ export class AccessoryManager {
     available: boolean,
   ): boolean {
     const accessory =
-      this.climateAccessories.get(
+      this.entityIndex.getAccessory(
         entityId,
       );
 
     const deviceId =
-      this.deviceIdsByEntityId.get(
+      this.entityIndex.getDeviceId(
         entityId,
       );
 
     if (
       !accessory ||
-    !deviceId
+      !deviceId
     ) {
       return false;
     }
@@ -474,7 +451,7 @@ export class AccessoryManager {
         uuid,
       );
 
-      this.removeEntityMappings(
+      this.entityIndex.removeAccessory(
         uuid,
       );
 
@@ -499,9 +476,37 @@ export class AccessoryManager {
   public clearDiscoveryState():
     void {
     this.activeAccessoryUUIDs.clear();
-    this.climateAccessories.clear();
-    this.deviceIdsByEntityId.clear();
-    this.entityIdsByAccessoryUUID.clear();
+    this.entityIndex.clear();
+  }
+
+  private logClimateSynchronizationSummary(
+    publishedDeviceCount: number,
+    unpublishedDeviceCount: number,
+    missingDeviceCount: number,
+  ): void {
+    if (
+      publishedDeviceCount > 0
+    ) {
+      this.log.info(
+        `${publishedDeviceCount} accessoires climatiques synchronisés`,
+      );
+    }
+
+    if (
+      unpublishedDeviceCount > 0
+    ) {
+      this.log.info(
+        `${unpublishedDeviceCount} appareils non publiés selon les préférences`,
+      );
+    }
+
+    if (
+      missingDeviceCount > 0
+    ) {
+      this.log.info(
+        `${missingDeviceCount} accessoires climatiques supprimés car absents`,
+      );
+    }
   }
 
   private createPublishedClimateDevice(
@@ -554,69 +559,5 @@ export class AccessoryManager {
     );
   }
 
-  private registerEntity(
-    entityId: string,
-    deviceId: string,
-    accessoryUUID: string,
-    accessory: ClimateAccessory,
-  ): void {
-    this.climateAccessories.set(
-      entityId,
-      accessory,
-    );
 
-    this.deviceIdsByEntityId.set(
-      entityId,
-      deviceId,
-    );
-
-    let registeredEntityIds =
-      this.entityIdsByAccessoryUUID.get(
-        accessoryUUID,
-      );
-
-    if (!registeredEntityIds) {
-      registeredEntityIds =
-        new Set<string>();
-
-      this.entityIdsByAccessoryUUID.set(
-        accessoryUUID,
-        registeredEntityIds,
-      );
-    }
-
-    registeredEntityIds.add(
-      entityId,
-    );
-  }
-
-  private removeEntityMappings(
-    accessoryUUID: string,
-  ): void {
-    const entityIds =
-      this.entityIdsByAccessoryUUID.get(
-        accessoryUUID,
-      );
-
-    if (!entityIds) {
-      return;
-    }
-
-    for (
-      const entityId
-      of entityIds
-    ) {
-      this.climateAccessories.delete(
-        entityId,
-      );
-
-      this.deviceIdsByEntityId.delete(
-        entityId,
-      );
-    }
-
-    this.entityIdsByAccessoryUUID.delete(
-      accessoryUUID,
-    );
-  }
 }

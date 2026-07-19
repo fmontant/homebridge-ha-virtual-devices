@@ -48,6 +48,32 @@ export class DeviceCatalog {
     const discoveredIds =
       new Set<string>();
 
+    this.processDiscoveredDevices(
+      discoveredDevices,
+      discoveredIds,
+      now,
+      result,
+    );
+
+    this.markMissingDevices(
+      discoveredIds,
+      now,
+      result,
+    );
+
+    return result;
+  }
+
+  private processDiscoveredDevices(
+    discoveredDevices:
+      DiscoveredCatalogDevice[],
+    discoveredIds:
+      Set<string>,
+    now:
+      string,
+    result:
+      CatalogSynchronizationResult,
+  ): void {
     for (
       const discoveredDevice
       of discoveredDevices
@@ -110,7 +136,16 @@ export class DeviceCatalog {
         existingDevice,
       );
     }
+  }
 
+  private markMissingDevices(
+    discoveredIds:
+      Set<string>,
+    now:
+      string,
+    result:
+      CatalogSynchronizationResult,
+  ): void {
     for (
       const existingDevice
       of this.devices.values()
@@ -143,8 +178,6 @@ export class DeviceCatalog {
         existingDevice,
       );
     }
-
-    return result;
   }
 
   public getAll():
@@ -319,6 +352,7 @@ export class DeviceCatalog {
       },
     );
   }
+
   public async setAvailability(
     id: string,
     available: boolean,
