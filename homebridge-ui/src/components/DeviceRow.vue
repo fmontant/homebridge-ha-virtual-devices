@@ -29,6 +29,20 @@ const badgeClass = {
   hidden: 'badge-hidden',
   missing: 'badge-missing',
 };
+
+const availabilityLabel = (
+  device: CatalogDevice,
+): string =>
+  device.available
+    ? labels[device.state]
+    : 'Hors ligne';
+
+const availabilityClass = (
+  device: CatalogDevice,
+): string =>
+  device.available
+    ? badgeClass[device.state]
+    : 'badge-offline';
 </script>
 
 <template>
@@ -43,11 +57,11 @@ const badgeClass = {
     @keydown.space.prevent="emit('click')"
   >
     <span
-      class="badge"
-      :class="badgeClass[device.state]"
-    >
-      {{ labels[device.state] }}
-    </span>
+  class="badge"
+  :class="availabilityClass(device)"
+>
+  {{ availabilityLabel(device) }}
+</span>
 
     <button
       type="button"
@@ -74,7 +88,6 @@ const badgeClass = {
 .device-row {
   display: grid;
   grid-template-columns: 100px 40px 1fr 180px 150px;
-  gap: 12px;
   align-items: center;
   padding: 12px 16px;
   border-bottom: 1px solid #ececec;
@@ -133,6 +146,11 @@ const badgeClass = {
 .badge-missing {
   background: #ffebee;
   color: #c62828;
+}
+
+.badge-offline {
+  background: #ffebee;
+  color: #b71c1c;
 }
 
 .favorite-button {

@@ -66,14 +66,14 @@ export class CatalogSorter {
     switch (
       device.state
     ) {
-      case CatalogDeviceState.Enabled:
-        return 1;
+    case CatalogDeviceState.Enabled:
+      return 1;
 
-      case CatalogDeviceState.Missing:
-        return 2;
+    case CatalogDeviceState.Missing:
+      return 2;
 
-      default:
-        return 3;
+    default:
+      return 3;
     }
   }
 }

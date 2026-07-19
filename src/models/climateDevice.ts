@@ -9,6 +9,7 @@ extends Device {
   temperature?: number;
   humidity?: number;
   batteryLevel?: number;
+  available: boolean;
 
   manufacturer?: string;
   model?: string;

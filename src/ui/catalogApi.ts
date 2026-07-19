@@ -24,6 +24,8 @@ export interface CatalogApiDevice {
   metadata: DeviceMetadata;
   preferences: DevicePreferences;
   timestamps: DeviceTimestamps;
+  available: boolean;
+  lastCommunication?: string;
   publishable: boolean;
 }
 

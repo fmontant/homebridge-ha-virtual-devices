@@ -8,7 +8,6 @@ import {
   DisplayNameFormatter,
 } from '../utils/displayNameFormatter.js';
 
-
 import type {
   ClimateAccessory,
 } from '../accessories/climateAccessory.js';
@@ -38,12 +37,19 @@ import {
   PLUGIN_NAME,
 } from '../settings.js';
 
+import type {
+  CatalogManager,
+} from './catalogManager.js';
+
 export class AccessoryManager {
   private readonly activeAccessoryUUIDs =
     new Set<string>();
 
   private readonly climateAccessories =
     new Map<string, ClimateAccessory>();
+
+  private readonly deviceIdsByEntityId =
+    new Map<string, string>();
 
   private readonly entityIdsByAccessoryUUID =
     new Map<string, Set<string>>();
@@ -55,6 +61,8 @@ export class AccessoryManager {
       AccessoryFactory,
     private readonly accessories:
       Map<string, PlatformAccessory>,
+    private readonly catalogManager:
+      CatalogManager,
   ) { }
 
   public restoreClimateAccessories(
@@ -328,6 +336,7 @@ export class AccessoryManager {
     ) {
       this.registerEntity(
         entityId,
+        device.id,
         uuid,
         climateAccessory,
       );
@@ -396,7 +405,50 @@ export class AccessoryManager {
 
     return true;
   }
- 
+
+  public updateAvailability(
+    entityId: string,
+    available: boolean,
+  ): boolean {
+    const accessory =
+      this.climateAccessories.get(
+        entityId,
+      );
+
+    const deviceId =
+      this.deviceIdsByEntityId.get(
+        entityId,
+      );
+
+    if (
+      !accessory ||
+    !deviceId
+    ) {
+      return false;
+    }
+
+    accessory.updateAvailability(
+      entityId,
+      available,
+    );
+
+    void this.catalogManager
+      .setAvailability(
+        deviceId,
+        available,
+      )
+      .catch(error => {
+        this.log.error(
+          `Impossible de mettre à jour la disponibilité de ${deviceId} :`,
+          error instanceof Error
+            ? error.message
+            : String(error),
+        );
+      });
+
+    return true;
+  }
+
   public removeObsoleteAccessories():
     void {
     const obsoleteAccessories:
@@ -448,6 +500,7 @@ export class AccessoryManager {
     void {
     this.activeAccessoryUUIDs.clear();
     this.climateAccessories.clear();
+    this.deviceIdsByEntityId.clear();
     this.entityIdsByAccessoryUUID.clear();
   }
 
@@ -503,12 +556,18 @@ export class AccessoryManager {
 
   private registerEntity(
     entityId: string,
+    deviceId: string,
     accessoryUUID: string,
     accessory: ClimateAccessory,
   ): void {
     this.climateAccessories.set(
       entityId,
       accessory,
+    );
+
+    this.deviceIdsByEntityId.set(
+      entityId,
+      deviceId,
     );
 
     let registeredEntityIds =
@@ -548,6 +607,10 @@ export class AccessoryManager {
       of entityIds
     ) {
       this.climateAccessories.delete(
+        entityId,
+      );
+
+      this.deviceIdsByEntityId.delete(
         entityId,
       );
     }

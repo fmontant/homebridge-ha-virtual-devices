@@ -324,6 +324,10 @@ export class HAVirtualDevicesUiServer
 
   private async publishCatalog():
     Promise<void> {
+    console.log(
+      '[UI] publishCatalog déclenché',
+    );
+
     if (
       !this.catalogStore
     ) {

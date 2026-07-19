@@ -36,6 +36,155 @@ const canEditState = computed(
   () => props.device?.state !== 'missing',
 );
 
+const stateLabel = computed(
+  () => {
+    switch (props.device?.state) {
+      case 'enabled':
+        return 'Actif';
+
+      case 'disabled':
+        return 'Désactivé';
+
+      case 'hidden':
+        return 'Masqué';
+
+      case 'missing':
+        return 'Manquant';
+
+      default:
+        return '';
+    }
+  },
+);
+
+const stateClass = computed(
+  () => {
+    switch (props.device?.state) {
+      case 'enabled':
+        return 'state-enabled';
+
+      case 'disabled':
+        return 'state-disabled';
+
+      case 'hidden':
+        return 'state-hidden';
+
+      case 'missing':
+        return 'state-missing';
+
+      default:
+        return '';
+    }
+  },
+);
+
+const displayedStateLabel = computed(
+  () =>
+    props.device?.available === false
+      ? 'Hors ligne'
+      : stateLabel.value,
+);
+
+const displayedStateClass = computed(
+  () =>
+    props.device?.available === false
+      ? 'state-offline'
+      : stateClass.value,
+);
+
+const displayedRoom = computed(
+  () => room.value.trim(),
+);
+
+function formatDate(
+  value?: string,
+): string {
+  if (!value) {
+    return '—';
+  }
+
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime(),
+    )
+  ) {
+    return value;
+  }
+
+  return date.toLocaleString(
+    'fr-FR',
+  );
+}
+
+function getCapabilityLabel(
+  capability: string,
+): string {
+  switch (capability) {
+    case 'temperature':
+      return 'Température';
+
+    case 'humidity':
+      return 'Humidité';
+
+    case 'battery':
+      return 'Batterie';
+
+    case 'pressure':
+      return 'Pression';
+
+    case 'illuminance':
+      return 'Luminosité';
+
+    case 'airQuality':
+      return 'Qualité de l’air';
+
+    case 'co2':
+      return 'CO₂';
+
+    case 'voc':
+      return 'COV';
+
+    default:
+      return capability;
+  }
+}
+
+function getCapabilityIcon(
+  capability: string,
+): string {
+  switch (capability) {
+    case 'temperature':
+      return '🌡️';
+
+    case 'humidity':
+      return '💧';
+
+    case 'battery':
+      return '🔋';
+
+    case 'pressure':
+      return '🧭';
+
+    case 'illuminance':
+      return '☀️';
+
+    case 'airQuality':
+      return '🍃';
+
+    case 'co2':
+      return '💨';
+
+    case 'voc':
+      return '🫧';
+
+    default:
+      return '•';
+  }
+}
+
 watch(
   () => props.device,
   device => {
@@ -128,117 +277,177 @@ function getErrorMessage(
         <div>
           <h2>{{ device.name }}</h2>
           <p>{{ device.source }}</p>
+
+          <p
+            v-if="displayedRoom"
+            class="room"
+          >
+            {{ displayedRoom }}
+          </p>
         </div>
 
-        <span class="state">
-          {{ device.state }}
-        </span>
+        <span
+  class="state"
+  :class="displayedStateClass"
+>
+  {{ displayedStateLabel }}
+</span>
       </header>
 
-      <form
-        class="card preferences-form"
-        @submit.prevent="savePreferences"
+      <details
+        class="card"
+        open
       >
-        <h3>Préférences</h3>
+        <summary>
+          Préférences
+        </summary>
 
-        <label class="field">
-          <span>Pièce</span>
-
-          <input
-            v-model="room"
-            type="text"
-            placeholder="Aucune pièce"
-          />
-        </label>
-
-        <label class="checkbox-field">
-          <input
-            v-model="favorite"
-            type="checkbox"
-          />
-
-          <span>Appareil favori</span>
-        </label>
-
-        <label class="checkbox-field">
-          <input
-            v-model="enabled"
-            type="checkbox"
-            :disabled="!canEditState"
-          />
-
-          <span>Appareil actif</span>
-        </label>
-
-        <label class="checkbox-field">
-          <input
-            v-model="hidden"
-            type="checkbox"
-            :disabled="!canEditState"
-          />
-
-          <span>Masquer dans le catalogue</span>
-        </label>
-
-        <p
-          v-if="!canEditState"
-          class="information-message"
+        <form
+          class="preferences-form"
+          @submit.prevent="savePreferences"
         >
-          L’état d’un appareil manquant ne peut pas être modifié.
-        </p>
+          <label class="field">
+            <span>Pièce</span>
 
-        <p
-          v-if="errorMessage"
-          class="error-message"
-          role="alert"
-        >
-          {{ errorMessage }}
-        </p>
+            <input
+              v-model="room"
+              type="text"
+              placeholder="Aucune pièce"
+            />
+          </label>
 
-        <p
-          v-if="successMessage"
-          class="success-message"
-          role="status"
-        >
-          {{ successMessage }}
-        </p>
+          <div class="checkbox-grid">
+            <label class="checkbox-field">
+              <input
+                v-model="favorite"
+                type="checkbox"
+              />
 
-        <button
-          type="submit"
-          :disabled="saving"
-        >
-          {{
-            saving
-              ? 'Enregistrement…'
-              : 'Enregistrer'
-          }}
-        </button>
-      </form>
+              <span>Appareil favori</span>
+            </label>
 
-      <section class="card">
-        <h3>Général</h3>
+            <label class="checkbox-field">
+              <input
+                v-model="enabled"
+                type="checkbox"
+                :disabled="!canEditState"
+              />
+
+              <span>Appareil actif</span>
+            </label>
+
+            <label class="checkbox-field">
+              <input
+                v-model="hidden"
+                type="checkbox"
+                :disabled="!canEditState"
+              />
+
+              <span>Masquer dans le catalogue</span>
+            </label>
+          </div>
+
+          <p
+            v-if="!canEditState"
+            class="information-message"
+          >
+            L’état d’un appareil manquant ne peut pas être modifié.
+          </p>
+
+          <p
+            v-if="errorMessage"
+            class="error-message"
+            role="alert"
+          >
+            {{ errorMessage }}
+          </p>
+
+          <p
+            v-if="successMessage"
+            class="success-message"
+            role="status"
+          >
+            {{ successMessage }}
+          </p>
+
+          <button
+            type="submit"
+            :disabled="saving"
+          >
+            {{
+              saving
+                ? 'Enregistrement…'
+                : 'Enregistrer'
+            }}
+          </button>
+        </form>
+      </details>
+
+      <details
+        class="card"
+        open
+      >
+        <summary>
+          Général
+        </summary>
 
         <dl>
           <dt>Identifiant</dt>
           <dd>{{ device.id }}</dd>
 
           <dt>État</dt>
-          <dd>{{ device.state }}</dd>
+<dd>{{ stateLabel }}</dd>
+
+<dt>Disponibilité</dt>
+<dd>
+  {{
+    device.available
+      ? 'Disponible'
+      : 'Hors ligne'
+  }}
+</dd>
+
+<dt>Dernière communication</dt>
+<dd>
+  {{ formatDate(device.lastCommunication) }}
+</dd>
         </dl>
-      </section>
+      </details>
 
-      <section class="card">
-        <h3>Capacités</h3>
+      <details
+        class="card"
+        open
+      >
+        <summary>
+          Capacités
+        </summary>
 
-        <ul>
-          <li
+        <div class="capability-list">
+          <span
             v-for="capability in device.capabilities"
             :key="capability"
+            class="capability"
           >
-            {{ capability }}
-          </li>
-        </ul>
-      </section>
+            <span
+              class="capability-icon"
+              aria-hidden="true"
+            >
+              {{ getCapabilityIcon(capability) }}
+            </span>
+
+            <span>
+              {{ getCapabilityLabel(capability) }}
+            </span>
+          </span>
+
+          <span
+            v-if="device.capabilities.length === 0"
+            class="empty-capabilities"
+          >
+            Aucune capacité détectée.
+          </span>
+        </div>
+      </details>
     </template>
 
     <div
@@ -254,9 +463,9 @@ function getErrorMessage(
 .details {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   height: 100%;
-  padding: 20px;
+  padding: 16px;
 }
 
 .details-header {
@@ -268,6 +477,7 @@ function getErrorMessage(
 
 .details-header h2 {
   margin: 0 0 4px;
+  font-size: 20px;
 }
 
 .details-header p {
@@ -275,28 +485,73 @@ function getErrorMessage(
   color: #6b7280;
 }
 
+.details-header .room {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .state {
-  padding: 4px 8px;
+  flex-shrink: 0;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: #f3f4f6;
   font-size: 12px;
   font-weight: 600;
 }
 
-.card {
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+.state-enabled {
+  background: #e8f5e9;
+  color: #2e7d32;
 }
 
-.card h3 {
-  margin: 0 0 16px;
+.state-disabled {
+  background: #eeeeee;
+  color: #616161;
+}
+
+.state-hidden {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.state-missing {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.state-offline {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.card summary {
+  padding: 13px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  user-select: none;
+}
+
+.card[open] summary {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.card summary:focus-visible {
+  border-radius: 10px;
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
 }
 
 .preferences-form {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding: 16px;
 }
 
 .field {
@@ -316,6 +571,11 @@ function getErrorMessage(
   border-radius: 6px;
   color: inherit;
   font: inherit;
+}
+
+.checkbox-grid {
+  display: grid;
+  gap: 10px;
 }
 
 .checkbox-field {
@@ -361,9 +621,14 @@ function getErrorMessage(
 
 dl {
   display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 8px;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 8px 16px;
   margin: 0;
+  padding: 16px;
+}
+
+dt {
+  font-weight: 600;
 }
 
 dd {
@@ -372,16 +637,37 @@ dd {
   overflow-wrap: anywhere;
 }
 
-ul {
-  margin: 0;
-  padding-left: 20px;
+.capability-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px;
+}
+
+.capability {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  font-size: 13px;
+}
+
+.capability-icon {
+  line-height: 1;
+}
+
+.empty-capabilities {
+  color: #6b7280;
+  font-size: 14px;
 }
 
 .empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  min-height: 220px;
   color: #6b7280;
   text-align: center;
 }

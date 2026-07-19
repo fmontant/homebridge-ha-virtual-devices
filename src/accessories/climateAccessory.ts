@@ -3,6 +3,8 @@ import type {
   Service,
 } from 'homebridge';
 
+
+
 import type { ClimateDevice } from '../models/climateDevice.js';
 import type { HAVirtualDevicesPlatform } from '../platform.js';
 
@@ -15,21 +17,21 @@ export class ClimateAccessory {
   private readonly includeBattery: boolean;
 
   constructor(
-        private readonly platform:
-            HAVirtualDevicesPlatform,
-        private readonly accessory:
-            PlatformAccessory,
+    private readonly platform:
+      HAVirtualDevicesPlatform,
+    private readonly accessory:
+      PlatformAccessory,
   ) {
     this.device =
-            accessory.context.device as ClimateDevice;
+      accessory.context.device as ClimateDevice;
 
     this.includeHumidity =
-            this.platform.config
-              .includeHumidity !== false;
+      this.platform.config
+        .includeHumidity !== false;
 
     this.includeBattery =
-            this.platform.config
-              .includeBattery !== false;
+      this.platform.config
+        .includeBattery !== false;
 
     this.platform.log.info(
       `Configuration de la tuile HomeKit : ${this.device.name}`,
@@ -41,7 +43,7 @@ export class ClimateAccessory {
     this.removeSeparateBatteryService();
 
     this.thermostatService =
-            this.configureThermostatService();
+      this.configureThermostatService();
 
     this.thermostatService
       .setPrimaryService();
@@ -55,7 +57,7 @@ export class ClimateAccessory {
   ): void {
     if (
       entityId ===
-            this.device.temperatureEntity
+      this.device.temperatureEntity
     ) {
       this.updateTemperature(value);
       return;
@@ -63,8 +65,8 @@ export class ClimateAccessory {
 
     if (
       this.includeHumidity &&
-            entityId ===
-            this.device.humidityEntity
+      entityId ===
+      this.device.humidityEntity
     ) {
       this.updateHumidity(value);
       return;
@@ -72,13 +74,89 @@ export class ClimateAccessory {
 
     if (
       this.includeBattery &&
-            entityId ===
-            this.device.batteryEntity
+      entityId ===
+      this.device.batteryEntity
     ) {
       this.updateBattery(value);
     }
   }
 
+  public updateAvailability(
+    entityId: string,
+    available: boolean,
+  ): void {
+    this.thermostatService
+      .updateCharacteristic(
+        this.platform.Characteristic
+          .StatusActive,
+        available,
+      );
+
+    this.thermostatService
+      .updateCharacteristic(
+        this.platform.Characteristic
+          .StatusFault,
+        available
+          ? this.platform.Characteristic
+            .StatusFault.NO_FAULT
+          : this.platform.Characteristic
+            .StatusFault.GENERAL_FAULT,
+      );
+
+    if (available) {
+      return;
+    }
+
+    const error =
+    new this.platform.api.hap
+      .HapStatusError(
+        this.platform.api.hap
+          .HAPStatus
+          .SERVICE_COMMUNICATION_FAILURE,
+      );
+
+    if (
+      entityId ===
+    this.device.temperatureEntity
+    ) {
+      this.thermostatService
+        .getCharacteristic(
+          this.platform.Characteristic
+            .CurrentTemperature,
+        )
+        .updateValue(error);
+
+      return;
+    }
+
+    if (
+      this.includeHumidity &&
+    entityId ===
+    this.device.humidityEntity
+    ) {
+      this.thermostatService
+        .getCharacteristic(
+          this.platform.Characteristic
+            .CurrentRelativeHumidity,
+        )
+        .updateValue(error);
+
+      return;
+    }
+
+    if (
+      this.includeBattery &&
+    entityId ===
+    this.device.batteryEntity
+    ) {
+      this.thermostatService
+        .getCharacteristic(
+          this.platform.Characteristic
+            .BatteryLevel,
+        )
+        .updateValue(error);
+    }
+  }
   public updateTemperature(
     temperature: number,
   ): void {
@@ -87,13 +165,13 @@ export class ClimateAccessory {
     }
 
     const normalizedTemperature =
-            Math.min(
-              100,
-              Math.max(
-                -270,
-                temperature,
-              ),
-            );
+      Math.min(
+        100,
+        Math.max(
+          -270,
+          temperature,
+        ),
+      );
 
     this.thermostatService
       .updateCharacteristic(
@@ -104,7 +182,7 @@ export class ClimateAccessory {
 
     this.platform.log.debug(
       `${this.device.name} : ` +
-            `${normalizedTemperature} °C`,
+      `${normalizedTemperature} °C`,
     );
   }
 
@@ -113,20 +191,20 @@ export class ClimateAccessory {
   ): void {
     if (
       !this.includeHumidity ||
-            !this.device.humidityEntity ||
-            !Number.isFinite(humidity)
+      !this.device.humidityEntity ||
+      !Number.isFinite(humidity)
     ) {
       return;
     }
 
     const normalizedHumidity =
-            Math.min(
-              100,
-              Math.max(
-                0,
-                humidity,
-              ),
-            );
+      Math.min(
+        100,
+        Math.max(
+          0,
+          humidity,
+        ),
+      );
 
     this.thermostatService
       .updateCharacteristic(
@@ -137,7 +215,7 @@ export class ClimateAccessory {
 
     this.platform.log.debug(
       `${this.device.name} : ` +
-            `${normalizedHumidity} %`,
+      `${normalizedHumidity} %`,
     );
   }
 
@@ -146,31 +224,31 @@ export class ClimateAccessory {
   ): void {
     if (
       !this.includeBattery ||
-            !this.device.batteryEntity ||
-            !Number.isFinite(batteryLevel)
+      !this.device.batteryEntity ||
+      !Number.isFinite(batteryLevel)
     ) {
       return;
     }
 
     const normalizedBattery =
-            Math.round(
-              Math.min(
-                100,
-                Math.max(
-                  0,
-                  batteryLevel,
-                ),
-              ),
-            );
+      Math.round(
+        Math.min(
+          100,
+          Math.max(
+            0,
+            batteryLevel,
+          ),
+        ),
+      );
 
     const lowBatteryStatus =
-            normalizedBattery <= 20
-              ? this.platform.Characteristic
-                .StatusLowBattery
-                .BATTERY_LEVEL_LOW
-              : this.platform.Characteristic
-                .StatusLowBattery
-                .BATTERY_LEVEL_NORMAL;
+      normalizedBattery <= 20
+        ? this.platform.Characteristic
+          .StatusLowBattery
+          .BATTERY_LEVEL_LOW
+        : this.platform.Characteristic
+          .StatusLowBattery
+          .BATTERY_LEVEL_NORMAL;
 
     this.thermostatService
       .updateCharacteristic(
@@ -193,82 +271,82 @@ export class ClimateAccessory {
 
     this.platform.log.debug(
       `${this.device.name} : ` +
-            `batterie intégrée ${normalizedBattery} %`,
+      `batterie intégrée ${normalizedBattery} %`,
     );
   }
 
   private configureAccessoryInformation():
-        void {
+  void {
     const manufacturer =
-            this.device.manufacturer ??
-            'HA Virtual Devices';
+      this.device.manufacturer ??
+      'HA Virtual Devices';
 
     const model =
-            this.device.model ??
-            'Home Assistant Climate Sensor';
+      this.device.model ??
+      'Home Assistant Climate Sensor';
 
     const serialNumber =
-            this.device.serialNumber ??
-            this.device.id;
+      this.device.serialNumber ??
+      this.device.id;
 
     const softwareVersion =
-            this.device.softwareVersion ??
-            'Non renseignée';
+      this.device.softwareVersion ??
+      'Non renseignée';
 
     const hardwareVersion =
-            this.device.hardwareVersion ??
-            'Non renseignée';
+      this.device.hardwareVersion ??
+      'Non renseignée';
 
-        this.accessory
-          .getService(
-            this.platform.Service
-              .AccessoryInformation,
-          )!
-          .setCharacteristic(
-            this.platform.Characteristic
-              .Manufacturer,
-            manufacturer,
-          )
-          .setCharacteristic(
-            this.platform.Characteristic
-              .Model,
-            model,
-          )
-          .setCharacteristic(
-            this.platform.Characteristic
-              .SerialNumber,
-            serialNumber,
-          )
-          .setCharacteristic(
-            this.platform.Characteristic
-              .FirmwareRevision,
-            softwareVersion,
-          )
-          .setCharacteristic(
-            this.platform.Characteristic
-              .HardwareRevision,
-            hardwareVersion,
-          );
+    this.accessory
+      .getService(
+        this.platform.Service
+          .AccessoryInformation,
+      )!
+      .setCharacteristic(
+        this.platform.Characteristic
+          .Manufacturer,
+        manufacturer,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .Model,
+        model,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .SerialNumber,
+        serialNumber,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .FirmwareRevision,
+        softwareVersion,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .HardwareRevision,
+        hardwareVersion,
+      );
 
-        this.platform.log.info(
-          `${this.device.name} : ` +
-            `${manufacturer}, ${model}, ` +
-            `logiciel ${softwareVersion}, ` +
-            `matériel ${hardwareVersion}`,
-        );
+    this.platform.log.info(
+      `${this.device.name} : ` +
+      `${manufacturer}, ${model}, ` +
+      `logiciel ${softwareVersion}, ` +
+      `matériel ${hardwareVersion}`,
+    );
   }
 
   private configureThermostatService():
-        Service {
+  Service {
     const service =
-            this.accessory.getService(
-              this.platform.Service.Thermostat,
-            ) ??
-            this.accessory.addService(
-              this.platform.Service.Thermostat,
-              this.device.name,
-              'thermostat',
-            );
+      this.accessory.getService(
+        this.platform.Service.Thermostat,
+      ) ??
+      this.accessory.addService(
+        this.platform.Service.Thermostat,
+        this.device.name,
+        'thermostat',
+      );
 
     service
       .setCharacteristic(
@@ -297,6 +375,17 @@ export class ClimateAccessory {
           .TemperatureDisplayUnits,
         this.platform.Characteristic
           .TemperatureDisplayUnits.CELSIUS,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .StatusActive,
+        true,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
+          .StatusFault,
+        this.platform.Characteristic
+          .StatusFault.NO_FAULT,
       );
 
     this.configureHumidityCharacteristic(
@@ -304,9 +393,7 @@ export class ClimateAccessory {
     );
 
     this.configureBatteryCharacteristics(
-
       service,
-
     );
 
     return service;
@@ -316,12 +403,12 @@ export class ClimateAccessory {
     service: Service,
   ): void {
     const humidityCharacteristic =
-            this.platform.Characteristic
-              .CurrentRelativeHumidity;
+      this.platform.Characteristic
+        .CurrentRelativeHumidity;
 
     if (
       this.includeHumidity &&
-            this.device.humidityEntity
+      this.device.humidityEntity
     ) {
       service.addOptionalCharacteristic(
         humidityCharacteristic,
@@ -354,24 +441,25 @@ export class ClimateAccessory {
       `Humidité désactivée : ${this.device.name}`,
     );
   }
+
   private configureBatteryCharacteristics(
     service: Service,
   ): void {
     const batteryLevel =
-            this.platform.Characteristic
-              .BatteryLevel;
+      this.platform.Characteristic
+        .BatteryLevel;
 
     const statusLowBattery =
-            this.platform.Characteristic
-              .StatusLowBattery;
+      this.platform.Characteristic
+        .StatusLowBattery;
 
     const chargingState =
-            this.platform.Characteristic
-              .ChargingState;
+      this.platform.Characteristic
+        .ChargingState;
 
     if (
       this.includeBattery &&
-            this.device.batteryEntity
+      this.device.batteryEntity
     ) {
       service.addOptionalCharacteristic(
         batteryLevel,
@@ -444,13 +532,14 @@ export class ClimateAccessory {
       `Batterie désactivée : ${this.device.name}`,
     );
   }
+
   private removeTemperatureSensorService():
-        void {
+  void {
     const temperatureService =
-            this.accessory.getService(
-              this.platform.Service
-                .TemperatureSensor,
-            );
+      this.accessory.getService(
+        this.platform.Service
+          .TemperatureSensor,
+      );
 
     if (!temperatureService) {
       return;
@@ -466,12 +555,12 @@ export class ClimateAccessory {
   }
 
   private removeSeparateHumidityService():
-        void {
+  void {
     const humidityService =
-            this.accessory.getService(
-              this.platform.Service
-                .HumiditySensor,
-            );
+      this.accessory.getService(
+        this.platform.Service
+          .HumiditySensor,
+      );
 
     if (!humidityService) {
       return;
@@ -487,11 +576,11 @@ export class ClimateAccessory {
   }
 
   private removeSeparateBatteryService():
-        void {
+  void {
     const batteryService =
-            this.accessory.getService(
-              this.platform.Service.Battery,
-            );
+      this.accessory.getService(
+        this.platform.Service.Battery,
+      );
 
     if (!batteryService) {
       return;
@@ -507,10 +596,10 @@ export class ClimateAccessory {
   }
 
   private applyInitialValues():
-        void {
+  void {
     if (
       typeof this.device.temperature ===
-            'number'
+      'number'
     ) {
       this.updateTemperature(
         this.device.temperature,
@@ -519,8 +608,8 @@ export class ClimateAccessory {
 
     if (
       this.includeHumidity &&
-            typeof this.device.humidity ===
-            'number'
+      typeof this.device.humidity ===
+      'number'
     ) {
       this.updateHumidity(
         this.device.humidity,
@@ -529,12 +618,17 @@ export class ClimateAccessory {
 
     if (
       this.includeBattery &&
-            typeof this.device.batteryLevel ===
-            'number'
+      typeof this.device.batteryLevel ===
+      'number'
     ) {
       this.updateBattery(
         this.device.batteryLevel,
       );
     }
+
+    this.updateAvailability(
+      this.device.temperatureEntity,
+      this.device.available,
+    );
   }
 }

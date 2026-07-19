@@ -24,25 +24,47 @@ export class EventManager {
     event: unknown,
   ): void {
     const message =
-      event as HomeAssistantStateChangedEvent;
+    event as HomeAssistantStateChangedEvent;
 
     const entityId =
-      message.event?.data
-        ?.entity_id;
+    message.event?.data
+      ?.entity_id;
 
     const rawState =
-      message.event?.data
-        ?.new_state?.state;
+    message.event?.data
+      ?.new_state?.state;
 
     if (
       !entityId ||
-      rawState === undefined
+    rawState === undefined
     ) {
       return;
     }
 
+    if (
+      rawState === 'unavailable' ||
+    rawState === 'unknown'
+    ) {
+      const updated =
+      this.accessoryManager
+        .updateAvailability(
+          entityId,
+          false,
+        );
+
+      if (!updated) {
+        return;
+      }
+
+      this.log.debug(
+        `Entité indisponible : ${entityId}`,
+      );
+
+      return;
+    }
+
     const value =
-      Number(rawState);
+    Number(rawState);
 
     if (!Number.isFinite(value)) {
       this.log.debug(
@@ -52,12 +74,18 @@ export class EventManager {
       return;
     }
 
+    this.accessoryManager
+      .updateAvailability(
+        entityId,
+        true,
+      );
+
     const updated =
-      this.accessoryManager
-        .updateEntity(
-          entityId,
-          value,
-        );
+    this.accessoryManager
+      .updateEntity(
+        entityId,
+        value,
+      );
 
     if (!updated) {
       return;
@@ -65,7 +93,8 @@ export class EventManager {
 
     this.log.debug(
       'Mise à jour temps réel : ' +
-      `${entityId} = ${value}`,
+    `${entityId} = ${value}`,
     );
+
   }
 }

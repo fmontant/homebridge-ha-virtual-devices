@@ -53,4 +53,7 @@ export interface CatalogDevice
 extends DiscoveredCatalogDevice {
   preferences: DevicePreferences;
   timestamps: DeviceTimestamps;
+
+  available: boolean;
+  lastCommunication?: string;
 }

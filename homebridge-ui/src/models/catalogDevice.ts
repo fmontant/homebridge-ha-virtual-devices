@@ -12,4 +12,6 @@ export interface CatalogDevice {
   state: DeviceState;
   favorite: boolean;
   capabilities: string[];
+  available: boolean;
+  lastCommunication?: string;
 }

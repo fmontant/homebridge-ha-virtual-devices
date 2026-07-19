@@ -105,6 +105,11 @@ export class ClimateDeviceManager {
           )
           : undefined,
 
+      available:
+        this.isEntityAvailable(
+          device.temperatureEntity,
+        ),
+
       manufacturer:
         device.manufacturer,
 
@@ -120,6 +125,21 @@ export class ClimateDeviceManager {
       serialNumber:
         device.serialNumber,
     };
+  }
+
+  private isEntityAvailable(
+    entityId: string,
+  ): boolean {
+    const state =
+      this.initialStates.get(
+        entityId,
+      );
+
+    return (
+      state !== undefined &&
+      state !== 'unavailable' &&
+      state !== 'unknown'
+    );
   }
 
   private readNumericState(

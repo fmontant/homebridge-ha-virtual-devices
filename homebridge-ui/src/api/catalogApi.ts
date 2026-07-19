@@ -8,47 +8,49 @@ import type {
 } from '../models/catalogDevice';
 
 declare global {
-  interface Window {
-    homebridge: IHomebridgePluginUi;
-  }
+    interface Window {
+        homebridge: IHomebridgePluginUi;
+    }
 }
 
 interface CatalogApiDevice {
-  id: string;
-  name: string;
-  source: string;
-  state: DeviceState;
-  capabilities: string[];
-  preferences: {
-    enabled: boolean;
-    hidden: boolean;
-    favorite: boolean;
-    room?: string;
-  };
+    id: string;
+    name: string;
+    source: string;
+    state: DeviceState;
+    capabilities: string[];
+    available?: boolean;
+    lastCommunication?: string;
+    preferences: {
+        enabled: boolean;
+        hidden: boolean;
+        favorite: boolean;
+        room?: string;
+    };
 }
 
 interface CatalogDevicesResponse {
-  devices: CatalogApiDevice[];
+    devices: CatalogApiDevice[];
 }
 
 interface CatalogDeviceResponse {
-  device: CatalogApiDevice;
+    device: CatalogApiDevice;
 }
 
 export interface CatalogDevicePreferencesUpdate {
-  enabled?: boolean;
-  hidden?: boolean;
-  favorite?: boolean;
-  room?: string;
+    enabled?: boolean;
+    hidden?: boolean;
+    favorite?: boolean;
+    room?: string;
 }
 
 export class CatalogApi {
   public async getDevices():
-    Promise<CatalogDevice[]> {
+        Promise<CatalogDevice[]> {
     const response =
-      await window.homebridge.request(
-        '/catalog/devices',
-      ) as CatalogDevicesResponse;
+            await window.homebridge.request(
+              '/catalog/devices',
+            ) as CatalogDevicesResponse;
 
     return response.devices.map(
       device =>
@@ -62,12 +64,12 @@ export class CatalogApi {
     id: string,
   ): Promise<CatalogDevice> {
     const response =
-      await window.homebridge.request(
-        '/catalog/device',
-        {
-          id,
-        },
-      ) as CatalogDeviceResponse;
+            await window.homebridge.request(
+              '/catalog/device',
+              {
+                id,
+              },
+            ) as CatalogDeviceResponse;
 
     return this.toCatalogDevice(
       response.device,
@@ -79,13 +81,13 @@ export class CatalogApi {
     favorite: boolean,
   ): Promise<CatalogDevice> {
     const response =
-      await window.homebridge.request(
-        '/catalog/device/favorite',
-        {
-          id,
-          favorite,
-        },
-      ) as CatalogDeviceResponse;
+            await window.homebridge.request(
+              '/catalog/device/favorite',
+              {
+                id,
+                favorite,
+              },
+            ) as CatalogDeviceResponse;
 
     return this.toCatalogDevice(
       response.device,
@@ -95,16 +97,16 @@ export class CatalogApi {
   public async updatePreferences(
     id: string,
     preferences:
-      CatalogDevicePreferencesUpdate,
+            CatalogDevicePreferencesUpdate,
   ): Promise<CatalogDevice> {
     const response =
-      await window.homebridge.request(
-        '/catalog/preferences',
-        {
-          id,
-          preferences,
-        },
-      ) as CatalogDeviceResponse;
+            await window.homebridge.request(
+              '/catalog/preferences',
+              {
+                id,
+                preferences,
+              },
+            ) as CatalogDeviceResponse;
 
     return this.toCatalogDevice(
       response.device,
@@ -116,23 +118,28 @@ export class CatalogApi {
   ): CatalogDevice {
     return {
       id:
-        device.id,
+                device.id,
       name:
-        device.name,
+                device.name,
       source:
-        device.source,
+                device.source,
       room:
-        device.preferences.room ?? '',
+                device.preferences.room ?? '',
       state:
-        device.state,
+                device.state,
       favorite:
-        device.preferences.favorite,
+                device.preferences.favorite,
       capabilities: [
         ...device.capabilities,
       ],
+      available:
+                device.available ?? true,
+      lastCommunication:
+                device.lastCommunication,
+
     };
   }
 }
 
 export const catalogApi =
-  new CatalogApi();
+    new CatalogApi();

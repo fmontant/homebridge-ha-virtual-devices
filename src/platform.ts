@@ -129,25 +129,6 @@ implements DynamicPlatformPlugin {
         this.log,
       );
 
-    this.accessoryManager =
-      new AccessoryManager(
-        this.api,
-        this.log,
-        this.accessoryFactory,
-        this.accessories,
-      );
-
-    this.eventManager =
-      new EventManager(
-        this.accessoryManager,
-        this.log,
-      );
-
-    this.climateDeviceManager =
-      new ClimateDeviceManager(
-        this.log,
-      );
-
     const catalogFilePath =
       join(
         this.api.user.storagePath(),
@@ -168,6 +149,26 @@ implements DynamicPlatformPlugin {
     this.catalogManager =
       new CatalogManager(
         this.deviceCatalog,
+        this.log,
+      );
+
+    this.accessoryManager =
+      new AccessoryManager(
+        this.api,
+        this.log,
+        this.accessoryFactory,
+        this.accessories,
+        this.catalogManager,
+      );
+
+    this.eventManager =
+      new EventManager(
+        this.accessoryManager,
+        this.log,
+      );
+
+    this.climateDeviceManager =
+      new ClimateDeviceManager(
         this.log,
       );
 

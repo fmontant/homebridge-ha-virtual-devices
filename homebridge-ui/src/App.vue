@@ -17,141 +17,213 @@ import type {
   DeviceState,
 } from './models/catalogDevice';
 
-type SortKey = 'state' | 'name' | 'source' | 'room';
-type SortDirection = 'asc' | 'desc';
-type StateFilter = DeviceState | '';
+type SortKey =
+  | 'state'
+  | 'name'
+  | 'source'
+  | 'room';
 
-const search = ref('');
-const stateFilter = ref<StateFilter>('');
-const roomFilter = ref('');
-const loading = ref(false);
-const initialized = ref(false);
-const errorMessage = ref('');
-const devices = ref<CatalogDevice[]>([]);
-const selectedDeviceId = ref<string | null>(null);
+type SortDirection =
+  | 'asc'
+  | 'desc';
 
-const sortKey = ref<SortKey | null>(null);
-const sortDirection = ref<SortDirection>('asc');
+type StateFilter =
+  | DeviceState
+  | '';
 
-const selectedDevice = computed<CatalogDevice | null>(() => {
-  if (!selectedDeviceId.value) {
-    return null;
-  }
+const search =
+  ref('');
 
-  return devices.value.find(
-    device =>
-      device.id ===
-      selectedDeviceId.value,
-  ) ?? null;
-});
+const stateFilter =
+  ref<StateFilter>('');
 
-const availableRooms = computed(() => {
-  const rooms = devices.value
-    .map((device) => device.room.trim())
-    .filter((room) => room.length > 0);
+const roomFilter =
+  ref('');
 
-  return [...new Set(rooms)].sort((left, right) =>
-    left.localeCompare(
-      right,
-      'fr',
-      {
-        numeric: true,
-        sensitivity: 'base',
-      },
-    ),
+const loading =
+  ref(false);
+
+const initialized =
+  ref(false);
+
+const errorMessage =
+  ref('');
+
+const devices =
+  ref<CatalogDevice[]>([]);
+
+const selectedDeviceId =
+  ref<string | null>(null);
+
+const sortKey =
+  ref<SortKey | null>(null);
+
+const sortDirection =
+  ref<SortDirection>('asc');
+
+const selectedDevice =
+  computed<CatalogDevice | null>(
+    () => {
+      if (!selectedDeviceId.value) {
+        return null;
+      }
+
+      return (
+        devices.value.find(
+          device =>
+            device.id ===
+            selectedDeviceId.value,
+        ) ??
+        null
+      );
+    },
   );
-});
 
-const filteredDevices = computed(() => {
-  const query = search.value.trim().toLowerCase();
+const availableRooms =
+  computed(() => {
+    const rooms =
+      devices.value
+        .map(device =>
+          device.room.trim(),
+        )
+        .filter(room =>
+          room.length > 0,
+        );
 
-  return devices.value.filter((device) => {
-    const matchesSearch =
-      !query ||
-      [
-        device.name,
-        device.source,
-        device.room,
-        device.state,
-        ...device.capabilities,
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(query);
-
-    const matchesState =
-      !stateFilter.value ||
-      device.state === stateFilter.value;
-
-    const matchesRoom =
-      !roomFilter.value ||
-      device.room === roomFilter.value;
-
-    return matchesSearch &&
-      matchesState &&
-      matchesRoom;
-  });
-});
-
-const sortedDevices = computed(() => {
-  if (sortKey.value === null) {
-    return filteredDevices.value;
-  }
-
-  const direction =
-    sortDirection.value === 'asc'
-      ? 1
-      : -1;
-
-  return filteredDevices.value
-    .map((device, index) => ({
-      device,
-      index,
-    }))
-    .sort((left, right) => {
-      const comparison =
-        getSortValue(
-          left.device,
-          sortKey.value!,
-        ).localeCompare(
-          getSortValue(
-            right.device,
-            sortKey.value!,
-          ),
+    return [
+      ...new Set(rooms),
+    ].sort(
+      (left, right) =>
+        left.localeCompare(
+          right,
           'fr',
           {
             numeric: true,
             sensitivity: 'base',
           },
+        ),
+    );
+  });
+
+const filteredDevices =
+  computed(() => {
+    const query =
+      search.value
+        .trim()
+        .toLowerCase();
+
+    return devices.value.filter(
+      device => {
+        const matchesSearch =
+          !query ||
+          [
+            device.name,
+            device.source,
+            device.room,
+            device.state,
+            ...device.capabilities,
+          ]
+            .join(' ')
+            .toLowerCase()
+            .includes(query);
+
+        const matchesState =
+          !stateFilter.value ||
+          device.state ===
+            stateFilter.value;
+
+        const matchesRoom =
+          !roomFilter.value ||
+          device.room ===
+            roomFilter.value;
+
+        return (
+          matchesSearch &&
+          matchesState &&
+          matchesRoom
         );
+      },
+    );
+  });
 
-      if (comparison !== 0) {
-        return comparison * direction;
-      }
+const sortedDevices =
+  computed(() => {
+    if (sortKey.value === null) {
+      return filteredDevices.value;
+    }
 
-      return left.index - right.index;
-    })
-    .map(({ device }) => device);
-});
+    const direction =
+      sortDirection.value === 'asc'
+        ? 1
+        : -1;
 
-const initialLoading = computed(
-  () =>
-    loading.value &&
-    !initialized.value,
-);
+    return filteredDevices.value
+      .map(
+        (device, index) => ({
+          device,
+          index,
+        }),
+      )
+      .sort(
+        (left, right) => {
+          const comparison =
+            getSortValue(
+              left.device,
+              sortKey.value!,
+            ).localeCompare(
+              getSortValue(
+                right.device,
+                sortKey.value!,
+              ),
+              'fr',
+              {
+                numeric: true,
+                sensitivity: 'base',
+              },
+            );
 
-const refreshing = computed(
-  () =>
-    loading.value &&
-    initialized.value,
-);
+          if (comparison !== 0) {
+            return (
+              comparison *
+              direction
+            );
+          }
 
-const filtersActive = computed(
-  () =>
-    search.value.trim().length > 0 ||
-    stateFilter.value !== '' ||
-    roomFilter.value !== '',
-);
+          return (
+            left.index -
+            right.index
+          );
+        },
+      )
+      .map(
+        ({ device }) =>
+          device,
+      );
+  });
+
+const initialLoading =
+  computed(
+    () =>
+      loading.value &&
+      !initialized.value,
+  );
+
+const refreshing =
+  computed(
+    () =>
+      loading.value &&
+      initialized.value,
+  );
+
+const filtersActive =
+  computed(
+    () =>
+      search.value
+        .trim()
+        .length > 0 ||
+      stateFilter.value !== '' ||
+      roomFilter.value !== '',
+  );
 
 async function loadDevices():
 Promise<void> {
@@ -166,16 +238,6 @@ Promise<void> {
     const loadedDevices =
       await catalogApi
         .getDevices();
-        console.log(
-  '[Catalogue chargé]',
-  loadedDevices.map(
-    device => ({
-      id: device.id,
-      name: device.name,
-      favorite: device.favorite,
-    }),
-  ),
-);
 
     devices.value =
       loadedDevices;
@@ -337,14 +399,6 @@ async function toggleFavorite(
           device.id,
           favorite,
         );
-      console.log(
-  '[Réponse favori]',
-  {
-    id: updatedDevice.id,
-    name: updatedDevice.name,
-    favorite: updatedDevice.favorite,
-  },
-);
 
     updateDevice(
       updatedDevice,
@@ -508,103 +562,103 @@ onUnmounted(() => {
 
     <section class="workspace">
       <section class="catalog">
-      <div class="table-header">
-        <button
-          type="button"
-          class="sort-button"
-          @click="changeSort('state')"
-        >
-          État
+        <div class="table-header">
+          <button
+            type="button"
+            class="sort-button"
+            @click="changeSort('state')"
+          >
+            État
 
-          <span class="sort-indicator">
-            {{ getSortIndicator('state') }}
+            <span class="sort-indicator">
+              {{ getSortIndicator('state') }}
+            </span>
+          </button>
+
+          <span class="favorite-header">
+            ★
           </span>
-        </button>
 
-        <span class="favorite-header">
-          ★
-        </span>
+          <button
+            type="button"
+            class="sort-button"
+            @click="changeSort('name')"
+          >
+            Nom
 
-        <button
-          type="button"
-          class="sort-button"
-          @click="changeSort('name')"
+            <span class="sort-indicator">
+              {{ getSortIndicator('name') }}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="sort-button"
+            @click="changeSort('source')"
+          >
+            Source
+
+            <span class="sort-indicator">
+              {{ getSortIndicator('source') }}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="sort-button"
+            @click="changeSort('room')"
+          >
+            Pièce
+
+            <span class="sort-indicator">
+              {{ getSortIndicator('room') }}
+            </span>
+          </button>
+        </div>
+
+        <div
+          v-if="initialLoading"
+          class="loading-state"
+          role="status"
+          aria-live="polite"
         >
-          Nom
+          <span
+            class="loading-spinner"
+            aria-hidden="true"
+          />
 
-          <span class="sort-indicator">
-            {{ getSortIndicator('name') }}
+          <span>
+            Chargement du catalogue…
           </span>
-        </button>
+        </div>
 
-        <button
-          type="button"
-          class="sort-button"
-          @click="changeSort('source')"
-        >
-          Source
+        <template v-else>
+          <DeviceRow
+            v-for="device in sortedDevices"
+            :key="device.id"
+            :device="device"
+            :selected="
+              device.id ===
+              selectedDeviceId
+            "
+            @click="selectDevice(device)"
+            @favorite="toggleFavorite(device)"
+          />
 
-          <span class="sort-indicator">
-            {{ getSortIndicator('source') }}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          class="sort-button"
-          @click="changeSort('room')"
-        >
-          Pièce
-
-          <span class="sort-indicator">
-            {{ getSortIndicator('room') }}
-          </span>
-        </button>
-      </div>
-
-      <div
-        v-if="initialLoading"
-        class="loading-state"
-        role="status"
-        aria-live="polite"
-      >
-        <span
-          class="loading-spinner"
-          aria-hidden="true"
-        />
-
-        <span>
-          Chargement du catalogue…
-        </span>
-      </div>
-
-      <template v-else>
-        <DeviceRow
-          v-for="device in sortedDevices"
-          :key="device.id"
-          :device="device"
-          :selected="
-            device.id ===
-            selectedDeviceId
-          "
-          @click="selectDevice(device)"
-          @favorite="toggleFavorite(device)"
-        />
-
-        <p
-          v-if="sortedDevices.length === 0"
-          class="empty-state"
-        >
-          {{
-            errorMessage &&
-            !initialized
-              ? 'Catalogue indisponible.'
-              : filtersActive
-                ? 'Aucun appareil ne correspond aux filtres.'
-                : 'Aucun appareil.'
-          }}
-        </p>
-      </template>
+          <p
+            v-if="sortedDevices.length === 0"
+            class="empty-state"
+          >
+            {{
+              errorMessage &&
+              !initialized
+                ? 'Catalogue indisponible.'
+                : filtersActive
+                  ? 'Aucun appareil ne correspond aux filtres.'
+                  : 'Aucun appareil.'
+            }}
+          </p>
+        </template>
       </section>
 
       <section class="details-panel">
@@ -621,6 +675,7 @@ onUnmounted(() => {
 .app {
   width: 100%;
   padding: 24px;
+  container-type: inline-size;
 }
 
 .header {
@@ -844,6 +899,16 @@ onUnmounted(() => {
   }
 }
 
+@container (max-width: 1000px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .details-panel {
+    min-height: 320px;
+  }
+}
+
 @media (max-width: 1100px) {
   .workspace {
     grid-template-columns:
@@ -872,6 +937,14 @@ onUnmounted(() => {
 
   .device-count {
     margin-left: auto;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .details-panel {
+    min-height: 320px;
   }
 }
 </style>

@@ -319,6 +319,36 @@ export class DeviceCatalog {
       },
     );
   }
+  public async setAvailability(
+    id: string,
+    available: boolean,
+  ): Promise<boolean> {
+    const device =
+      this.devices.get(
+        id,
+      );
+
+    if (!device) {
+      return false;
+    }
+
+    if (
+      device.available ===
+      available
+    ) {
+      return true;
+    }
+
+    device.available =
+      available;
+
+    device.timestamps.lastUpdated =
+      new Date().toISOString();
+
+    await this.save();
+
+    return true;
+  }
 
   public set(
     device: CatalogDevice,
@@ -411,6 +441,8 @@ export class DeviceCatalog {
         lastUpdated:
           now,
       },
+      available:
+        true,
     };
   }
 

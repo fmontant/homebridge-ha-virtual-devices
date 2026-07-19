@@ -13,15 +13,15 @@ export class CatalogApiMapper {
   ): CatalogApiDevice {
     return {
       id:
-        device.id,
+                device.id,
       source:
-        device.source,
+                device.source,
       sourceId:
-        device.sourceId,
+                device.sourceId,
       name:
-        device.name,
+                device.name,
       state:
-        device.state,
+                device.state,
       capabilities: [
         ...device.capabilities,
       ],
@@ -34,11 +34,16 @@ export class CatalogApiMapper {
       timestamps: {
         ...device.timestamps,
       },
+      available:
+                device.available,
+      lastCommunication:
+                device.lastCommunication ??
+                device.timestamps.lastSeen,
       publishable:
-        device.preferences.enabled &&
-        !device.preferences.hidden &&
-        device.state !==
-          CatalogDeviceState.Missing,
+                device.preferences.enabled &&
+                !device.preferences.hidden &&
+                device.state !==
+                CatalogDeviceState.Missing,
     };
   }
 }

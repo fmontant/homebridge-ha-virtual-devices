@@ -25,17 +25,17 @@ export class CatalogManager {
     false;
 
   private catalogLoading:
-    Promise<void> | undefined;
+        Promise<void> | undefined;
 
   private readonly climateDeviceCatalogMapper =
     new ClimateDeviceCatalogMapper();
 
   constructor(
-    private readonly deviceCatalog:
-      DeviceCatalog,
-    private readonly log:
-      Logging,
-  ) {}
+        private readonly deviceCatalog:
+            DeviceCatalog,
+        private readonly log:
+            Logging,
+  ) { }
 
   public async synchronizeClimateDevices(
     climateDevices: ClimateDevice[],
@@ -43,16 +43,16 @@ export class CatalogManager {
     await this.load();
 
     const discoveredCatalogDevices =
-      this.climateDeviceCatalogMapper
-        .toDiscoveredCatalogDevices(
-          climateDevices,
-        );
+            this.climateDeviceCatalogMapper
+              .toDiscoveredCatalogDevices(
+                climateDevices,
+              );
 
     const synchronizationResult =
-      this.deviceCatalog
-        .synchronize(
-          discoveredCatalogDevices,
-        );
+            this.deviceCatalog
+              .synchronize(
+                discoveredCatalogDevices,
+              );
 
     await this.save();
 
@@ -68,7 +68,7 @@ export class CatalogManager {
   }
 
   public async load():
-    Promise<void> {
+        Promise<void> {
     if (this.catalogLoaded) {
       return;
     }
@@ -80,23 +80,23 @@ export class CatalogManager {
     }
 
     this.catalogLoading =
-      this.loadCatalog();
+            this.loadCatalog();
 
     try {
       await this.catalogLoading;
     } finally {
       this.catalogLoading =
-        undefined;
+                undefined;
     }
   }
 
   private async loadCatalog():
-    Promise<void> {
+        Promise<void> {
     await this.deviceCatalog
       .load();
 
     this.catalogLoaded =
-      true;
+            true;
 
     this.log.info(
       `${this.deviceCatalog.getAll().length} appareils chargés depuis le catalogue`,
@@ -104,7 +104,7 @@ export class CatalogManager {
   }
 
   public async save():
-    Promise<void> {
+        Promise<void> {
     await this.load();
 
     await this.deviceCatalog
@@ -112,7 +112,7 @@ export class CatalogManager {
   }
 
   public getAll():
-    CatalogDevice[] {
+        CatalogDevice[] {
     return this.deviceCatalog
       .getAll();
   }
@@ -222,9 +222,21 @@ export class CatalogManager {
         room,
       );
   }
+  public async setAvailability(
+    id: string,
+    available: boolean,
+  ): Promise<boolean> {
+    await this.load();
+
+    return this.deviceCatalog
+      .setAvailability(
+        id,
+        available,
+      );
+  }
 
   public getCatalog():
-    DeviceCatalog {
+        DeviceCatalog {
     return this.deviceCatalog;
   }
 }
