@@ -3,6 +3,10 @@ import type { Logging } from 'homebridge';
 import type { HomeAssistantConfig } from './config.js';
 import type { DeviceRegistryEntry } from '../models/deviceRegistryEntry.js';
 import type { EntityRegistryEntry } from '../models/entityRegistryEntry.js';
+import {
+  PendingRequest,
+  PendingRequestManager,
+} from './pendingRequestManager.js';
 
 interface HomeAssistantError {
   code?: string;
@@ -49,20 +53,11 @@ interface DeviceRegistryResponse {
   serial_number?: string;
 }
 
-type PendingRequest =
-  | 'subscribe_state_events'
-  | 'subscribe_entity_registry_events'
-  | 'subscribe_device_registry_events'
-  | 'device_registry'
-  | 'entity_registry';
-
 export class HomeAssistantWebSocketClient {
   private socket?: WebSocket;
 
-  private nextMessageId = 1;
-
-  private readonly pendingRequests =
-    new Map<number, PendingRequest>();
+  private readonly pendingRequestManager =
+    new PendingRequestManager();
 
   private registryRefreshTimer?:
     ReturnType<typeof setTimeout>;
@@ -181,7 +176,7 @@ export class HomeAssistantWebSocketClient {
           'Connexion WebSocket fermée',
         );
 
-        this.pendingRequests.clear();
+        this.pendingRequestManager.clear();
         this.clearRegistryRefreshTimer();
       },
     );
@@ -296,7 +291,7 @@ export class HomeAssistantWebSocketClient {
     }
 
     const requestType =
-      this.pendingRequests.get(
+      this.pendingRequestManager.get(
         message.id,
       );
 
@@ -305,11 +300,11 @@ export class HomeAssistantWebSocketClient {
     }
 
     if (
-      !this.isSubscriptionRequest(
+      !this.pendingRequestManager.isSubscription(
         requestType,
       )
     ) {
-      this.pendingRequests.delete(
+      this.pendingRequestManager.complete(
         message.id,
       );
     }
@@ -416,14 +411,9 @@ export class HomeAssistantWebSocketClient {
     }
 
     const id =
-      this.nextMessageId;
-
-    this.nextMessageId += 1;
-
-    this.pendingRequests.set(
-      id,
-      requestType,
-    );
+      this.pendingRequestManager.create(
+        requestType,
+      );
 
     this.socket.send(
       JSON.stringify({
@@ -474,18 +464,6 @@ export class HomeAssistantWebSocketClient {
       undefined;
   }
 
-  private isSubscriptionRequest(
-    requestType: PendingRequest,
-  ): boolean {
-    return (
-      requestType ===
-        'subscribe_state_events' ||
-      requestType ===
-        'subscribe_entity_registry_events' ||
-      requestType ===
-        'subscribe_device_registry_events'
-    );
-  }
 
   private logSubscriptionSuccess(
     requestType: PendingRequest,
