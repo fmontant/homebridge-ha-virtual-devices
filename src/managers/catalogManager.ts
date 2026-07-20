@@ -153,6 +153,15 @@ export class CatalogManager {
       );
   }
 
+  public isArchived(
+    id: string,
+  ): boolean {
+    return this.deviceCatalog
+      .isArchived(
+        id,
+      );
+  }
+
   public isFavorite(
     id: string,
   ): boolean {
@@ -194,6 +203,19 @@ export class CatalogManager {
       .setHidden(
         id,
         hidden,
+      );
+  }
+
+  public async setArchived(
+    id: string,
+    archived: boolean,
+  ): Promise<boolean> {
+    await this.load();
+
+    return this.deviceCatalog
+      .setArchived(
+        id,
+        archived,
       );
   }
 
