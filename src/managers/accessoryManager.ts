@@ -132,6 +132,42 @@ export class AccessoryManager {
     }
   }
 
+  public applyCatalogDevice(
+    climateDevice: ClimateDevice,
+    catalogDevice: CatalogDevice,
+    deviceCatalog: DeviceCatalog,
+  ): void {
+    if (
+      !deviceCatalog.shouldPublish(
+        catalogDevice.id,
+      )
+    ) {
+      this.removeClimateAccessory(
+        catalogDevice.id,
+      );
+
+      this.log.info(
+        `Appareil non publié selon les préférences : ${catalogDevice.name}`,
+      );
+
+      return;
+    }
+
+    const publishedDevice =
+      this.createPublishedClimateDevice(
+        climateDevice,
+        catalogDevice,
+      );
+
+    this.registerClimateAccessory(
+      publishedDevice,
+    );
+
+    this.log.info(
+      `Préférences appliquées à la tuile : ${catalogDevice.name}`,
+    );
+  }
+
   public applyClimateSynchronization(
     climateDevices: ClimateDevice[],
     synchronizationResult:

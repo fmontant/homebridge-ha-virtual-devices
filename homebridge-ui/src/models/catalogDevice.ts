@@ -1,8 +1,9 @@
 export type DeviceState =
   | 'enabled'
   | 'disabled'
-  | 'hidden'
-  | 'missing';
+  | 'missing'
+  | 'error'
+  | 'archived';
 
 export interface CatalogDevice {
   id: string;
@@ -11,6 +12,8 @@ export interface CatalogDevice {
   room: string;
   state: DeviceState;
   favorite: boolean;
+  enabled: boolean;
+  archived: boolean;
   capabilities: string[];
   available: boolean;
   lastCommunication?: string;

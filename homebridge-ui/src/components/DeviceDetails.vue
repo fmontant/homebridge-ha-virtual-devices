@@ -23,7 +23,7 @@ const emit =
 const room = ref('');
 const favorite = ref(false);
 const enabled = ref(false);
-const hidden = ref(false);
+const archived = ref(false);
 const saving = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
@@ -32,8 +32,12 @@ const hasDevice = computed(
   () => props.device !== null,
 );
 
-const canEditState = computed(
+const canEditEnabled = computed(
   () => props.device?.state !== 'missing',
+);
+
+const canArchive = computed(
+  () => props.device?.state === 'missing',
 );
 
 const stateLabel = computed(
@@ -45,11 +49,11 @@ const stateLabel = computed(
       case 'disabled':
         return 'Désactivé';
 
-      case 'hidden':
-        return 'Masqué';
-
       case 'missing':
         return 'Manquant';
+
+      case 'error':
+        return 'Erreur';
 
       default:
         return '';
@@ -66,11 +70,11 @@ const stateClass = computed(
       case 'disabled':
         return 'state-disabled';
 
-      case 'hidden':
-        return 'state-hidden';
-
       case 'missing':
         return 'state-missing';
+
+      case 'error':
+        return 'state-error';
 
       default:
         return '';
@@ -79,17 +83,27 @@ const stateClass = computed(
 );
 
 const displayedStateLabel = computed(
-  () =>
-    props.device?.available === false
+  () => {
+    if (props.device?.archived) {
+      return 'Archivé';
+    }
+
+    return props.device?.available === false
       ? 'Hors ligne'
-      : stateLabel.value,
+      : stateLabel.value;
+  },
 );
 
 const displayedStateClass = computed(
-  () =>
-    props.device?.available === false
+  () => {
+    if (props.device?.archived) {
+      return 'state-archived';
+    }
+
+    return props.device?.available === false
       ? 'state-offline'
-      : stateClass.value,
+      : stateClass.value;
+  },
 );
 
 const displayedRoom = computed(
@@ -195,10 +209,10 @@ watch(
       device?.favorite ?? false;
 
     enabled.value =
-      device?.state === 'enabled';
+      device?.enabled ?? true;
 
-    hidden.value =
-      device?.state === 'hidden';
+    archived.value =
+      device?.archived ?? false;
 
     errorMessage.value = '';
     successMessage.value = '';
@@ -229,8 +243,8 @@ async function savePreferences():
             favorite.value,
           enabled:
             enabled.value,
-          hidden:
-            hidden.value,
+          archived:
+            archived.value,
         },
       );
 
@@ -330,7 +344,7 @@ function getErrorMessage(
               <input
                 v-model="enabled"
                 type="checkbox"
-                :disabled="!canEditState"
+                :disabled="!canEditEnabled"
               />
 
               <span>Appareil actif</span>
@@ -338,20 +352,27 @@ function getErrorMessage(
 
             <label class="checkbox-field">
               <input
-                v-model="hidden"
+                v-model="archived"
                 type="checkbox"
-                :disabled="!canEditState"
+                :disabled="!canArchive"
               />
 
-              <span>Masquer dans le catalogue</span>
+              <span>Archiver l’appareil</span>
             </label>
           </div>
 
           <p
-            v-if="!canEditState"
+            v-if="device.state === 'missing'"
             class="information-message"
           >
-            L’état d’un appareil manquant ne peut pas être modifié.
+            Cet appareil est manquant. Il reste publié dans HomeKit jusqu’à son archivage.
+          </p>
+
+          <p
+            v-else
+            class="information-message"
+          >
+            L’archivage est disponible uniquement pour un appareil manquant.
           </p>
 
           <p
@@ -509,9 +530,14 @@ function getErrorMessage(
   color: #616161;
 }
 
-.state-hidden {
+.state-archived {
   background: #fff3e0;
   color: #ef6c00;
+}
+
+.state-error {
+  background: #fff3e0;
+  color: #c2410c;
 }
 
 .state-missing {

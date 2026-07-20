@@ -1,3 +1,4 @@
+import { watch, type FSWatcher } from 'node:fs';
 import { join } from 'node:path';
 
 import type {
@@ -74,6 +75,12 @@ implements DynamicPlatformPlugin {
 
   private readonly registryManager:
     RegistryManager;
+
+  private catalogWatcher?:
+    FSWatcher;
+
+  private catalogReloadTimer?:
+    NodeJS.Timeout;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public readonly CustomServices: any;
@@ -226,6 +233,8 @@ implements DynamicPlatformPlugin {
       return;
     }
 
+    this.startCatalogWatcher();
+
     this.log.info(
       'Test de connexion à Home Assistant...',
     );
@@ -325,6 +334,54 @@ implements DynamicPlatformPlugin {
             );
           });
       });
+  }
+
+
+  private startCatalogWatcher():
+    void {
+    const catalogPath =
+      join(
+        this.api.user.storagePath(),
+        'ha-virtual-devices',
+        'device-catalog.json',
+      );
+
+    this.catalogWatcher?.close();
+
+    this.catalogWatcher =
+      watch(
+        catalogPath,
+        () => {
+          if (
+            this.catalogReloadTimer
+          ) {
+            clearTimeout(
+              this.catalogReloadTimer,
+            );
+          }
+
+          this.catalogReloadTimer =
+            setTimeout(() => {
+              void this.registryManager
+                .refreshFromCatalog()
+                .catch(error => {
+                  this.log.error(
+                    'Erreur lors du rechargement du catalogue :',
+                    error instanceof Error
+                      ? error.message
+                      : String(error),
+                  );
+                });
+            }, 250);
+        },
+      );
+
+    this.api.on(
+      'shutdown',
+      () => {
+        this.catalogWatcher?.close();
+      },
+    );
   }
 
   private readIgnoredDevices():

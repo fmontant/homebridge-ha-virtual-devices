@@ -1,4 +1,5 @@
 export enum CatalogDeviceState {
+  Archived = 'archived',
   Enabled = 'enabled',
   Disabled = 'disabled',
   Missing = 'missing',

@@ -227,6 +227,10 @@ const filtersActive =
 
 async function loadDevices():
 Promise<void> {
+  console.log(
+    '[UI] loadDevices()',
+  );
+
   if (loading.value) {
     return;
   }
@@ -675,7 +679,6 @@ onUnmounted(() => {
 .app {
   width: 100%;
   padding: 24px;
-  container-type: inline-size;
 }
 
 .header {
@@ -896,16 +899,6 @@ onUnmounted(() => {
 @keyframes spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@container (max-width: 1000px) {
-  .workspace {
-    grid-template-columns: 1fr;
-  }
-
-  .details-panel {
-    min-height: 320px;
   }
 }
 

@@ -1,12 +1,36 @@
 import type { Logging } from 'homebridge';
 
-import type { ClimateDevice } from '../models/climateDevice.js';
-import type { DeviceRegistryEntry } from '../models/deviceRegistryEntry.js';
-import type { EntityRegistryEntry } from '../models/entityRegistryEntry.js';
-import type { AccessoryManager } from './accessoryManager.js';
-import type { CatalogManager } from './catalogManager.js';
-import type { ClimateDeviceManager } from './ClimateDeviceManager.js';
-import type { DiscoveryManager } from './discoveryManager.js';
+import type {
+  CatalogDevice,
+} from '../catalog/catalogDevice.js';
+
+import type {
+  ClimateDevice,
+} from '../models/climateDevice.js';
+
+import type {
+  DeviceRegistryEntry,
+} from '../models/deviceRegistryEntry.js';
+
+import type {
+  EntityRegistryEntry,
+} from '../models/entityRegistryEntry.js';
+
+import type {
+  AccessoryManager,
+} from './accessoryManager.js';
+
+import type {
+  CatalogManager,
+} from './catalogManager.js';
+
+import type {
+  ClimateDeviceManager,
+} from './ClimateDeviceManager.js';
+
+import type {
+  DiscoveryManager,
+} from './discoveryManager.js';
 
 export class RegistryManager {
   private deviceRegistry:
@@ -21,6 +45,12 @@ export class RegistryManager {
   private synchronizationQueue:
     Promise<void> =
       Promise.resolve();
+
+  private readonly lastClimateDevices =
+    new Map<string, ClimateDevice>();
+
+  private catalogPublicationState =
+    new Map<string, string>();
 
   constructor(
     private readonly discoveryManager:
@@ -79,6 +109,124 @@ export class RegistryManager {
     await synchronization;
   }
 
+  public async refreshFromCatalog():
+    Promise<void> {
+    if (
+      this.lastClimateDevices.size === 0
+    ) {
+      this.log.warn(
+        'Impossible de rafraîchir les accessoires : aucun appareil climatique mémorisé',
+      );
+
+      return;
+    }
+
+    const previousPublicationState =
+      new Map(
+        this.catalogPublicationState,
+      );
+
+    await this.catalogManager
+      .reload();
+
+    const deviceCatalog =
+      this.catalogManager
+        .getCatalog();
+
+    const catalogDevices =
+      deviceCatalog.getAll();
+
+    const currentPublicationState =
+      this.createCatalogPublicationState(
+        catalogDevices,
+      );
+
+    let updatedAccessoryCount = 0;
+
+    for (
+      const catalogDevice
+      of catalogDevices
+    ) {
+      const previousState =
+        previousPublicationState.get(
+          catalogDevice.id,
+        );
+
+      const currentState =
+        currentPublicationState.get(
+          catalogDevice.id,
+        );
+
+      if (
+        previousState ===
+        currentState
+      ) {
+        continue;
+      }
+
+      const climateDevice =
+        this.lastClimateDevices.get(
+          catalogDevice.id,
+        );
+
+      if (!climateDevice) {
+        this.log.warn(
+          `Impossible d’appliquer les préférences : appareil climatique introuvable pour ${catalogDevice.name}`,
+        );
+
+        continue;
+      }
+
+      this.accessoryManager
+        .applyCatalogDevice(
+          climateDevice,
+          catalogDevice,
+          deviceCatalog,
+        );
+
+      updatedAccessoryCount += 1;
+    }
+
+    for (
+      const deviceId
+      of previousPublicationState.keys()
+    ) {
+      if (
+        currentPublicationState.has(
+          deviceId,
+        )
+      ) {
+        continue;
+      }
+
+      if (
+        this.accessoryManager
+          .removeClimateAccessory(
+            deviceId,
+          )
+      ) {
+        updatedAccessoryCount += 1;
+      }
+    }
+
+    this.catalogPublicationState =
+      currentPublicationState;
+
+    if (
+      updatedAccessoryCount === 0
+    ) {
+      this.log.debug(
+        'Aucune préférence de publication modifiée',
+      );
+
+      return;
+    }
+
+    this.log.info(
+      `${updatedAccessoryCount} accessoire(s) mis à jour depuis le catalogue`,
+    );
+  }
+
   private async synchronizeEntityRegistry(
     entries: EntityRegistryEntry[],
   ): Promise<void> {
@@ -103,6 +251,18 @@ export class RegistryManager {
       this.prepareClimateDevices(
         discoveredClimateDevices,
       );
+
+    this.lastClimateDevices.clear();
+
+    for (
+      const climateDevice
+      of climateDevices
+    ) {
+      this.lastClimateDevices.set(
+        climateDevice.id,
+        climateDevice,
+      );
+    }
 
     this.log.info(
       `${climateDevices.length} appareils climatiques préparés pour la synchronisation`,
@@ -138,8 +298,35 @@ export class RegistryManager {
         );
     }
 
+    this.catalogPublicationState =
+      this.createCatalogPublicationState(
+        deviceCatalog.getAll(),
+      );
+
     this.log.info(
       synchronizationResult.summary(),
+    );
+  }
+
+  private createCatalogPublicationState(
+    catalogDevices: CatalogDevice[],
+  ): Map<string, string> {
+    return new Map(
+      catalogDevices.map(
+        catalogDevice => [
+          catalogDevice.id,
+          JSON.stringify({
+            name:
+              catalogDevice.name,
+            enabled:
+              catalogDevice.preferences
+                .enabled,
+            archived:
+              catalogDevice.preferences
+                .archived,
+          }),
+        ],
+      ),
     );
   }
 

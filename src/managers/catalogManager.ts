@@ -90,6 +90,19 @@ export class CatalogManager {
     }
   }
 
+
+  public async reload():
+        Promise<void> {
+    if (this.catalogLoading) {
+      await this.catalogLoading;
+    }
+
+    this.catalogLoaded =
+            false;
+
+    await this.load();
+  }
+
   private async loadCatalog():
         Promise<void> {
     await this.deviceCatalog

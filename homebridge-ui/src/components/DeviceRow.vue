@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import type { CatalogDevice } from '../models/catalogDevice';
+import type {
+  CatalogDevice,
+  DeviceState,
+} from '../models/catalogDevice';
 
 withDefaults(
   defineProps<{
@@ -16,18 +19,20 @@ const emit = defineEmits<{
   favorite: [];
 }>();
 
-const labels = {
-  enabled: 'Actif',
+const labels: Record<DeviceState, string> = {
+  archived: 'Archivé',
+  enabled: 'Activé',
   disabled: 'Désactivé',
-  hidden: 'Masqué',
   missing: 'Manquant',
+  error: 'Erreur',
 };
 
-const badgeClass = {
-  enabled: 'badge-enabled',
-  disabled: 'badge-disabled',
-  hidden: 'badge-hidden',
-  missing: 'badge-missing',
+const badgeClass: Record<DeviceState, string> = {
+  archived: 'state-archived',
+  enabled: 'state-enabled',
+  disabled: 'state-disabled',
+  missing: 'state-missing',
+  error: 'state-error',
 };
 
 const availabilityLabel = (
@@ -128,29 +133,34 @@ const availabilityClass = (
   font-weight: 600;
 }
 
-.badge-enabled {
+.state-archived {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.state-enabled {
   background: #e8f5e9;
   color: #2e7d32;
 }
 
-.badge-disabled {
+.state-disabled {
   background: #eeeeee;
   color: #616161;
 }
 
-.badge-hidden {
-  background: #fff3e0;
-  color: #ef6c00;
-}
-
-.badge-missing {
+.state-missing {
   background: #ffebee;
   color: #c62828;
 }
 
-.badge-offline {
+.state-offline {
   background: #ffebee;
   color: #b71c1c;
+}
+
+.state-error {
+  background: #fff3e0;
+  color: #c2410c;
 }
 
 .favorite-button {
