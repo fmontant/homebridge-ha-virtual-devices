@@ -14,7 +14,7 @@ export class DeviceCatalog {
   constructor(
     private readonly store:
       DeviceCatalogStore,
-  ) {}
+  ) { }
 
   public async load():
     Promise<void> {
@@ -252,7 +252,7 @@ export class DeviceCatalog {
       device.preferences.enabled &&
       !device.preferences.hidden &&
       device.state !==
-        CatalogDeviceState.Missing
+      CatalogDeviceState.Missing
     );
   }
 
@@ -331,7 +331,7 @@ export class DeviceCatalog {
 
     const nextRoom =
       normalizedRoom &&
-      normalizedRoom.length > 0
+        normalizedRoom.length > 0
         ? normalizedRoom
         : undefined;
 
@@ -466,6 +466,8 @@ export class DeviceCatalog {
           false,
         hidden:
           false,
+        archived:
+          false,
       },
       timestamps: {
         discoveredAt:
@@ -523,13 +525,13 @@ export class DeviceCatalog {
   ): boolean {
     return (
       existingDevice.source !==
-        discoveredDevice.source ||
+      discoveredDevice.source ||
       existingDevice.sourceId !==
-        discoveredDevice.sourceId ||
+      discoveredDevice.sourceId ||
       existingDevice.name !==
-        discoveredDevice.name ||
+      discoveredDevice.name ||
       existingDevice.state !==
-        discoveredDevice.state ||
+      discoveredDevice.state ||
       !this.haveSameCapabilities(
         existingDevice.capabilities,
         discoveredDevice.capabilities,
@@ -546,7 +548,7 @@ export class DeviceCatalog {
       CatalogDevice['capabilities'],
     discoveredCapabilities:
       DiscoveredCatalogDevice[
-        'capabilities'
+      'capabilities'
       ],
   ): boolean {
     if (
@@ -580,15 +582,15 @@ export class DeviceCatalog {
   ): boolean {
     return (
       existingMetadata.manufacturer ===
-        discoveredMetadata.manufacturer &&
+      discoveredMetadata.manufacturer &&
       existingMetadata.model ===
-        discoveredMetadata.model &&
+      discoveredMetadata.model &&
       existingMetadata.serialNumber ===
-        discoveredMetadata.serialNumber &&
+      discoveredMetadata.serialNumber &&
       existingMetadata.softwareVersion ===
-        discoveredMetadata.softwareVersion &&
+      discoveredMetadata.softwareVersion &&
       existingMetadata.hardwareVersion ===
-        discoveredMetadata.hardwareVersion
+      discoveredMetadata.hardwareVersion
     );
   }
 }
