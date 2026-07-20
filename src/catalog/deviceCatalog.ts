@@ -14,7 +14,7 @@ export class DeviceCatalog {
   constructor(
     private readonly store:
       DeviceCatalogStore,
-  ) {}
+  ) { }
 
   public async load():
     Promise<void> {
@@ -225,6 +225,17 @@ export class DeviceCatalog {
     );
   }
 
+  public isArchived(
+    id: string,
+  ): boolean {
+    return (
+      this.devices.get(
+        id,
+      )?.preferences.archived ??
+      false
+    );
+  }
+
   public isFavorite(
     id: string,
   ): boolean {
@@ -250,9 +261,7 @@ export class DeviceCatalog {
 
     return (
       device.preferences.enabled &&
-      !device.preferences.hidden &&
-      device.state !==
-        CatalogDeviceState.Missing
+      !device.preferences.archived
     );
   }
 
@@ -300,6 +309,28 @@ export class DeviceCatalog {
     );
   }
 
+  public async setArchived(
+    id: string,
+    archived: boolean,
+  ): Promise<boolean> {
+    return this.updatePreference(
+      id,
+      device => {
+        if (
+          device.preferences.archived ===
+          archived
+        ) {
+          return false;
+        }
+
+        device.preferences.archived =
+          archived;
+
+        return true;
+      },
+    );
+  }
+
   public async setFavorite(
     id: string,
     favorite: boolean,
@@ -331,7 +362,7 @@ export class DeviceCatalog {
 
     const nextRoom =
       normalizedRoom &&
-      normalizedRoom.length > 0
+        normalizedRoom.length > 0
         ? normalizedRoom
         : undefined;
 
@@ -466,6 +497,8 @@ export class DeviceCatalog {
           false,
         hidden:
           false,
+        archived:
+          false,
       },
       timestamps: {
         discoveredAt:
@@ -523,13 +556,13 @@ export class DeviceCatalog {
   ): boolean {
     return (
       existingDevice.source !==
-        discoveredDevice.source ||
+      discoveredDevice.source ||
       existingDevice.sourceId !==
-        discoveredDevice.sourceId ||
+      discoveredDevice.sourceId ||
       existingDevice.name !==
-        discoveredDevice.name ||
+      discoveredDevice.name ||
       existingDevice.state !==
-        discoveredDevice.state ||
+      discoveredDevice.state ||
       !this.haveSameCapabilities(
         existingDevice.capabilities,
         discoveredDevice.capabilities,
@@ -546,7 +579,7 @@ export class DeviceCatalog {
       CatalogDevice['capabilities'],
     discoveredCapabilities:
       DiscoveredCatalogDevice[
-        'capabilities'
+      'capabilities'
       ],
   ): boolean {
     if (
@@ -580,15 +613,15 @@ export class DeviceCatalog {
   ): boolean {
     return (
       existingMetadata.manufacturer ===
-        discoveredMetadata.manufacturer &&
+      discoveredMetadata.manufacturer &&
       existingMetadata.model ===
-        discoveredMetadata.model &&
+      discoveredMetadata.model &&
       existingMetadata.serialNumber ===
-        discoveredMetadata.serialNumber &&
+      discoveredMetadata.serialNumber &&
       existingMetadata.softwareVersion ===
-        discoveredMetadata.softwareVersion &&
+      discoveredMetadata.softwareVersion &&
       existingMetadata.hardwareVersion ===
-        discoveredMetadata.hardwareVersion
+      discoveredMetadata.hardwareVersion
     );
   }
 }

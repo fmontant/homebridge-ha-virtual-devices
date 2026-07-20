@@ -23,7 +23,7 @@ interface CatalogApiDevice {
     lastCommunication?: string;
     preferences: {
         enabled: boolean;
-        hidden: boolean;
+        archived: boolean;
         favorite: boolean;
         room?: string;
     };
@@ -39,7 +39,7 @@ interface CatalogDeviceResponse {
 
 export interface CatalogDevicePreferencesUpdate {
     enabled?: boolean;
-    hidden?: boolean;
+    archived?: boolean;
     favorite?: boolean;
     room?: string;
 }
@@ -129,6 +129,10 @@ export class CatalogApi {
                 device.state,
       favorite:
                 device.preferences.favorite,
+      enabled:
+                device.preferences.enabled,
+      archived:
+                device.preferences.archived,
       capabilities: [
         ...device.capabilities,
       ],
@@ -136,7 +140,6 @@ export class CatalogApi {
                 device.available ?? true,
       lastCommunication:
                 device.lastCommunication,
-
     };
   }
 }

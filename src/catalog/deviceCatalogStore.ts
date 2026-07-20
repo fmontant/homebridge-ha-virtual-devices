@@ -9,6 +9,7 @@ import { dirname } from 'node:path';
 
 import type {
   CatalogDevice,
+  DevicePreferences,
 } from './catalogDevice.js';
 
 export class DeviceCatalogStore {
@@ -34,14 +35,20 @@ export class DeviceCatalogStore {
         return [];
       }
 
-      return parsed.filter(
-        (
-          device,
-        ): device is CatalogDevice =>
-          this.isCatalogDevice(
+      return parsed
+        .filter(
+          (
+            device,
+          ): device is CatalogDevice =>
+            this.isCatalogDevice(
+              device,
+            ),
+        )
+        .map(device =>
+          this.normalizeCatalogDevice(
             device,
           ),
-      );
+        );
     } catch (
       error
     ) {
@@ -92,6 +99,34 @@ export class DeviceCatalogStore {
       temporaryFilePath,
       this.filePath,
     );
+  }
+
+  private normalizeCatalogDevice(
+    device: CatalogDevice,
+  ): CatalogDevice {
+    const storedPreferences =
+      device.preferences as
+        Partial<DevicePreferences>;
+
+    return {
+      ...device,
+      preferences: {
+        enabled:
+          storedPreferences.enabled ??
+          true,
+        favorite:
+          storedPreferences.favorite ??
+          false,
+        hidden:
+          storedPreferences.hidden ??
+          false,
+        archived:
+          storedPreferences.archived ??
+          false,
+        room:
+          storedPreferences.room,
+      },
+    };
   }
 
   private isCatalogDevice(

@@ -16,17 +16,38 @@ export class CatalogEventListener {
   private readonly eventHandler = (
     event: Event,
   ): void => {
+
+    console.log(
+      '[UI] événement reçu',
+      event,
+    );
+
     if (!(event instanceof MessageEvent)) {
+      console.log(
+        '[UI] pas un MessageEvent',
+      );
       return;
     }
+
+    console.log(
+      '[UI] données',
+      event.data,
+    );
 
     if (
       !isCatalogUpdatedEvent(
         event.data,
       )
     ) {
+      console.log(
+        '[UI] événement ignoré',
+      );
       return;
     }
+
+    console.log(
+      '[UI] catalog-updated validé',
+    );
 
     this.callback?.(
       event.data,

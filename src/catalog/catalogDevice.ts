@@ -1,7 +1,7 @@
 export enum CatalogDeviceState {
+  Archived = 'archived',
   Enabled = 'enabled',
   Disabled = 'disabled',
-  Hidden = 'hidden',
   Missing = 'missing',
   Error = 'error',
 }
@@ -29,6 +29,7 @@ export interface DevicePreferences {
   enabled: boolean;
   favorite: boolean;
   hidden: boolean;
+  archived: boolean;
   room?: string;
 }
 
