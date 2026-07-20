@@ -40,10 +40,8 @@ export class CatalogApiMapper {
                 device.lastCommunication ??
                 device.timestamps.lastSeen,
       publishable:
-                device.preferences.enabled &&
-                !device.preferences.hidden &&
-                device.state !==
-                CatalogDeviceState.Missing,
+          device.preferences.enabled &&
+          !device.preferences.archived,
     };
   }
 }
