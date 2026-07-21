@@ -364,6 +364,24 @@ docs/developer-documentation/
 
 ---
 
+## Captures d'écran
+
+Les captures illustrant l'intégration Apple Home sont disponibles ci-dessous.
+
+### Vue générale Apple Home
+
+![Vue générale Apple Home](docs/screenshots/apple-home-overview.png)
+
+### Thermostat Apple Home
+
+![Thermostat Apple Home](docs/screenshots/apple-home-thermostat.png)
+
+### Informations de l'accessoire Apple Home
+
+![Informations de l'accessoire Apple Home](docs/screenshots/apple-home-accessory-info.png)
+
+---
+
 ## Philosophie du projet
 
 Le développement de **Homebridge HA Virtual Devices** repose sur quelques principes simples.

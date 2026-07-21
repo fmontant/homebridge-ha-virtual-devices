@@ -274,11 +274,19 @@ docs/developer-documentation/
 
 ## Screenshots
 
-Screenshots illustrating the Homebridge interface and Apple Home integration are available in:
+Screenshots illustrating the Apple Home integration are available below.
 
-```
-docs/screenshots/
-```
+### Apple Home overview
+
+![Apple Home overview](docs/screenshots/apple-home-overview.png)
+
+### Apple Home thermostat
+
+![Apple Home thermostat](docs/screenshots/apple-home-thermostat.png)
+
+### Apple Home accessory information
+
+![Apple Home accessory information](docs/screenshots/apple-home-accessory-info.png)
 
 ---
 
