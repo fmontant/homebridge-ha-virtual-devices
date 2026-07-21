@@ -1,209 +1,558 @@
 # Homebridge HA Virtual Devices
 
+> Expose les capteurs environnementaux de Home Assistant sous forme d'accessoires HomeKit natifs via Homebridge.
+
 [![Build](https://github.com/fmontant/homebridge-ha-virtual-devices/actions/workflows/build.yml/badge.svg)](https://github.com/fmontant/homebridge-ha-virtual-devices/actions/workflows/build.yml)
 [![npm version](https://img.shields.io/npm/v/homebridge-ha-virtual-devices.svg)](https://www.npmjs.com/package/homebridge-ha-virtual-devices)
 [![Homebridge](https://img.shields.io/badge/Homebridge-2.x-orange)](https://homebridge.io/)
-[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Compatible-41BDF5)](https://www.home-assistant.io/)
-[![Node.js](https://img.shields.io/badge/Node.js-22%2B-green)](https://nodejs.org/)
-[![Licence MIT](https://img.shields.io/badge/Licence-MIT-green.svg)](LICENSE)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Compatible-blue)](https://www.home-assistant.io/)
+[![Node.js](https://img.shields.io/badge/Node.js-22+-green)](https://nodejs.org/)
+[![Licence](https://img.shields.io/github/license/fmontant/homebridge-ha-virtual-devices)](LICENSE)
 
-Expose automatiquement les capteurs environnementaux compatibles de Home Assistant sous forme de thermostats natifs Apple Maison grâce à Homebridge.
+---
 
-Au lieu d'afficher séparément les capteurs de température, d'humidité et de batterie, le plugin regroupe intelligemment les mesures d'un même appareil dans une unique tuile Thermostat native.
+## Présentation
 
-Aucune configuration manuelle.
+Home Assistant est une plateforme particulièrement puissante pour collecter les données provenant des objets connectés.
+
+Apple Home propose une interface simple et cohérente pour consulter et utiliser ces informations au quotidien.
+
+**Homebridge HA Virtual Devices** relie ces deux écosystèmes.
+
+Le plugin découvre automatiquement les capteurs environnementaux compatibles dans Home Assistant et les expose sous forme d'accessoires HomeKit entièrement natifs.
+
+L'objectif n'est pas d'ajouter davantage de tuiles dans Apple Home.
+
+L'objectif est de proposer une expérience plus simple, plus lisible et plus cohérente.
+
+Au lieu d'afficher séparément :
+
+- la température ;
+- l'humidité ;
+- le niveau de batterie ;
+
+les informations associées à un même appareil sont regroupées dans une seule tuile HomeKit.
+
+Le résultat :
+
+- une interface Apple Home plus claire ;
+- moins d'accessoires à gérer ;
+- davantage d'informations au même endroit ;
+- une expérience réellement native.
 
 Aucun polling.
 
-Aucun accessoire dupliqué.
+Aucun service HomeKit personnalisé.
 
-Une expérience Apple Maison simple, propre et totalement native.
+Aucune configuration manuelle complexe.
 
-> La réalité avant tout.
-> Toutes les captures d'écran présentées ci-dessous proviennent d'une installation réelle du plugin. Seules les informations personnelles ont été anonymisées.
-
-![Banner](docs/images/banner.png)
+Uniquement des accessoires HomeKit standards.
 
 ---
 
-# Pourquoi ce plugin ?
+## Pourquoi ce plugin ?
 
-Home Assistant excelle dans la collecte des données provenant de centaines d'appareils.
+Apple Home ne propose pas actuellement de type d'accessoire spécifiquement dédié aux capteurs environnementaux.
 
-Apple Maison offre l'une des meilleures expériences utilisateur pour piloter son habitation au quotidien.
+Une sonde équipée de plusieurs mesures apparaît généralement sous plusieurs accessoires indépendants :
 
-Ce plugin réunit les deux.
+- Température ;
+- Humidité ;
+- Batterie.
 
-Les capteurs environnementaux compatibles sont découverts automatiquement, regroupés intelligemment puis exposés sous forme de thermostats HomeKit natifs, sans aucune configuration complexe.
+Avec un grand nombre de capteurs, cette organisation devient rapidement difficile à exploiter.
 
----
+Après analyse des services HomeKit disponibles, le thermostat s'est révélé être le meilleur compromis.
 
-# Fonctionnalités
+Une seule tuile permet d'afficher naturellement :
 
-## Découverte automatique
+- la température actuelle ;
+- l'humidité relative ;
+- les informations de l'accessoire ;
+- le niveau de batterie lorsqu'il est disponible.
 
-- Découverte automatique des appareils compatibles Home Assistant
-- Création automatique des accessoires HomeKit
-- Regroupement automatique des mesures d'un même appareil
-- Aucune configuration manuelle
+Le plugin utilise uniquement les capacités natives de HomeKit.
 
-## Intégration native Apple Maison
+L'objectif est simple :
 
-- Thermostats HomeKit natifs
-- Température et humidité réunies dans une seule tuile
-- Niveau de batterie optionnel
-- Mise à jour en temps réel via l'API WebSocket de Home Assistant
-
-## Informations de l'appareil
-
-- Fabricant
-- Modèle
-- Version du firmware
-- Version matérielle
-- Numéro de série
-
-## Configuration
-
-- Configuration minimale
-- Liste d'exclusion des appareils
-- Synchronisation automatique
+> Utiliser les services HomeKit existants pour offrir une intégration fiable, propre et naturelle dans Apple Home.
 
 ---
 
-# Capteurs pris en charge
+## Fonctionnalités
 
-Actuellement
+### Découverte automatique
 
-- Température
-- Humidité
-- Niveau de batterie
+Les appareils compatibles sont automatiquement découverts depuis Home Assistant.
 
-Prévu prochainement
+Aucune déclaration manuelle n'est nécessaire.
 
-- Qualité de l'air
-- CO₂
-- COV
-- Pression atmosphérique
-- Luminosité
-- Autres capteurs environnementaux
+Le plugin identifie les capteurs environnementaux disponibles et crée automatiquement les accessoires HomeKit correspondants.
 
 ---
 
-# Pourquoi utiliser un thermostat ?
+### Regroupement intelligent
 
-Apple Maison ne propose actuellement aucun type d'accessoire natif dédié aux capteurs environnementaux.
+Les différentes informations provenant d'un même appareil sont regroupées automatiquement.
 
-Parmi tous les accessoires HomeKit disponibles, le thermostat offre aujourd'hui la présentation la plus intuitive pour afficher les informations environnementales tout en respectant parfaitement les conventions d'interface d'Apple.
+Au lieu d'obtenir plusieurs accessoires indépendants :
 
-Le plugin ne crée jamais d'accessoires personnalisés.
+- Température ;
+- Humidité ;
+- Batterie ;
 
-Tous les accessoires exposés sont entièrement natifs HomeKit.
+Apple Home affiche une seule tuile contenant toutes les informations disponibles.
 
----
-
-# Captures d'écran
-
-Le plugin s'intègre naturellement dans Apple Maison.
-
-Au lieu de créer plusieurs accessoires indépendants, les différentes mesures sont regroupées dans une seule tuile Thermostat.
-
-| Vue d'ensemble | Thermostat | Informations |
-|:--------------:|:----------:|:------------:|
-| ![Vue générale](docs/screenshots/apple-home-overview.png) | ![Thermostat](docs/screenshots/apple-home-thermostat.png) | ![Informations](docs/screenshots/apple-home-accessory-info.png) |
+Cette approche permet de conserver une interface claire et facile à utiliser.
 
 ---
 
-# Architecture
+### Accessoires HomeKit natifs
 
-```mermaid
-flowchart LR
+Le plugin utilise exclusivement les services HomeKit officiels.
 
-HA["Home Assistant"]
-HB["Homebridge HA Virtual Devices"]
-HK["Apple Maison"]
+Il n'utilise pas :
 
-HA --> HB
-HB --> HK
+- de services HomeKit personnalisés ;
+- de caractéristiques propriétaires ;
+- de solutions de contournement.
+
+L'objectif est de garantir la meilleure compatibilité possible avec l'écosystème Apple.
+
+---
+
+### Synchronisation temps réel
+
+Le plugin communique avec Home Assistant grâce à son API WebSocket.
+
+Les changements détectés sont immédiatement répercutés dans Apple Home.
+
+Aucun polling n'est utilisé.
+
+Cette approche permet :
+
+- des mises à jour plus rapides ;
+- une consommation réduite des ressources ;
+- une meilleure fiabilité de synchronisation.
+
+---
+
+### Informations enrichies
+
+Lorsque ces informations sont disponibles, les accessoires peuvent exposer :
+
+- le fabricant ;
+- le modèle ;
+- la version du firmware ;
+- la version matérielle ;
+- le numéro de série ;
+- le niveau de batterie.
+
+---
+
+### Catalogue persistant
+
+Le plugin maintient un catalogue persistant des appareils découverts.
+
+Contrairement à un fonctionnement classique où un appareil temporairement indisponible peut disparaître définitivement, le catalogue conserve les informations connues.
+
+Chaque appareil peut conserver :
+
+- son identifiant unique ;
+- son nom affiché ;
+- sa pièce ;
+- son état de publication ;
+- son statut favori ;
+- son état masqué ;
+- sa disponibilité ;
+- sa date de découverte ;
+- sa dernière communication ;
+- son état de synchronisation.
+
+Les préférences utilisateur sont conservées après :
+
+- un redémarrage de Homebridge ;
+- un redémarrage de Home Assistant ;
+- une mise à jour du plugin.
+
+L'architecture détaillée du catalogue est disponible dans :
+
+```
+docs/developer-documentation/architecture/
 ```
 
-Le plugin découvre automatiquement les capteurs environnementaux compatibles, regroupe les différentes mesures puis les expose sous forme d'accessoires natifs Apple Maison.
+---
+
+### Synchronisation dynamique
+
+Les préférences modifiées depuis l'interface Homebridge sont automatiquement synchronisées.
+
+Lorsqu'une modification est effectuée :
+
+- le catalogue est mis à jour ;
+- l'accessoire concerné est synchronisé ;
+- HomeKit est automatiquement actualisé.
+
+Exemple :
+
+- Modifier une préférence dans Homebridge UI ;
+- Mettre à jour le catalogue persistant ;
+- Synchroniser l'accessoire concerné ;
+- Mettre à jour Apple Home.
+
+Aucun redémarrage de Homebridge n'est nécessaire.
 
 ---
 
-# Installation
+## Interface Homebridge
 
-Installation globale :
+Le plugin dispose d'une interface d'administration intégrée permettant de gérer les appareils découverts.
+
+Elle constitue le centre de pilotage des appareils virtuels exposés dans HomeKit.
+
+Elle permet notamment de :
+
+- rechercher un appareil ;
+- filtrer par pièce ;
+- trier les équipements ;
+- gérer les favoris ;
+- modifier les préférences ;
+- activer ou désactiver la publication dans HomeKit ;
+- masquer un appareil ;
+- consulter les informations détaillées ;
+- suivre la disponibilité ;
+- connaître la dernière communication.
+
+---
+
+### Gestion des indisponibilités
+
+Les capteurs environnementaux peuvent temporairement devenir indisponibles pour différentes raisons :
+
+- remplacement des piles ;
+- perte temporaire de communication Zigbee ;
+- redémarrage du coordinateur ;
+- redémarrage de Home Assistant ;
+- interruption réseau.
+
+Le plugin détecte automatiquement ces situations.
+
+Lorsque Home Assistant indique qu'un appareil n'est plus disponible :
+
+- l'état de disponibilité est mis à jour ;
+- HomeKit reflète l'état de communication lorsque cela est possible ;
+- les informations connues de l'appareil sont conservées.
+
+Lorsque le capteur redevient disponible :
+
+- les valeurs sont actualisées ;
+- l'accessoire reprend son fonctionnement normal ;
+- aucune intervention utilisateur n'est nécessaire.
+
+---
+
+## Prérequis
+
+### Homebridge
+
+- Homebridge 2.x
+
+### Node.js
+
+- Node.js 22 ou version supérieure
+
+### Home Assistant
+
+Une instance Home Assistant fonctionnelle est nécessaire avec :
+
+- l'API WebSocket activée ;
+- un jeton d'accès longue durée (*Long-Lived Access Token*) ;
+- une connectivité réseau entre Homebridge et Home Assistant.
+
+---
+
+## Installation
+
+Le plugin peut être installé directement depuis le gestionnaire de plugins Homebridge ou avec npm.
 
 ```bash
 npm install -g homebridge-ha-virtual-devices
 ```
 
-Redémarre Homebridge.
-
-Configure le plugin.
-
-Profite d'une intégration entièrement automatique.
+Après installation, redémarrez Homebridge.
 
 ---
 
-# Configuration
+## Configuration
+
+La configuration est volontairement limitée au strict nécessaire.
 
 Exemple :
 
 ```json
 {
-  "platform": "HAVirtualDevices",
-  "name": "HA Virtual Devices",
+  "platform": "HomeAssistantVirtualDevices",
+  "name": "Home Assistant Virtual Devices",
   "host": "http://homeassistant.local:8123",
   "token": "YOUR_LONG_LIVED_ACCESS_TOKEN"
 }
 ```
 
-Deux paramètres sont obligatoires :
+### Paramètres disponibles
 
-- L'adresse de Home Assistant
-- Un Long-Lived Access Token
-
-Après le redémarrage de Homebridge, les accessoires sont créés automatiquement.
-
----
-
-# Compatibilité
-
-- Homebridge 2.x
-- Node.js 22 ou supérieur
-- Home Assistant 2024.6 ou supérieur
-- Apple Maison
-- iOS 16 ou supérieur
-- macOS 13 ou supérieur
+| Paramètre | Obligatoire | Description |
+|-----------|-------------|-------------|
+| host | Oui | URL de Home Assistant |
+| token | Oui | Jeton d'accès longue durée |
+| includeHumidity | Non | Publier l'humidité lorsqu'elle est disponible |
+| includeBattery | Non | Publier le niveau de batterie lorsqu'il est disponible |
+| logLevel | Non | Niveau de journalisation |
 
 ---
 
-# Feuille de route
+## Documentation
 
-Les prochaines versions intégreront notamment :
+La documentation complète est disponible dans le dossier `docs`.
 
-- Capteurs CO₂
-- Capteurs de qualité de l'air
-- Capteurs COV
-- Capteurs de luminosité
-- Capteurs de pression atmosphérique
-- Découverte via Matter
-- Options de filtrage avancées
-- Diagnostics enrichis
+Elle est organisée en deux parties.
 
 ---
 
-# Contribuer
+### Documentation utilisateur
+
+Documentation destinée aux utilisateurs du plugin.
+
+Elle contient :
+
+- guide d'installation ;
+- configuration ;
+- guide utilisateur ;
+- dépannage ;
+- questions fréquentes.
+
+Disponible en :
+
+- français ;
+- anglais.
+
+Emplacement :
+
+```
+docs/user-documentation/french/
+```
+
+---
+
+### Documentation développeur
+
+Documentation technique destinée aux contributeurs et développeurs.
+
+Elle contient :
+
+- architecture du plugin ;
+- composants internes ;
+- Architecture Decision Records ;
+- diagrammes techniques.
+
+Emplacement :
+
+```
+docs/developer-documentation/
+```
+
+---
+
+## Philosophie du projet
+
+Le développement de **Homebridge HA Virtual Devices** repose sur quelques principes simples.
+
+### HomeKit avant tout
+
+Le plugin privilégie les services HomeKit natifs.
+
+L'objectif est de proposer une intégration qui s'intègre naturellement dans Apple Home sans utiliser de solutions propriétaires.
+
+---
+
+### Simplicité
+
+Le minimum de configuration est recherché.
+
+La découverte automatique est toujours privilégiée par rapport à une configuration manuelle complexe.
+
+---
+
+### Fiabilité
+
+Une perte temporaire de communication ne doit jamais obliger l'utilisateur à recréer ses accessoires.
+
+Les appareils connus restent suivis grâce au catalogue persistant.
+
+---
+
+### Maintenabilité
+
+Chaque composant possède une responsabilité clairement définie.
+
+Cette organisation permet de faire évoluer le projet tout en conservant une architecture stable.
+
+---
+
+## Questions fréquentes
+
+### Le plugin modifie-t-il Home Assistant ?
+
+Non.
+
+Le plugin fonctionne uniquement en lecture.
+
+Il :
+
+- découvre les entités compatibles ;
+- écoute les événements Home Assistant ;
+- met à jour les accessoires HomeKit.
+
+Il ne crée, ne modifie et ne supprime aucune entité dans Home Assistant.
+
+---
+
+### Le plugin utilise-t-il du polling ?
+
+Non.
+
+Les communications reposent sur l'API WebSocket de Home Assistant.
+
+Les mises à jour sont déclenchées par les événements.
+
+Cette approche réduit la charge système tout en permettant une synchronisation rapide.
+
+---
+
+### Que se passe-t-il si Home Assistant redémarre ?
+
+Le plugin se reconnecte automatiquement.
+
+Lorsque Home Assistant redevient disponible :
+
+- les appareils sont redécouverts ;
+- les valeurs sont actualisées ;
+- HomeKit est mis à jour.
+
+Aucune intervention n'est nécessaire.
+
+---
+
+### Que se passe-t-il si un capteur disparaît temporairement ?
+
+Le catalogue conserve les informations de l'appareil.
+
+Lorsque la communication est interrompue :
+
+- la disponibilité est mise à jour ;
+- les préférences utilisateur sont conservées ;
+- l'accessoire reste connu.
+
+Lorsque le capteur revient en ligne, son fonctionnement normal reprend automatiquement.
+
+---
+
+### Mes préférences sont-elles conservées après une mise à jour ?
+
+Oui.
+
+Le catalogue persistant conserve notamment :
+
+- les favoris ;
+- les pièces ;
+- l'état de publication ;
+- les appareils masqués ;
+- l'historique de découverte.
+
+---
+
+## Feuille de route
+
+Les évolutions envisagées comprennent :
+
+### Interface utilisateur
+
+- filtres avancés ;
+- opérations par lot ;
+- statistiques des appareils ;
+- tableau de bord de santé ;
+- enrichissement des informations du catalogue.
+
+---
+
+### Nouveaux capteurs
+
+Le support pourra être étendu à :
+
+- qualité de l'air ;
+- CO₂ ;
+- composés organiques volatils (VOC) ;
+- pression atmosphérique ;
+- luminosité ;
+- autres capteurs environnementaux compatibles Home Assistant.
+
+---
+
+### Évolutions HomeKit
+
+Les pistes étudiées comprennent :
+
+- enrichissement des métadonnées ;
+- informations de diagnostic supplémentaires ;
+- amélioration des rapports de synchronisation.
+
+---
+
+## Contribuer
 
 Les contributions sont les bienvenues.
 
-N'hésite pas à proposer des idées, signaler un problème ou ouvrir une Pull Request.
+Vous pouvez aider en :
+
+- signalant des bugs ;
+- proposant des améliorations ;
+- améliorant la documentation ;
+- contribuant au code ;
+- proposant des traductions.
+
+Pour les évolutions importantes, il est recommandé d'ouvrir d'abord une discussion afin de valider l'approche.
 
 ---
 
-# Licence
+## Support
 
-Ce projet est distribué sous licence MIT.
+Lors d'un signalement de problème, merci d'indiquer :
 
-Consulte le fichier `LICENSE` pour plus d'informations.
+- version de Homebridge ;
+- version de Node.js ;
+- version de Home Assistant ;
+- version du plugin ;
+- journaux concernés ;
+- étapes permettant de reproduire le problème.
+
+Ces informations facilitent l'analyse et la résolution des problèmes.
+
+---
+
+## Licence
+
+Licence MIT.
+
+Voir le fichier **LICENSE** pour le texte complet.
+
+---
+
+## Remerciements
+
+Merci à :
+
+- la communauté Homebridge ;
+- la communauté Home Assistant ;
+- toutes les personnes ayant testé les différentes versions ;
+- tous les utilisateurs ayant signalé des anomalies ou proposé des améliorations.
+
+Leurs retours contribuent directement à l'évolution du projet.
