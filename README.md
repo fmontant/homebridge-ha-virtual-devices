@@ -9,6 +9,8 @@
 [![Node.js](https://img.shields.io/badge/Node.js-22+-green)](https://nodejs.org/)
 [![License](https://img.shields.io/github/license/fmontant/homebridge-ha-virtual-devices)](LICENSE)
 
+![Homebridge HA Virtual Devices](docs/images/banner.png)
+
 ---
 
 ## Overview
