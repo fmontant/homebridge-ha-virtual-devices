@@ -366,19 +366,29 @@ docs/developer-documentation/
 
 ## Captures d'écran
 
-Les captures illustrant l'intégration Apple Home sont disponibles ci-dessous.
+Captures illustrant l'intégration Apple Home.
 
-### Vue générale Apple Home
+<table>
+<tr>
+<td align="center">
+<img src="docs/screenshots/apple-home-overview.png" width="250">
+<br>
+Vue générale Apple Home
+</td>
 
-![Vue générale Apple Home](docs/screenshots/apple-home-overview.png)
+<td align="center">
+<img src="docs/screenshots/apple-home-thermostat.png" width="250">
+<br>
+Thermostat Apple Home
+</td>
 
-### Thermostat Apple Home
-
-![Thermostat Apple Home](docs/screenshots/apple-home-thermostat.png)
-
-### Informations de l'accessoire Apple Home
-
-![Informations de l'accessoire Apple Home](docs/screenshots/apple-home-accessory-info.png)
+<td align="center">
+<img src="docs/screenshots/apple-home-accessory-info.png" width="250">
+<br>
+Informations de l'accessoire Apple Home
+</td>
+</tr>
+</table>
 
 ---
 

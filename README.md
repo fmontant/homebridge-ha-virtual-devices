@@ -274,19 +274,29 @@ docs/developer-documentation/
 
 ## Screenshots
 
-Screenshots illustrating the Apple Home integration are available below.
+Screenshots illustrating the Apple Home integration.
 
-### Apple Home overview
+<table>
+<tr>
+<td align="center">
+<img src="docs/screenshots/apple-home-overview.png" width="250">
+<br>
+Apple Home overview
+</td>
 
-![Apple Home overview](docs/screenshots/apple-home-overview.png)
+<td align="center">
+<img src="docs/screenshots/apple-home-thermostat.png" width="250">
+<br>
+Apple Home thermostat
+</td>
 
-### Apple Home thermostat
-
-![Apple Home thermostat](docs/screenshots/apple-home-thermostat.png)
-
-### Apple Home accessory information
-
-![Apple Home accessory information](docs/screenshots/apple-home-accessory-info.png)
+<td align="center">
+<img src="docs/screenshots/apple-home-accessory-info.png" width="250">
+<br>
+Apple Home accessory information
+</td>
+</tr>
+</table>
 
 ---
 
