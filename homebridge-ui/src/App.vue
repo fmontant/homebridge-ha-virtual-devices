@@ -209,13 +209,6 @@ const initialLoading =
       !initialized.value,
   );
 
-const refreshing =
-  computed(
-    () =>
-      loading.value &&
-      initialized.value,
-  );
-
 const filtersActive =
   computed(
     () =>
@@ -423,6 +416,10 @@ onMounted(() => {
   catalogEventListener
     .subscribe(
       () => {
+        console.log(
+          '[UI] catalog-updated reçu',
+        );
+
         void loadDevices();
       },
     );
@@ -438,47 +435,43 @@ onUnmounted(() => {
 
 <template>
   <main class="app">
-    <header class="header">
-      <div>
-        <h1>
-          Homebridge HA Virtual Devices
-        </h1>
+  <header class="header">
+  <div class="header-content">
+    <h1>
+      Homebridge HA Virtual Devices
+    </h1>
 
-        <p>
-          Gestion des appareils Home Assistant exposés à HomeKit.
-        </p>
-      </div>
+    <p>
+      Gestion des appareils Home Assistant exposés à HomeKit.
+    </p>
+  </div>
 
-      <button
-        type="button"
-        class="primary-button"
-        :disabled="loading"
-        @click="loadDevices"
-      >
-        <span
-          v-if="loading"
-          class="button-spinner"
-          aria-hidden="true"
-        />
+  <img
+    src="/logo1.png"
+    alt="Homebridge HA Virtual Devices"
+    class="app-logo"
+  />
+</header>
 
-        {{
-          refreshing
-            ? 'Actualisation…'
-            : 'Actualiser'
-        }}
-      </button>
-    </header>
-
-    <ConfigurationPanel />
+    <section class="configuration-panel">
+      <ConfigurationPanel />
+    </section>
 
     <section class="toolbar">
       <input
         v-model="search"
         class="search-input"
         type="search"
+        name="device-search"
+        autocomplete="off"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        inputmode="search"
+        enterkeyhint="search"
+        aria-label="Rechercher un appareil"
         placeholder="Rechercher un appareil…"
       />
-
       <select
         v-model="stateFilter"
         class="filter-select"
@@ -684,11 +677,23 @@ onUnmounted(() => {
   padding: 24px;
 }
 
+.app-logo {
+  width: 240px;
+  height: 240px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
 .header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  gap: 32px;
   margin-bottom: 24px;
+}
+
+.header-content {
+  flex: 1;
+  text-align: center;
 }
 
 .header h1 {
@@ -698,6 +703,11 @@ onUnmounted(() => {
 .header p {
   margin: 0;
   color: #6b7280;
+}
+
+.configuration-panel {
+  width: 100%;
+  margin-bottom: 16px;
 }
 
 .primary-button {

@@ -533,8 +533,8 @@ function normalizeConfiguration(
     token:
       normalizeText(value.token),
     autoDiscovery: true,
-    includeHumidity: true,
-    includeBattery: true,
+includeHumidity: true,
+includeBattery: true,
   };
 }
 
@@ -542,14 +542,15 @@ function comparableConfiguration(
   value: PluginConfiguration,
 ): PluginConfiguration {
   return {
-    haUrl:
-      normalizeText(value.haUrl),
-    token:
-      normalizeText(value.token),
-    autoDiscovery: true,
-    includeHumidity: true,
-    includeBattery: true,
-  };
+  haUrl:
+    normalizeText(value.haUrl),
+  token:
+    normalizeText(value.token),
+
+  autoDiscovery: true,
+  includeHumidity: true,
+  includeBattery: true,
+};
 }
 
 function normalizeText(
@@ -607,7 +608,7 @@ onMounted(() => {
         </strong>
 
         <small>
-          Connexion au serveur Home Assistant
+          Connexion et options générales du plugin
         </small>
       </span>
 
@@ -648,16 +649,20 @@ onMounted(() => {
           </span>
 
           <input
-            v-model="configuration.haUrl"
-            type="url"
-            name="home-assistant-server-address"
-            autocomplete="off"
-            autocapitalize="off"
-            spellcheck="false"
-            placeholder="http://homeassistant.local:8123"
-            :disabled="saving || checking"
-            @input="clearMessages"
-          />
+  v-model="configuration.haUrl"
+  type="url"
+  name="home-assistant-server-address"
+  autocomplete="off"
+  autocapitalize="none"
+  autocorrect="off"
+  spellcheck="false"
+  inputmode="url"
+  enterkeyhint="next"
+  aria-label="Adresse du serveur Home Assistant"
+  placeholder="http://homeassistant.local:8123"
+  :disabled="saving || checking"
+  @input="clearMessages"
+/>
         </label>
 
         <label class="configuration-field">
@@ -667,21 +672,24 @@ onMounted(() => {
 
           <span class="token-field">
             <input
-              v-model="configuration.token"
-              type="text"
-              name="ha-api-token-not-a-password"
-              autocomplete="new-password"
-              autocapitalize="off"
-              spellcheck="false"
-              data-1p-ignore="true"
-              data-lpignore="true"
-              :class="{
-                'token-masked': !showToken,
-              }"
-              placeholder="Jeton Home Assistant"
-              :disabled="saving || checking"
-              @input="clearMessages"
-            />
+  v-model="configuration.token"
+  type="text"
+  name="ha-api-token-not-a-password"
+  autocomplete="new-password"
+  autocapitalize="none"
+  autocorrect="off"
+  spellcheck="false"
+  inputmode="text"
+  aria-label="Jeton d'accès Home Assistant"
+  data-1p-ignore="true"
+  data-lpignore="true"
+  :class="{
+    'token-masked': !showToken,
+  }"
+  placeholder="Jeton Home Assistant"
+  :disabled="saving || checking"
+  @input="clearMessages"
+/>
 
             <button
               type="button"
@@ -694,6 +702,8 @@ onMounted(() => {
             </button>
           </span>
         </label>
+
+        
 
         <div
           v-if="
@@ -936,6 +946,25 @@ onMounted(() => {
   opacity: 0.5;
 }
 
+.configuration-options {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.configuration-options label {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.configuration-options input {
+  width: 16px;
+  height: 16px;
+}
+
 .configuration-message {
   grid-column: 1 / -1;
   padding: 10px 12px;
@@ -965,11 +994,17 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 
+  .configuration-options,
   .configuration-message,
   .configuration-actions {
     grid-column: auto;
   }
 
+  .configuration-options {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
 
   .configuration-status {
     margin-left: 0;

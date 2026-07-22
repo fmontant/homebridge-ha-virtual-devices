@@ -47,7 +47,7 @@ const availabilityClass = (
 ): string =>
   device.available
     ? badgeClass[device.state]
-    : 'badge-offline';
+    : 'state-offline';
 </script>
 
 <template>
