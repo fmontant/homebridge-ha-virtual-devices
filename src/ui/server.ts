@@ -26,6 +26,10 @@ import {
   CatalogSorter,
 } from './catalogSorter.js';
 
+import {
+  ConfigurationStatusService,
+} from './configuration/configurationStatusService.js';
+
 interface FavoriteRequestPayload {
   id: string;
   favorite: boolean;
@@ -63,6 +67,9 @@ export class HAVirtualDevicesUiServer
   private readonly catalogSorter =
     new CatalogSorter();
 
+  private readonly configurationStatusService =
+    new ConfigurationStatusService();
+
   private catalogDirectoryPath?:
     string;
 
@@ -87,6 +94,28 @@ export class HAVirtualDevicesUiServer
           );
         },
       );
+
+    this.onRequest(
+      '/config/status',
+      async payload => {
+        console.log(
+          '[UI] Requête /config/status reçue',
+        );
+
+        const status =
+          await this.configurationStatusService
+            .getStatus(
+              payload,
+            );
+
+        console.log(
+          '[UI] Réponse /config/status :',
+          status,
+        );
+
+        return status;
+      },
+    );
 
     this.onRequest(
       '/catalog/devices',

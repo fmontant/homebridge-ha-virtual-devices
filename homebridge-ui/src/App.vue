@@ -7,6 +7,7 @@ import {
 } from 'vue';
 
 import { catalogApi } from './api/catalogApi';
+import ConfigurationPanel from './components/ConfigurationPanel.vue';
 import DeviceDetails from './components/DeviceDetails.vue';
 import DeviceRow from './components/DeviceRow.vue';
 import {
@@ -467,6 +468,8 @@ onUnmounted(() => {
         }}
       </button>
     </header>
+
+    <ConfigurationPanel />
 
     <section class="toolbar">
       <input

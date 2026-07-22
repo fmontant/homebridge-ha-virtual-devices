@@ -124,3 +124,6 @@ dist
 .idea
 
 /test/hbConfig
+
+# Fichiers locaux de développement
+_dev/

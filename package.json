@@ -2,7 +2,7 @@
   "name": "homebridge-ha-virtual-devices",
   "displayName": "Homebridge HA Virtual Devices",
   "type": "module",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "Automatically exposes Home Assistant environmental sensors as read-only HomeKit thermostat accessories through Homebridge.",
   "author": {
     "name": "Fabrice Montant"
