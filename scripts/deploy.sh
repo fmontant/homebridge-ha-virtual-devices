@@ -1,53 +1,87 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-set -e
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REMOTE_HOST="${REMOTE_HOST:-homebridge-nas}"
+REMOTE_DIR="${REMOTE_DIR:-/tmp/homebridge-ha-virtual-devices-deploy}"
+REMOTE_INSTALLER="${REMOTE_DIR}/install-on-nas.sh"
 
-SERVER="TNASFAB"
-SHARE="public"
+cd "$PROJECT_ROOT"
 
-SHARE_ROOT="/Volumes/$SHARE"
-HOMEBRIDGE_ROOT="$SHARE_ROOT/homebridge"
-TARGET="$HOMEBRIDGE_ROOT/homebridge-ha-virtual-devices"
+line() {
+  printf '%s\n' '────────────────────────────────────────'
+}
 
-if [ ! -d "$SHARE_ROOT" ] || ! ls "$SHARE_ROOT" >/dev/null 2>&1; then
-  echo "Connexion au TerraMaster..."
+step() {
+  printf '\n▶ %s\n' "$1"
+}
 
-  osascript -e "mount volume \"smb://$SERVER/$SHARE\"" >/dev/null 2>&1 || true
+success() {
+  printf '✓ %s\n' "$1"
+}
 
-  sleep 3
-fi
-
-if [ ! -d "$HOMEBRIDGE_ROOT" ] || ! ls "$HOMEBRIDGE_ROOT" >/dev/null 2>&1; then
-  echo "Erreur : impossible d'accéder au partage TerraMaster."
+fail() {
+  printf '✗ %s\n' "$1" >&2
   exit 1
-fi
+}
 
-if [ ! -d "$TARGET" ]; then
-  echo "Erreur : dossier cible introuvable :"
-  echo "$TARGET"
-  exit 1
-fi
+trap 'fail "Déploiement interrompu à la ligne ${LINENO}."' ERR
 
-echo "Compilation..."
-npm run build
+line
+printf '%s\n' 'Homebridge HA Virtual Devices — Déploiement'
+line
 
-echo "Mise à jour du plugin..."
+command -v npm >/dev/null 2>&1 || fail "npm est introuvable sur le Mac."
+command -v ssh >/dev/null 2>&1 || fail "ssh est introuvable sur le Mac."
+command -v scp >/dev/null 2>&1 || fail "scp est introuvable sur le Mac."
 
-echo "Synchronisation du dist..."
-mkdir -p "$TARGET/dist"
-time rsync -rt --inplace --delete dist/ "$TARGET/dist/"
+PACKAGE_NAME="$(node -p "require('./package.json').name")"
+PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+EXPECTED_TGZ="${PACKAGE_NAME#@*/}-${PACKAGE_VERSION}.tgz"
 
-echo "Copie du package.json..."
-time cp package.json "$TARGET/package.json"
+step "Vérification de la connexion SSH"
+ssh -o BatchMode=yes -o ConnectTimeout=10 "$REMOTE_HOST" 'printf ok' >/dev/null
+success "Connexion à ${REMOTE_HOST}"
 
-echo "Copie du config.schema.json..."
-time cp config.schema.json "$TARGET/config.schema.json"
+step "Build complet"
+npm run build:all
+success "Build terminé"
 
-echo "Copie du README.md..."
-time cp README.md "$TARGET/README.md"
+step "Création du paquet npm"
+rm -f -- "$EXPECTED_TGZ"
+PACK_OUTPUT="$(npm pack --json)"
+TGZ_FILE="$(node -e "const d=JSON.parse(process.argv[1]); if(!d[0]?.filename) process.exit(1); process.stdout.write(d[0].filename);" "$PACK_OUTPUT")"
+[[ -f "$TGZ_FILE" ]] || fail "Paquet introuvable après npm pack."
+success "Paquet créé : ${TGZ_FILE}"
 
-echo "Copie du LICENSE..."
-time cp LICENSE "$TARGET/LICENSE"
+step "Préparation du répertoire distant"
+ssh "$REMOTE_HOST" "mkdir -p '$REMOTE_DIR'"
+success "Répertoire distant prêt"
 
-echo "Déploiement terminé."
-echo "Il reste à redémarrer le conteneur Homebridge."
+step "Copie sur le NAS"
+
+ssh "$REMOTE_HOST" \
+  "cat > '${REMOTE_DIR}/${TGZ_FILE}'" \
+  < "$TGZ_FILE"
+
+ssh "$REMOTE_HOST" \
+  "cat > '${REMOTE_INSTALLER}'" \
+  < "$PROJECT_ROOT/scripts/install-on-nas.sh"
+
+ssh "$REMOTE_HOST" \
+  "chmod +x '${REMOTE_INSTALLER}'"
+
+success "Fichiers copiés"
+
+step "Installation dans Homebridge"
+ssh -t "$REMOTE_HOST" \
+  "chmod 700 '$REMOTE_INSTALLER' && '$REMOTE_INSTALLER' '$REMOTE_DIR/$TGZ_FILE' '$PACKAGE_NAME' '$PACKAGE_VERSION'"
+success "Installation distante terminée"
+
+step "Nettoyage local"
+rm -f -- "$TGZ_FILE"
+success "Paquet local supprimé"
+
+line
+printf 'Déploiement terminé avec succès : %s %s\n' "$PACKAGE_NAME" "$PACKAGE_VERSION"
+line
