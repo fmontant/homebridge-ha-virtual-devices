@@ -30,7 +30,13 @@ interface CatalogApiDevice {
 }
 
 interface CatalogDevicesResponse {
-    devices: CatalogApiDevice[];
+  devices: CatalogApiDevice[];
+  updatedAt?: string;
+}
+
+export interface CatalogDevicesResult {
+  devices: CatalogDevice[];
+  updatedAt?: string;
 }
 
 interface CatalogDeviceResponse {
@@ -46,18 +52,23 @@ export interface CatalogDevicePreferencesUpdate {
 
 export class CatalogApi {
   public async getDevices():
-        Promise<CatalogDevice[]> {
+  Promise<CatalogDevicesResult> {
     const response =
-            await window.homebridge.request(
-              '/catalog/devices',
-            ) as CatalogDevicesResponse;
+    await window.homebridge.request(
+      '/catalog/devices',
+    ) as CatalogDevicesResponse;
 
-    return response.devices.map(
-      device =>
-        this.toCatalogDevice(
-          device,
-        ),
-    );
+    return {
+      devices:
+      response.devices.map(
+        device =>
+          this.toCatalogDevice(
+            device,
+          ),
+      ),
+      updatedAt:
+      response.updatedAt,
+    };
   }
 
   public async getDevice(

@@ -9,6 +9,8 @@ import type {
   IHomebridgePluginUi,
 } from '@homebridge/plugin-ui-utils';
 
+import CollapsibleSection from './CollapsibleSection.vue';
+
 declare const homebridge:
   IHomebridgePluginUi;
 
@@ -587,31 +589,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="configuration-panel">
-    <button
-      type="button"
-      class="configuration-header"
-      :aria-expanded="expanded"
-      aria-controls="home-assistant-configuration"
-      @click="expanded = !expanded"
-    >
-      <span
-        class="configuration-indicator"
-        aria-hidden="true"
-      >
-        {{ expanded ? '▼' : '▶' }}
-      </span>
-
-      <span class="configuration-title">
-        <strong>
-          Configuration Home Assistant
-        </strong>
-
-        <small>
-          Connexion et options générales du plugin
-        </small>
-      </span>
-
+  <CollapsibleSection
+    v-model="expanded"
+    title="Configuration Home Assistant"
+    description="Connexion et options générales du plugin"
+    content-id="home-assistant-configuration"
+  >
+    <template #status>
       <span
         class="configuration-status"
         :class="`status-${status}`"
@@ -623,203 +607,146 @@ onMounted(() => {
 
         {{ statusLabel }}
       </span>
-    </button>
+    </template>
 
     <div
-      v-if="expanded"
-      id="home-assistant-configuration"
-      class="configuration-content"
+      v-if="loading"
+      class="configuration-loading"
+      role="status"
+      aria-live="polite"
     >
+      Chargement de la configuration…
+    </div>
+
+    <div
+      v-else
+      class="configuration-form"
+    >
+      <label class="configuration-field">
+        <span>
+          Adresse Home Assistant
+        </span>
+
+        <input
+          v-model="configuration.haUrl"
+          type="url"
+          name="home-assistant-server-address"
+          autocomplete="off"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+          inputmode="url"
+          enterkeyhint="next"
+          aria-label="Adresse du serveur Home Assistant"
+          placeholder="http://homeassistant.local:8123"
+          :disabled="saving || checking"
+          @input="clearMessages"
+        >
+      </label>
+
+      <label class="configuration-field">
+        <span>
+          Jeton d’accès longue durée
+        </span>
+
+        <span class="token-field">
+          <input
+            v-model="configuration.token"
+            type="text"
+            name="ha-api-token-not-a-password"
+            autocomplete="new-password"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+            inputmode="text"
+            aria-label="Jeton d'accès Home Assistant"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            :class="{
+              'token-masked': !showToken,
+            }"
+            placeholder="Jeton Home Assistant"
+            :disabled="saving || checking"
+            @input="clearMessages"
+          >
+
+          <button
+            type="button"
+            class="token-toggle"
+            :aria-label="
+              showToken
+                ? 'Masquer le jeton'
+                : 'Afficher le jeton'
+            "
+            :disabled="saving || checking"
+            @click="showToken = !showToken"
+          >
+            {{ showToken ? 'Masquer' : 'Afficher' }}
+          </button>
+        </span>
+      </label>
+
       <div
-        v-if="loading"
-        class="configuration-loading"
+        v-if="
+          connectionMessage &&
+          status === 'unreachable'
+        "
+        class="configuration-message error-message"
         role="status"
         aria-live="polite"
       >
-        Chargement de la configuration…
+        {{ connectionMessage }}
       </div>
 
       <div
-        v-else
-        class="configuration-form"
+        v-if="errorMessage"
+        class="configuration-message error-message"
+        role="alert"
       >
-        <label class="configuration-field">
-          <span>
-            Adresse Home Assistant
-          </span>
+        {{ errorMessage }}
+      </div>
 
-          <input
-  v-model="configuration.haUrl"
-  type="url"
-  name="home-assistant-server-address"
-  autocomplete="off"
-  autocapitalize="none"
-  autocorrect="off"
-  spellcheck="false"
-  inputmode="url"
-  enterkeyhint="next"
-  aria-label="Adresse du serveur Home Assistant"
-  placeholder="http://homeassistant.local:8123"
-  :disabled="saving || checking"
-  @input="clearMessages"
-/>
-        </label>
+      <div
+        v-if="successMessage"
+        class="configuration-message success-message"
+        role="status"
+        aria-live="polite"
+      >
+        {{ successMessage }}
+      </div>
 
-        <label class="configuration-field">
-          <span>
-            Jeton d’accès longue durée
-          </span>
-
-          <span class="token-field">
-            <input
-  v-model="configuration.token"
-  type="text"
-  name="ha-api-token-not-a-password"
-  autocomplete="new-password"
-  autocapitalize="none"
-  autocorrect="off"
-  spellcheck="false"
-  inputmode="text"
-  aria-label="Jeton d'accès Home Assistant"
-  data-1p-ignore="true"
-  data-lpignore="true"
-  :class="{
-    'token-masked': !showToken,
-  }"
-  placeholder="Jeton Home Assistant"
-  :disabled="saving || checking"
-  @input="clearMessages"
-/>
-
-            <button
-              type="button"
-              class="token-toggle"
-              :aria-label="showToken ? 'Masquer le jeton' : 'Afficher le jeton'"
-              :disabled="saving || checking"
-              @click="showToken = !showToken"
-            >
-              {{ showToken ? 'Masquer' : 'Afficher' }}
-            </button>
-          </span>
-        </label>
-
-        
-
-        <div
-          v-if="
-            connectionMessage &&
-            status === 'unreachable'
+      <div class="configuration-actions">
+        <button
+          type="button"
+          class="secondary-button"
+          :disabled="
+            saving ||
+            checking ||
+            !hasChanges
           "
-          class="configuration-message error-message"
-          role="status"
-          aria-live="polite"
+          @click="resetConfiguration"
         >
-          {{ connectionMessage }}
-        </div>
+          Annuler
+        </button>
 
-        <div
-          v-if="errorMessage"
-          class="configuration-message error-message"
-          role="alert"
+        <button
+          type="button"
+          class="primary-button"
+          :disabled="
+            saving ||
+            checking ||
+            !canSubmit
+          "
+          @click="saveConfiguration"
         >
-          {{ errorMessage }}
-        </div>
-
-        <div
-          v-if="successMessage"
-          class="configuration-message success-message"
-          role="status"
-          aria-live="polite"
-        >
-          {{ successMessage }}
-        </div>
-
-        <div class="configuration-actions">
-          <button
-            type="button"
-            class="secondary-button"
-            :disabled="
-              saving ||
-              checking ||
-              !hasChanges
-            "
-            @click="resetConfiguration"
-          >
-            Annuler
-          </button>
-
-          <button
-            type="button"
-            class="primary-button"
-            :disabled="
-              saving ||
-              checking ||
-              !canSubmit
-            "
-            @click="saveConfiguration"
-          >
-            {{ primaryActionLabel }}
-          </button>
-        </div>
+          {{ primaryActionLabel }}
+        </button>
       </div>
     </div>
-  </section>
+  </CollapsibleSection>
 </template>
 
 <style scoped>
-.configuration-panel {
-  margin-bottom: 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.configuration-header {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  width: 100%;
-  padding: 14px 16px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.configuration-header:hover {
-  background: #f3f4f6;
-}
-
-.configuration-header:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: -2px;
-}
-
-.configuration-title {
-  min-width: 0;
-}
-
-.configuration-title strong,
-.configuration-title small {
-  display: block;
-}
-
-.configuration-title small {
-  margin-top: 3px;
-  color: #6b7280;
-  font-size: 13px;
-  font-weight: 400;
-}
-
-.configuration-indicator {
-  width: 14px;
-  color: #6b7280;
-  font-size: 11px;
-  text-align: center;
-}
-
 .configuration-status {
   display: inline-flex;
   gap: 9px;
@@ -1004,10 +931,6 @@ onMounted(() => {
     align-items: flex-start;
     flex-direction: column;
     gap: 10px;
-  }
-
-  .configuration-status {
-    margin-left: 0;
   }
 
   .token-field {

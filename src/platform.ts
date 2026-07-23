@@ -15,6 +15,7 @@ import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
 
 import { DeviceCatalog } from './catalog/deviceCatalog.js';
 import { DeviceCatalogStore } from './catalog/deviceCatalogStore.js';
+import { PluginStateStore } from './catalog/pluginStateStore.js';
 import { AccessoryFactory } from './factories/accessoryFactory.js';
 import { HomeAssistantClient } from './homeassistant/client.js';
 import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
@@ -66,6 +67,10 @@ implements DynamicPlatformPlugin {
 
   private readonly deviceCatalogStore:
     DeviceCatalogStore;
+
+  private readonly pluginStateStore:
+    PluginStateStore;
+
 
   private readonly deviceCatalog:
     DeviceCatalog;
@@ -143,9 +148,21 @@ implements DynamicPlatformPlugin {
         'device-catalog.json',
       );
 
+    const pluginStateFilePath =
+      join(
+        this.api.user.storagePath(),
+        'ha-virtual-devices',
+        'plugin-state.json',
+      );
+
     this.deviceCatalogStore =
       new DeviceCatalogStore(
         catalogFilePath,
+      );
+
+    this.pluginStateStore =
+      new PluginStateStore(
+        pluginStateFilePath,
       );
 
     this.deviceCatalog =
@@ -154,10 +171,11 @@ implements DynamicPlatformPlugin {
       );
 
     this.catalogManager =
-      new CatalogManager(
-        this.deviceCatalog,
-        this.log,
-      );
+  new CatalogManager(
+    this.deviceCatalog,
+    this.pluginStateStore,
+    this.log,
+  );
 
     this.accessoryManager =
       new AccessoryManager(

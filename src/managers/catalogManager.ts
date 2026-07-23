@@ -14,6 +14,10 @@ import type {
   DeviceCatalog,
 } from '../catalog/deviceCatalog.js';
 
+import type {
+  PluginStateStore,
+} from '../catalog/pluginStateStore.js';
+
 import { ClimateDeviceCatalogMapper } from '../mappers/climateDeviceCatalogMapper.js';
 
 import type {
@@ -25,17 +29,19 @@ export class CatalogManager {
     false;
 
   private catalogLoading:
-        Promise<void> | undefined;
+    Promise<void> | undefined;
 
   private readonly climateDeviceCatalogMapper =
     new ClimateDeviceCatalogMapper();
 
   constructor(
-        private readonly deviceCatalog:
-            DeviceCatalog,
-        private readonly log:
-            Logging,
-  ) { }
+    private readonly deviceCatalog:
+      DeviceCatalog,
+    private readonly pluginStateStore:
+      PluginStateStore,
+    private readonly log:
+      Logging,
+  ) {}
 
   public async synchronizeClimateDevices(
     climateDevices: ClimateDevice[],
@@ -43,18 +49,23 @@ export class CatalogManager {
     await this.load();
 
     const discoveredCatalogDevices =
-            this.climateDeviceCatalogMapper
-              .toDiscoveredCatalogDevices(
-                climateDevices,
-              );
+      this.climateDeviceCatalogMapper
+        .toDiscoveredCatalogDevices(
+          climateDevices,
+        );
 
     const synchronizationResult =
-            this.deviceCatalog
-              .synchronize(
-                discoveredCatalogDevices,
-              );
+      this.deviceCatalog
+        .synchronize(
+          discoveredCatalogDevices,
+        );
 
     await this.save();
+
+    await this.pluginStateStore
+      .saveSynchronization(
+        new Date(),
+      );
 
     this.log.info(
       [
@@ -68,7 +79,7 @@ export class CatalogManager {
   }
 
   public async load():
-        Promise<void> {
+    Promise<void> {
     if (this.catalogLoaded) {
       return;
     }
@@ -80,36 +91,35 @@ export class CatalogManager {
     }
 
     this.catalogLoading =
-            this.loadCatalog();
+      this.loadCatalog();
 
     try {
       await this.catalogLoading;
     } finally {
       this.catalogLoading =
-                undefined;
+        undefined;
     }
   }
 
-
   public async reload():
-        Promise<void> {
+    Promise<void> {
     if (this.catalogLoading) {
       await this.catalogLoading;
     }
 
     this.catalogLoaded =
-            false;
+      false;
 
     await this.load();
   }
 
   private async loadCatalog():
-        Promise<void> {
+    Promise<void> {
     await this.deviceCatalog
       .load();
 
     this.catalogLoaded =
-            true;
+      true;
 
     this.log.info(
       `${this.deviceCatalog.getAll().length} appareils chargés depuis le catalogue`,
@@ -117,7 +127,7 @@ export class CatalogManager {
   }
 
   public async save():
-        Promise<void> {
+    Promise<void> {
     await this.load();
 
     await this.deviceCatalog
@@ -125,7 +135,7 @@ export class CatalogManager {
   }
 
   public getAll():
-        CatalogDevice[] {
+    CatalogDevice[] {
     return this.deviceCatalog
       .getAll();
   }
@@ -257,6 +267,7 @@ export class CatalogManager {
         room,
       );
   }
+
   public async setAvailability(
     id: string,
     available: boolean,
@@ -271,7 +282,7 @@ export class CatalogManager {
   }
 
   public getCatalog():
-        DeviceCatalog {
+    DeviceCatalog {
     return this.deviceCatalog;
   }
 }

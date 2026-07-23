@@ -53,7 +53,8 @@
     "prepublishOnly": "npm run lint && npm run build:all",
     "watch": "npm run build && npm link && nodemon",
     "prepare-release": "bash scripts/prepare-release.sh",
-    "release": "bash scripts/release.sh"
+    "release": "bash scripts/release.sh",
+    "install-on-nas": "bash scripts/install-on-nas.sh"
   },
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^2.2.5",

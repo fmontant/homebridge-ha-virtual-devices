@@ -7,8 +7,20 @@ import {
 } from '@homebridge/plugin-ui-utils';
 
 import {
+  SystemInformationService,
+} from './system/systemInformationService.js';
+
+import {
+  ConfigurationStatusService,
+} from './configuration/configurationStatusService.js';
+
+import {
   DeviceCatalogStore,
 } from '../catalog/deviceCatalogStore.js';
+
+import {
+  PluginStateStore,
+} from '../catalog/pluginStateStore.js';
 
 import type {
   CatalogApiDevice,
@@ -26,40 +38,20 @@ import {
   CatalogSorter,
 } from './catalogSorter.js';
 
-import {
-  ConfigurationStatusService,
-} from './configuration/configurationStatusService.js';
-
 interface FavoriteRequestPayload {
-  id: string;
-  favorite: boolean;
+    id: string;
+    favorite: boolean;
 }
 
 interface FavoriteResponsePayload {
-  device: CatalogApiDevice;
-}
-
-interface DeviceRequestPayload {
-  id: string;
-}
-
-interface PreferencesUpdatePayload {
-  enabled?: boolean;
-  favorite?: boolean;
-  archived?: boolean;
-  room?: string;
-}
-
-interface PreferencesRequestPayload {
-  id: string;
-  preferences: PreferencesUpdatePayload;
+    device: CatalogApiDevice;
 }
 
 export class HAVirtualDevicesUiServer
   extends HomebridgePluginUiServer {
 
   private readonly catalogEvents:
-    CatalogEventPublisher;
+        CatalogEventPublisher;
 
   private readonly catalogApiMapper =
     new CatalogApiMapper();
@@ -67,73 +59,78 @@ export class HAVirtualDevicesUiServer
   private readonly catalogSorter =
     new CatalogSorter();
 
+  private readonly systemInformationService =
+    new SystemInformationService();
+
   private readonly configurationStatusService =
     new ConfigurationStatusService();
 
   private catalogDirectoryPath?:
-    string;
+        string;
 
   private catalogStore?:
-    DeviceCatalogStore;
+        DeviceCatalogStore;
+
+  private pluginStateStore?:
+        PluginStateStore;
 
   private catalogWatcher?:
-    ReturnType<typeof watch>;
+        ReturnType<typeof watch>;
 
   private publicationTimer?:
-    NodeJS.Timeout;
+        NodeJS.Timeout;
 
   constructor() {
     super();
 
     this.catalogEvents =
-      new CatalogEventPublisher(
-        (event, data) => {
-          this.pushEvent(
-            event,
-            data,
-          );
-        },
-      );
+            new CatalogEventPublisher(
+              (event, data) => {
+                this.pushEvent(
+                  event,
+                  data,
+                );
+              },
+            );
 
     this.onRequest(
       '/config/status',
-      async payload => {
-        console.log(
-          '[UI] Requête /config/status reçue',
-        );
-
-        const status =
-          await this.configurationStatusService
-            .getStatus(
-              payload,
-            );
-
-        console.log(
-          '[UI] Réponse /config/status :',
-          status,
-        );
-
-        return status;
-      },
+      async payload =>
+        this.configurationStatusService
+          .getStatus(payload),
     );
 
     this.onRequest(
       '/catalog/devices',
-      async () => ({
-        devices:
-          await this.loadCatalog(),
-        updatedAt:
-          new Date().toISOString(),
-      }),
+      async () => {
+        if (
+          !this.pluginStateStore
+        ) {
+          throw new Error(
+            'État du plugin non initialisé',
+          );
+        }
+
+        const state =
+                    await this.pluginStateStore
+                      .load();
+
+        return {
+          devices:
+                        await this.loadCatalog(),
+          updatedAt:
+                        state.lastSynchronizationAt,
+        };
+      },
     );
 
     this.onRequest(
-      '/catalog/device',
-      async payload =>
-        this.getDevice(
-          payload,
-        ),
+      '/system/information',
+      async () =>
+        this.systemInformationService
+          .getInformation(),
     );
+
 
     this.onRequest(
       '/catalog/device/favorite',
@@ -142,23 +139,14 @@ export class HAVirtualDevicesUiServer
           payload,
         ),
     );
-
-    this.onRequest(
-      '/catalog/preferences',
-      async payload =>
-        this.updatePreferences(
-          payload,
-        ),
-    );
-
     void this.initialize();
   }
 
   private async initialize():
-    Promise<void> {
+        Promise<void> {
     try {
       const homebridgeStoragePath =
-        this.homebridgeStoragePath;
+                this.homebridgeStoragePath;
 
       if (
         !homebridgeStoragePath
@@ -169,21 +157,32 @@ export class HAVirtualDevicesUiServer
       }
 
       this.catalogDirectoryPath =
-        join(
-          homebridgeStoragePath,
-          'ha-virtual-devices',
-        );
+                join(
+                  homebridgeStoragePath,
+                  'ha-virtual-devices',
+                );
 
       const catalogFilePath =
-        join(
-          this.catalogDirectoryPath,
-          'device-catalog.json',
-        );
+                join(
+                  this.catalogDirectoryPath,
+                  'device-catalog.json',
+                );
+
+      const pluginStateFilePath =
+                join(
+                  this.catalogDirectoryPath,
+                  'plugin-state.json',
+                );
 
       this.catalogStore =
-        new DeviceCatalogStore(
-          catalogFilePath,
-        );
+                new DeviceCatalogStore(
+                  catalogFilePath,
+                );
+
+      this.pluginStateStore =
+                new PluginStateStore(
+                  pluginStateFilePath,
+                );
 
       await mkdir(
         this.catalogDirectoryPath,
@@ -210,7 +209,7 @@ export class HAVirtualDevicesUiServer
   }
 
   private startCatalogWatcher():
-    void {
+        void {
     if (
       !this.catalogDirectoryPath
     ) {
@@ -218,12 +217,12 @@ export class HAVirtualDevicesUiServer
     }
 
     this.catalogWatcher =
-      watch(
-        this.catalogDirectoryPath,
-        () => {
-          this.scheduleCatalogPublication();
-        },
-      );
+            watch(
+              this.catalogDirectoryPath,
+              () => {
+                this.scheduleCatalogPublication();
+              },
+            );
 
     this.catalogWatcher.on(
       'error',
@@ -237,7 +236,7 @@ export class HAVirtualDevicesUiServer
   }
 
   private scheduleCatalogPublication():
-    void {
+        void {
     if (
       this.publicationTimer
     ) {
@@ -247,19 +246,19 @@ export class HAVirtualDevicesUiServer
     }
 
     this.publicationTimer =
-      setTimeout(
-        () => {
-          this.publicationTimer =
-            undefined;
+            setTimeout(
+              () => {
+                this.publicationTimer =
+                        undefined;
 
-          void this.publishCatalog();
-        },
-        250,
-      );
+                void this.publishCatalog();
+              },
+              250,
+            );
   }
 
   private async loadCatalog():
-    Promise<CatalogApiDevice[]> {
+        Promise<CatalogApiDevice[]> {
     if (
       !this.catalogStore
     ) {
@@ -269,64 +268,22 @@ export class HAVirtualDevicesUiServer
     }
 
     const devices =
-      await this.catalogStore
-        .load();
+            await this.catalogStore
+              .load();
 
     const apiDevices =
-      devices.map(
-        device =>
-          this.catalogApiMapper
-            .toApiDevice(
-              device,
-            ),
-      );
+            devices.map(
+              device =>
+                this.catalogApiMapper
+                  .toApiDevice(
+                    device,
+                  ),
+            );
 
     return this.catalogSorter
       .sort(
         apiDevices,
       );
-  }
-
-  private async getDevice(
-    payload: unknown,
-  ): Promise<FavoriteResponsePayload> {
-    if (
-      !this.catalogStore
-    ) {
-      throw new Error(
-        'Catalogue non initialisé',
-      );
-    }
-
-    const request =
-      this.parseDeviceRequest(
-        payload,
-      );
-
-    const devices =
-      await this.catalogStore
-        .load();
-
-    const device =
-      devices.find(
-        value =>
-          value.id ===
-          request.id,
-      );
-
-    if (!device) {
-      throw new Error(
-        `Appareil introuvable : ${request.id}`,
-      );
-    }
-
-    return {
-      device:
-        this.catalogApiMapper
-          .toApiDevice(
-            device,
-          ),
-    };
   }
 
   private async setDeviceFavorite(
@@ -341,20 +298,20 @@ export class HAVirtualDevicesUiServer
     }
 
     const request =
-      this.parseFavoriteRequest(
-        payload,
-      );
+            this.parseFavoriteRequest(
+              payload,
+            );
 
     const devices =
-      await this.catalogStore
-        .load();
+            await this.catalogStore
+              .load();
 
     const device =
-      devices.find(
-        value =>
-          value.id ===
-          request.id,
-      );
+            devices.find(
+              value =>
+                value.id ===
+                    request.id,
+            );
 
     if (!device) {
       throw new Error(
@@ -363,7 +320,7 @@ export class HAVirtualDevicesUiServer
     }
 
     device.preferences.favorite =
-      request.favorite;
+            request.favorite;
 
     await this.catalogStore
       .save(
@@ -374,225 +331,10 @@ export class HAVirtualDevicesUiServer
 
     return {
       device:
-        this.catalogApiMapper
-          .toApiDevice(
-            device,
-          ),
-    };
-  }
-
-  private async updatePreferences(
-    payload: unknown,
-  ): Promise<FavoriteResponsePayload> {
-    if (
-      !this.catalogStore
-    ) {
-      throw new Error(
-        'Catalogue non initialisé',
-      );
-    }
-
-    const request =
-      this.parsePreferencesRequest(
-        payload,
-      );
-
-    const devices =
-      await this.catalogStore
-        .load();
-
-    const device =
-      devices.find(
-        value =>
-          value.id ===
-          request.id,
-      );
-
-    if (!device) {
-      throw new Error(
-        `Appareil introuvable : ${request.id}`,
-      );
-    }
-
-    if (
-      request.preferences.enabled !==
-        undefined
-    ) {
-      device.preferences.enabled =
-        request.preferences.enabled;
-    }
-
-    if (
-      request.preferences.favorite !==
-        undefined
-    ) {
-      device.preferences.favorite =
-        request.preferences.favorite;
-    }
-
-    if (
-      request.preferences.archived !==
-        undefined
-    ) {
-      device.preferences.archived =
-        request.preferences.archived;
-    }
-
-    if (
-      request.preferences.room !==
-        undefined
-    ) {
-      device.preferences.room =
-        request.preferences.room;
-    }
-
-    await this.catalogStore
-      .save(
-        devices,
-      );
-
-    await this.publishCatalog();
-
-    return {
-      device:
-        this.catalogApiMapper
-          .toApiDevice(
-            device,
-          ),
-    };
-  }
-
-  private parseDeviceRequest(
-    payload: unknown,
-  ): DeviceRequestPayload {
-    if (
-      typeof payload !==
-        'object' ||
-      payload === null
-    ) {
-      throw new Error(
-        'Requête invalide',
-      );
-    }
-
-    const request =
-      payload as Partial<
-        DeviceRequestPayload
-      >;
-
-    if (
-      typeof request.id !==
-        'string'
-    ) {
-      throw new Error(
-        'Identifiant invalide',
-      );
-    }
-
-    return {
-      id:
-        request.id,
-    };
-  }
-
-  private parsePreferencesRequest(
-    payload: unknown,
-  ): PreferencesRequestPayload {
-    if (
-      typeof payload !==
-        'object' ||
-      payload === null
-    ) {
-      throw new Error(
-        'Requête invalide',
-      );
-    }
-
-    const request =
-      payload as Partial<
-        PreferencesRequestPayload
-      >;
-
-    if (
-      typeof request.id !==
-        'string'
-    ) {
-      throw new Error(
-        'Identifiant invalide',
-      );
-    }
-
-    if (
-      typeof request.preferences !==
-        'object' ||
-      request.preferences === null
-    ) {
-      throw new Error(
-        'Préférences invalides',
-      );
-    }
-
-    const preferences =
-      request.preferences as
-        PreferencesUpdatePayload;
-
-    if (
-      preferences.enabled !==
-        undefined &&
-      typeof preferences.enabled !==
-        'boolean'
-    ) {
-      throw new Error(
-        'Valeur enabled invalide',
-      );
-    }
-
-    if (
-      preferences.favorite !==
-        undefined &&
-      typeof preferences.favorite !==
-        'boolean'
-    ) {
-      throw new Error(
-        'Valeur favorite invalide',
-      );
-    }
-
-    if (
-      preferences.archived !==
-        undefined &&
-      typeof preferences.archived !==
-        'boolean'
-    ) {
-      throw new Error(
-        'Valeur archived invalide',
-      );
-    }
-
-    if (
-      preferences.room !==
-        undefined &&
-      typeof preferences.room !==
-        'string'
-    ) {
-      throw new Error(
-        'Valeur room invalide',
-      );
-    }
-
-    return {
-      id:
-        request.id,
-      preferences: {
-        enabled:
-          preferences.enabled,
-        favorite:
-          preferences.favorite,
-        archived:
-          preferences.archived,
-        room:
-          preferences.room,
-      },
+                this.catalogApiMapper
+                  .toApiDevice(
+                    device,
+                  ),
     };
   }
 
@@ -601,8 +343,8 @@ export class HAVirtualDevicesUiServer
   ): FavoriteRequestPayload {
     if (
       typeof payload !==
-        'object' ||
-      payload === null
+            'object' ||
+            payload === null
     ) {
       throw new Error(
         'Requête invalide',
@@ -610,13 +352,13 @@ export class HAVirtualDevicesUiServer
     }
 
     const request =
-      payload as Partial<
-        FavoriteRequestPayload
-      >;
+            payload as Partial<
+                FavoriteRequestPayload
+            >;
 
     if (
       typeof request.id !==
-        'string'
+            'string'
     ) {
       throw new Error(
         'Identifiant invalide',
@@ -625,7 +367,7 @@ export class HAVirtualDevicesUiServer
 
     if (
       typeof request.favorite !==
-        'boolean'
+            'boolean'
     ) {
       throw new Error(
         'Valeur favorite invalide',
@@ -634,18 +376,15 @@ export class HAVirtualDevicesUiServer
 
     return {
       id:
-        request.id,
+                request.id,
       favorite:
-        request.favorite,
+                request.favorite,
     };
   }
 
   private async publishCatalog():
-    Promise<void> {
-    console.log(
-      '[UI] publishCatalog déclenché',
-    );
 
+        Promise<void> {
     if (
       !this.catalogStore
     ) {
@@ -654,7 +393,7 @@ export class HAVirtualDevicesUiServer
 
     try {
       const devices =
-        await this.loadCatalog();
+                await this.loadCatalog();
 
       this.catalogEvents
         .publish(

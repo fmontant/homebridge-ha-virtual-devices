@@ -10,6 +10,7 @@ import { catalogApi } from './api/catalogApi';
 import ConfigurationPanel from './components/ConfigurationPanel.vue';
 import DeviceDetails from './components/DeviceDetails.vue';
 import DeviceRow from './components/DeviceRow.vue';
+import PluginSummary from './components/PluginSummary.vue';
 import {
   catalogEventListener,
 } from './events/catalogEventListener';
@@ -49,6 +50,11 @@ const initialized =
 
 const errorMessage =
   ref('');
+
+const lastSynchronizationAt =
+  ref<string | undefined>(
+    undefined,
+  );
 
 const devices =
   ref<CatalogDevice[]>([]);
@@ -233,21 +239,24 @@ Promise<void> {
   errorMessage.value = '';
 
   try {
-    const loadedDevices =
-      await catalogApi
-        .getDevices();
+    const result =
+  await catalogApi
+    .getDevices();
 
-    devices.value =
-      loadedDevices;
+devices.value =
+  result.devices;
+
+lastSynchronizationAt.value =
+  result.updatedAt ?? '';
 
     if (
-      selectedDeviceId.value &&
-      !loadedDevices.some(
-        device =>
-          device.id ===
-          selectedDeviceId.value,
-      )
-    ) {
+  selectedDeviceId.value &&
+  !result.devices.some(
+    device =>
+      device.id ===
+      selectedDeviceId.value,
+  )
+) {
       selectedDeviceId.value =
         null;
     }
@@ -457,6 +466,10 @@ onUnmounted(() => {
       <ConfigurationPanel />
     </section>
 
+   <PluginSummary
+    :devices="devices"
+    :last-synchronization-at="lastSynchronizationAt"
+  />
     <section class="toolbar">
       <input
         v-model="search"

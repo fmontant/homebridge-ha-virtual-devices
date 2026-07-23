@@ -110,7 +110,7 @@ const displayedRoom = computed(
   () => room.value.trim(),
 );
 
-function formatDate(
+function formatLastCommunication(
   value?: string,
 ): string {
   if (!value) {
@@ -128,9 +128,77 @@ function formatDate(
     return value;
   }
 
-  return date.toLocaleString(
-    'fr-FR',
-  );
+  const elapsedMilliseconds =
+    Date.now() - date.getTime();
+
+  if (elapsedMilliseconds < 0) {
+    return 'Moins d’une minute';
+  }
+
+  const elapsedMinutes =
+    Math.floor(
+      elapsedMilliseconds / 60_000,
+    );
+
+  if (elapsedMinutes < 1) {
+    return 'Moins d’une minute';
+  }
+
+  if (elapsedMinutes < 60) {
+    return `Il y a ${elapsedMinutes} ${
+      elapsedMinutes === 1
+        ? 'minute'
+        : 'minutes'
+    }`;
+  }
+
+  const elapsedHours =
+    Math.floor(
+      elapsedMinutes / 60,
+    );
+
+  if (elapsedHours < 24) {
+    return `Il y a ${elapsedHours} ${
+      elapsedHours === 1
+        ? 'heure'
+        : 'heures'
+    }`;
+  }
+
+  const elapsedDays =
+    Math.floor(
+      elapsedHours / 24,
+    );
+
+  if (elapsedDays < 30) {
+    return `Il y a ${elapsedDays} ${
+      elapsedDays === 1
+        ? 'jour'
+        : 'jours'
+    }`;
+  }
+
+  const formattedDate =
+    new Intl.DateTimeFormat(
+      'fr-FR',
+      {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      },
+    ).format(date);
+
+  const formattedTime =
+    new Intl.DateTimeFormat(
+      'fr-FR',
+      {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      },
+    ).format(date);
+
+  return `Le ${formattedDate} à ${formattedTime}`;
 }
 
 function getCapabilityLabel(
@@ -430,7 +498,7 @@ function getErrorMessage(
 
 <dt>Dernière communication</dt>
 <dd>
-  {{ formatDate(device.lastCommunication) }}
+  {{ formatLastCommunication(device.lastCommunication) }}
 </dd>
         </dl>
       </details>
