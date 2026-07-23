@@ -8,24 +8,27 @@ It was created to make every release reproducible, reduce manual operations and 
 
 ## Background
 
-The Developer Toolkit was introduced to replace a manual release workflow with a fully reproducible and automated process.
+The Developer Toolkit replaces a manual release workflow with a reproducible and automated process.
 
-It centralizes the release scripts, validation steps and deployment utilities required to publish official releases of the project.
+It centralizes the release scripts, validation steps and deployment utilities required to publish official project releases.
 
 ---
 
 ## Overview
 
-The toolkit automates the complete release workflow:
+The toolkit supports the complete release workflow:
 
 ```text
 Development
       │
       ▼
-prepare-release
+prepare-release.sh
       │
       ▼
 Git validation
+      │
+      ▼
+release.sh
       │
       ▼
 Release validation
@@ -40,6 +43,9 @@ Git tag creation
 GitHub publication
       │
       ▼
+install-on-nas.sh
+      │
+      ▼
 NAS deployment (optional)
 ```
 
@@ -52,7 +58,7 @@ The toolkit has four primary objectives:
 - automate repetitive development tasks;
 - prevent common release mistakes;
 - guarantee reproducible releases;
-- standardize the development workflow.
+- standardize the release workflow.
 
 ---
 
@@ -60,23 +66,23 @@ The toolkit has four primary objectives:
 
 ### Release Preparation
 
-Prepares a new project version.
+The `prepare-release.sh` script prepares a new project version.
 
-Responsibilities include:
+Its responsibilities include:
 
 - selecting the next version;
 - validating Semantic Versioning;
-- updating `package.json`;
+- updating the project version;
 - creating the release commit;
-- pushing changes to GitHub.
+- pushing the changes to GitHub.
 
 ---
 
 ### Release
 
-Publishes an official project release.
+The `release.sh` script publishes an official project release.
 
-Before publishing, the toolkit automatically verifies:
+Before publishing, it verifies:
 
 - required tools;
 - current Git branch;
@@ -84,30 +90,30 @@ Before publishing, the toolkit automatically verifies:
 - GitHub synchronization;
 - npm authentication;
 - version availability;
-- code quality (lint);
+- code quality;
 - project build;
 - generated files;
 - package contents.
 
-After confirmation it automatically:
+After explicit confirmation, it:
 
 - publishes the package to npm;
 - creates the Git tag;
-- publishes the tag to GitHub.
+- pushes the tag to GitHub.
 
 ---
 
 ### NAS Deployment
 
-Provides deployment utilities specific to the development environment.
+The `install-on-nas.sh` script provides deployment utilities specific to the development environment.
 
-This component intentionally remains separate from the generic release workflow because it depends on the author's TerraMaster Homebridge installation.
+NAS deployment intentionally remains separate from the generic release workflow because it depends on the maintainer's TerraMaster Homebridge installation.
 
 ---
 
 ### Shared Library
 
-All shared Bash functions are centralized in:
+Shared Bash functions are centralized in:
 
 ```text
 scripts/lib/common.sh
@@ -123,13 +129,13 @@ This library provides:
 - quality checks;
 - common utilities.
 
-Centralizing shared logic guarantees consistent behaviour across every toolkit script.
+Centralizing shared logic guarantees consistent behaviour across the toolkit scripts.
 
 ---
 
 ## Design Principles
 
-The toolkit follows a small number of design principles:
+The toolkit follows these design principles:
 
 - one responsibility per script;
 - shared code in a single location;
@@ -145,11 +151,11 @@ The toolkit follows a small number of design principles:
 
 | Document | Description |
 |----------|-------------|
-| GettingStarted.md | Installing and using the toolkit. |
-| Architecture.md | Internal architecture and design choices. |
-| ReleaseProcess.md | Complete release workflow. |
-| InstallOnNAS.md | Deploying a package to the development NAS. |
-| BashErrorHandling.md | Bash error handling strategy. |
+| [Getting Started](GettingStarted.md) | Preparing a development environment. |
+| [Release Workflow](ReleaseWorkflow.md) | Preparing, publishing and verifying a release. |
+| [Deployment](Deployment.md) | Deploying a published version to the development NAS. |
+| [Reference](Reference.md) | Responsibilities of the toolkit scripts. |
+| [Troubleshooting](Troubleshooting.md) | Diagnosing common development, release and deployment issues. |
 
 ---
 
@@ -163,7 +169,7 @@ The toolkit follows a small number of design principles:
 
 ## Status
 
-The Developer Toolkit is considered production-ready and is used for every official release of **Homebridge HA Virtual Devices**.
+The Developer Toolkit is production-ready and is used for official releases of **Homebridge HA Virtual Devices**.
 
 ---
 
