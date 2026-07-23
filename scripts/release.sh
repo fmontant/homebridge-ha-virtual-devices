@@ -44,7 +44,10 @@ git_require_synced origin "$RELEASE_BRANCH"
 success "Dépôt synchronisé avec GitHub"
 
 step "Vérification de l'authentification npm"
-NPM_USER="$(npm_require_login "$NPM_REGISTRY")"
+if ! NPM_USER="$(npm_require_login "$NPM_REGISTRY")"; then
+  exit 1
+fi
+
 success "Compte npm : ${NPM_USER}"
 
 step "Vérification de la version"

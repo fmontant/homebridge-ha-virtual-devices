@@ -202,26 +202,30 @@ npm_current_user() {
   local registry="${1:-https://registry.npmjs.org}"
   local npm_user
 
-  if ! npm_user="$(npm whoami --registry "$registry" 2>/dev/null)"; then
-    printf '\nVous n'\''êtes pas connecté à npm.\n\n' >&2
-    printf 'Exécutez :\n\n' >&2
-    printf 'npm login --auth-type=web\n\n' >&2
-    printf 'Puis relancez :\n\n' >&2
-    printf 'npm run release\n\n' >&2
-    return 1
+  if npm_user="$(npm whoami --registry "$registry" 2>/dev/null)"; then
+    printf '%s\n' "$npm_user"
+    return 0
   fi
 
-  printf '%s\n' "$npm_user"
+  return 1
 }
 
 npm_require_login() {
   local registry="${1:-https://registry.npmjs.org}"
   local npm_user
 
-  npm_user="$(npm_current_user "$registry")" \
-    || exit 1
+  if npm_user="$(npm_current_user "$registry")"; then
+    printf '%s\n' "$npm_user"
+    return 0
+  fi
 
-  printf '%s\n' "$npm_user"
+  printf '\nVous n'\''êtes pas connecté à npm.\n\n' >&2
+  printf 'Exécutez :\n\n' >&2
+  printf 'npm login --auth-type=web\n\n' >&2
+  printf 'Puis relancez :\n\n' >&2
+  printf 'npm run release\n\n' >&2
+
+  return 1
 }
 
 npm_version_exists() {
