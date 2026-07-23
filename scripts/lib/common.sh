@@ -200,22 +200,18 @@ require_confirmation() {
 
 npm_current_user() {
   local registry="${1:-https://registry.npmjs.org}"
-  local npm_user
 
-  if npm_user="$(npm whoami --registry "$registry" 2>/dev/null)"; then
-    printf '%s\n' "$npm_user"
-    return 0
-  fi
-
-  return 1
+  (
+    trap - ERR
+    set +e
+    npm whoami --registry "$registry" 2>/dev/null
+  )
 }
 
 npm_require_login() {
   local registry="${1:-https://registry.npmjs.org}"
-  local npm_user
 
-  if npm_user="$(npm_current_user "$registry")"; then
-    printf '%s\n' "$npm_user"
+  if NPM_USER="$(npm_current_user "$registry")"; then
     return 0
   fi
 
@@ -225,7 +221,7 @@ npm_require_login() {
   printf 'Puis relancez :\n\n' >&2
   printf 'npm run release\n\n' >&2
 
-  return 1
+  exit 1
 }
 
 npm_version_exists() {
