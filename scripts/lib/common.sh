@@ -198,20 +198,34 @@ require_confirmation() {
     || fail "$cancellation_message"
 }
 
-npm_current_user() {
-  local registry="${1:-https://registry.npmjs.org}"
-
-  (
-    trap - ERR
-    set +e
-    npm whoami --registry "$registry" 2>/dev/null
-  )
-}
-
 npm_require_login() {
   local registry="${1:-https://registry.npmjs.org}"
+  local result
+  local npm_status
 
-  if NPM_USER="$(npm_current_user "$registry")"; then
+  result="$(
+    trap - ERR
+    set +e
+
+    npm whoami --registry "$registry" 2>/dev/null
+    npm_status=$?
+
+    printf '\n__NPM_STATUS__=%s\n' "$npm_status"
+    exit 0
+  )"
+
+  npm_status="$(
+    printf '%s\n' "$result" \
+      | sed -n 's/^__NPM_STATUS__=//p'
+  )"
+
+  NPM_USER="$(
+    printf '%s\n' "$result" \
+      | sed '/^__NPM_STATUS__=/d' \
+      | sed '/^[[:space:]]*$/d'
+  )"
+
+  if [[ "$npm_status" == "0" && -n "$NPM_USER" ]]; then
     return 0
   fi
 
