@@ -54,7 +54,11 @@
     "watch": "npm run build && npm link && nodemon",
     "prepare-release": "bash scripts/prepare-release.sh",
     "release": "bash scripts/release.sh",
-    "install-on-nas": "bash scripts/install-on-nas.sh"
+    "install-on-nas": "bash scripts/install-on-nas.sh",
+    "toolkit:prepare": "bash scripts/prepare-release.sh",
+    "toolkit:release": "bash scripts/release.sh",
+    "toolkit:install": "bash scripts/install-on-nas.sh",
+    "toolkit:publish": "bash scripts/publish.sh"
   },
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^2.2.5",
