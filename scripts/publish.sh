@@ -165,9 +165,23 @@ DURATION_SECONDS="$((END_TIME - START_TIME))"
 DURATION_MINUTES="$((DURATION_SECONDS / 60))"
 DURATION_REMAINDER="$((DURATION_SECONDS % 60))"
 
+case "$MODE" in
+  prepare)
+    SUMMARY="Préparation terminée avec succès"
+    ;;
+  release)
+    SUMMARY="Publication npm terminée avec succès"
+    ;;
+  install)
+    SUMMARY="Installation sur le NAS terminée avec succès"
+    ;;
+  standard)
+    SUMMARY="Publication complète terminée avec succès"
+    ;;
+esac
+
 line
-printf '%s\n' 'Publication terminée avec succès'
-printf 'Paquet  : %s\n' "$PACKAGE_NAME"
+printf '%s\n' "$SUMMARY"
 printf 'Version : %s\n' "$FINAL_VERSION"
 printf 'Durée   : %d min %02d s\n' \
   "$DURATION_MINUTES" \
