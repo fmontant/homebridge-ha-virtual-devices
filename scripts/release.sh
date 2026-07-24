@@ -25,10 +25,10 @@ success "Outils disponibles"
 git_require_repository
 git_require_head
 
-PACKAGE_NAME="$(package_name)"
-PACKAGE_VERSION="$(package_version)"
+PACKAGE_NAME="$(get_package_name)"
+PACKAGE_VERSION="$(get_package_version)"
 RELEASE_TAG="v${PACKAGE_VERSION}"
-CURRENT_BRANCH="$(git_current_branch)"
+CURRENT_BRANCH="$(get_current_branch)"
 
 step "Vérification de la branche Git"
 git_require_branch "$RELEASE_BRANCH"

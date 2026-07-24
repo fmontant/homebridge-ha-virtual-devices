@@ -1,33 +1,24 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(
+  cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1
+  pwd
+)"
+
+# shellcheck source=scripts/lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 REMOTE_HOST="${REMOTE_HOST:-homebridge-nas}"
 REMOTE_DIR="${REMOTE_DIR:-/tmp/homebridge-ha-virtual-devices-install}"
 REMOTE_SCRIPT="${REMOTE_DIR}/install-on-nas.sh"
+REMOTE_LIB_DIR="${REMOTE_DIR}/lib"
+REMOTE_COMMON="${REMOTE_LIB_DIR}/common.sh"
 
 DOCKER_BIN="${DOCKER_BIN:-/Volume1/@apps/DockerEngine/dockerd/bin/docker}"
 CONTAINER_NAME="${HOMEBRIDGE_CONTAINER:-homebridge-homebridge_v13}"
 CONTAINER_PACKAGE_DIR="${HOMEBRIDGE_PACKAGE_DIR:-/tmp}"
 CONTAINER_PROJECT_DIR="${HOMEBRIDGE_PROJECT_DIR:-/homebridge}"
-
-line() {
-  printf '%s\n' '────────────────────────────────────────'
-}
-
-step() {
-  printf '\n▶ %s\n' "$1"
-}
-
-success() {
-  printf '✓ %s\n' "$1"
-}
-
-fail() {
-  printf '✗ %s\n' "$1" >&2
-  exit 1
-}
 
 run_docker() {
   "$DOCKER_BIN" "$@"
@@ -61,9 +52,7 @@ install_remotely() {
   package_basename="$(basename "$package_file")"
   container_package="${CONTAINER_PACKAGE_DIR}/${package_basename}"
 
-  line
-  printf '%s\n' 'Homebridge HA Virtual Devices — Installation NAS'
-  line
+  banner "Homebridge HA Virtual Devices — Installation NAS"
 
   step "Copie du paquet dans le conteneur"
   run_docker cp \
@@ -128,21 +117,14 @@ install_remotely() {
 }
 
 install_from_mac() {
-  cd "$PROJECT_ROOT"
+  enter_project_root
 
-  trap 'fail "Installation interrompue à la ligne ${LINENO}."' ERR
+  trap_with_context "Installation"
 
-  line
-  printf '%s\n' 'Homebridge HA Virtual Devices — Déploiement NAS'
-  line
+  banner "Homebridge HA Virtual Devices — Déploiement NAS"
 
   step "Vérification des outils"
-  command -v node >/dev/null 2>&1 \
-    || fail "node est introuvable sur le Mac."
-  command -v npm >/dev/null 2>&1 \
-    || fail "npm est introuvable sur le Mac."
-  command -v ssh >/dev/null 2>&1 \
-    || fail "ssh est introuvable sur le Mac."
+  require_commands node npm ssh
   success "Outils disponibles"
 
   local package_name
@@ -151,8 +133,8 @@ install_from_mac() {
   local pack_output
   local tgz_file
 
-  package_name="$(node -p "require('./package.json').name")"
-  package_version="$(node -p "require('./package.json').version")"
+  package_name="$(get_package_name)"
+  package_version="$(get_package_version)"
   expected_tgz="${package_name#@*/}-${package_version}.tgz"
 
   step "Vérification de la connexion SSH"
@@ -163,19 +145,19 @@ install_from_mac() {
     'printf ok' >/dev/null
   success "Connexion à ${REMOTE_HOST}"
 
-step "Contrôle qualité"
+  step "Contrôle qualité"
 
-printf '%s\n' '• Correction automatique ESLint'
-npm run lint -- --fix
-success "Corrections automatiques appliquées"
+  printf '%s\n' '• Correction automatique ESLint'
+  npm run lint -- --fix
+  success "Corrections automatiques appliquées"
 
-printf '%s\n' '• Vérification ESLint'
-npm run lint
-success "Lint validé"
+  printf '%s\n' '• Vérification ESLint'
+  npm run lint
+  success "Lint validé"
 
-printf '%s\n' '• Compilation complète'
-npm run build:all
-success "Build validé"
+  printf '%s\n' '• Compilation complète'
+  npm run build:all
+  success "Build validé"
 
   step "Création du paquet npm"
   rm -f -- "$expected_tgz"
@@ -196,7 +178,7 @@ process.stdout.write(data[0].filename);
 
   step "Préparation du NAS"
   ssh "$REMOTE_HOST" \
-    "mkdir -p '$REMOTE_DIR'"
+    "mkdir -p '$REMOTE_DIR' '$REMOTE_LIB_DIR'"
   success "Répertoire distant prêt"
 
   step "Transfert du paquet par SSH"
@@ -205,10 +187,19 @@ process.stdout.write(data[0].filename);
     < "$tgz_file"
   success "Paquet transféré"
 
+  step "Transfert de la bibliothèque commune par SSH"
+  ssh "$REMOTE_HOST" \
+    "cat > '${REMOTE_COMMON}'" \
+    < "${SCRIPT_DIR}/lib/common.sh"
+
+  ssh "$REMOTE_HOST" \
+    "chmod 600 '${REMOTE_COMMON}'"
+  success "Bibliothèque commune transférée"
+
   step "Transfert de l'installateur par SSH"
   ssh "$REMOTE_HOST" \
     "cat > '${REMOTE_SCRIPT}'" \
-    < "$PROJECT_ROOT/scripts/install-on-nas.sh"
+    < "${SCRIPT_DIR}/install-on-nas.sh"
 
   ssh "$REMOTE_HOST" \
     "chmod 700 '${REMOTE_SCRIPT}'"

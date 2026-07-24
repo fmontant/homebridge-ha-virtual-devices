@@ -66,7 +66,7 @@ require_commands() {
   done
 }
 
-project_root() {
+get_project_root() {
   printf '%s\n' "$COMMON_PROJECT_ROOT"
 }
 
@@ -75,7 +75,7 @@ enter_project_root() {
     || fail "Impossible d'accéder au projet : ${COMMON_PROJECT_ROOT}"
 }
 
-git_current_branch() {
+get_current_branch() {
   git branch --show-current
 }
 
@@ -101,7 +101,7 @@ git_require_branch() {
   [[ -n "$expected_branch" ]] \
     || fail "Branche Git attendue non définie."
 
-  current_branch="$(git_current_branch)"
+  current_branch="$(get_current_branch)"
 
   [[ "$current_branch" == "$expected_branch" ]] \
     || fail "Branche courante : ${current_branch}. Branche attendue : ${expected_branch}."
@@ -132,11 +132,11 @@ git_require_synced() {
     || fail "La branche locale n'est pas synchronisée avec ${remote_name}/${branch_name}."
 }
 
-package_name() {
+get_package_name() {
   node -p "require('./package.json').name"
 }
 
-package_version() {
+get_package_version() {
   node -p "require('./package.json').version"
 }
 
