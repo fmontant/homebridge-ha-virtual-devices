@@ -14,6 +14,10 @@ import {
   CatalogApiMapper,
 } from './catalogApiMapper.js';
 
+import {
+  CatalogSorter,
+} from './catalogSorter.js';
+
 export interface CatalogApiDevice {
   id: string;
   source: string;
@@ -36,6 +40,9 @@ export class CatalogApi {
   private readonly catalogApiMapper =
     new CatalogApiMapper();
 
+  private readonly catalogSorter =
+    new CatalogSorter();
+
   constructor(
     private readonly catalogManager:
       CatalogManager,
@@ -46,13 +53,19 @@ export class CatalogApi {
     await this.catalogManager
       .load();
 
-    return this.catalogManager
-      .getAll()
-      .map(device =>
-        this.catalogApiMapper
-          .toApiDevice(
-            device,
-          ),
+    const devices =
+      this.catalogManager
+        .getAll()
+        .map(device =>
+          this.catalogApiMapper
+            .toApiDevice(
+              device,
+            ),
+        );
+
+    return this.catalogSorter
+      .sort(
+        devices,
       );
   }
 
@@ -77,6 +90,20 @@ export class CatalogApi {
         device,
       );
   }
+
+  public async markDeviceViewed(
+    id: string,
+  ): Promise<CatalogApiDevice | undefined> {
+    await this.catalogManager
+      .setFirstViewedAt(
+        id,
+      );
+
+    return this.getDevice(
+      id,
+    );
+  }
+
 
   public async updatePreferences(
     id: string,

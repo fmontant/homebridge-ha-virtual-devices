@@ -81,7 +81,16 @@ const availabilityClass = (
       {{ device.favorite ? '★' : '☆' }}
     </button>
 
-    <strong>{{ device.name }}</strong>
+     <strong class="device-name">
+      {{ device.name }}
+
+      <span
+        v-if="!device.firstViewedAt"
+        class="new-badge"
+      >
+        NEW
+      </span>
+    </strong>
 
     <span>{{ device.source }}</span>
 
@@ -161,6 +170,28 @@ const availabilityClass = (
 .state-error {
   background: #fff3e0;
   color: #c2410c;
+}
+
+.device-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.new-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
 }
 
 .favorite-button {

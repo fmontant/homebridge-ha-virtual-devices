@@ -35,6 +35,7 @@ export interface DevicePreferences {
 
 export interface DeviceTimestamps {
   discoveredAt: string;
+  firstViewedAt?: string;
   lastSeen: string;
   lastUpdated: string;
   missingSince?: string;

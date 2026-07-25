@@ -8,6 +8,9 @@ import {
   DisplayNameFormatter,
 } from '../utils/displayNameFormatter.js';
 
+import {
+  CatalogDeviceState,
+} from '../catalog/catalogDevice.js';
 
 import type {
   CatalogDevice,
@@ -68,6 +71,7 @@ export class AccessoryManager {
 
     let publishedDeviceCount = 0;
     let unpublishedDeviceCount = 0;
+    let missingDeviceCount = 0;
 
     for (
       const climateDevice
@@ -117,6 +121,29 @@ export class AccessoryManager {
       publishedDeviceCount += 1;
     }
 
+    for (
+      const catalogDevice
+      of deviceCatalog.getAll()
+    ) {
+      if (
+        catalogDevice.state !==
+        CatalogDeviceState.Missing ||
+        !deviceCatalog.shouldPublish(
+          catalogDevice.id,
+        )
+      ) {
+        continue;
+      }
+
+      if (
+        this.markClimateAccessoryMissing(
+          catalogDevice.id,
+        )
+      ) {
+        missingDeviceCount += 1;
+      }
+    }
+
     this.removeObsoleteAccessories();
 
     this.log.info(
@@ -128,6 +155,14 @@ export class AccessoryManager {
     ) {
       this.log.info(
         `${unpublishedDeviceCount} appareils non publiés selon les préférences`,
+      );
+    }
+
+    if (
+      missingDeviceCount > 0
+    ) {
+      this.log.info(
+        `${missingDeviceCount} accessoires climatiques manquants conservés`,
       );
     }
   }
@@ -248,7 +283,21 @@ export class AccessoryManager {
       of synchronizationResult.missing
     ) {
       if (
+        !deviceCatalog.shouldPublish(
+          missingDevice.id,
+        )
+      ) {
         this.removeClimateAccessory(
+          missingDevice.id,
+        );
+
+        unpublishedDeviceCount += 1;
+
+        continue;
+      }
+
+      if (
+        this.markClimateAccessoryMissing(
           missingDevice.id,
         )
       ) {
@@ -515,6 +564,100 @@ export class AccessoryManager {
     this.entityIndex.clear();
   }
 
+  private markClimateAccessoryMissing(
+    deviceId: string,
+  ): boolean {
+    const uuid =
+      this.getClimateAccessoryUUID(
+        deviceId,
+      );
+
+    const accessory =
+      this.accessories.get(
+        uuid,
+      );
+
+    if (!accessory) {
+      this.log.warn(
+        `Impossible de conserver la tuile manquante : ${deviceId}`,
+      );
+
+      return false;
+    }
+
+    const device =
+      accessory.context.device as
+        ClimateDevice | undefined;
+
+    if (
+      !device ||
+      device.id !== deviceId ||
+      typeof device.temperatureEntity !==
+        'string'
+    ) {
+      this.log.warn(
+        `Contexte climatique invalide pour la tuile manquante : ${accessory.displayName}`,
+      );
+
+      return false;
+    }
+
+    this.activeAccessoryUUIDs.add(
+      uuid,
+    );
+
+    this.entityIndex.removeAccessory(
+      uuid,
+    );
+
+    const climateAccessory =
+      this.accessoryFactory
+        .createClimateAccessory(
+          device,
+          accessory,
+        );
+
+    for (
+      const entityId
+      of this.getClimateEntityIds(
+        device,
+      )
+    ) {
+      this.entityIndex.register(
+        entityId,
+        device.id,
+        uuid,
+        climateAccessory,
+      );
+
+      climateAccessory
+        .updateAvailability(
+          entityId,
+          false,
+        );
+    }
+
+    void this.catalogManager
+      .setAvailability(
+        device.id,
+        false,
+      )
+      .catch(error => {
+        this.log.error(
+          `Impossible de marquer ${device.id} comme indisponible :`,
+          error instanceof Error
+            ? error.message
+            : String(error),
+        );
+      });
+
+    this.log.info(
+      `Tuile conservée comme indisponible : ${accessory.displayName}`,
+    );
+
+    return true;
+  }
+
   private logClimateSynchronizationSummary(
     publishedDeviceCount: number,
     unpublishedDeviceCount: number,
@@ -540,7 +683,7 @@ export class AccessoryManager {
       missingDeviceCount > 0
     ) {
       this.log.info(
-        `${missingDeviceCount} accessoires climatiques supprimés car absents`,
+        `${missingDeviceCount} accessoires climatiques manquants conservés`,
       );
     }
   }
@@ -594,6 +737,4 @@ export class AccessoryManager {
       `sensor-v2:${deviceId}`,
     );
   }
-
-
 }

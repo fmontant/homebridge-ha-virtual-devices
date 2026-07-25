@@ -25,6 +25,7 @@ export interface DeviceMetadata {
 
 export interface DeviceTimestamps {
   discoveredAt?: string;
+  firstViewedAt?: string;
   lastSeen?: string;
   lastUpdated?: string;
   missingSince?: string;
@@ -42,5 +43,6 @@ export interface CatalogDevice {
   hidden?: boolean;
   capabilities: DeviceCapability[];
   metadata?: DeviceMetadata;
+  firstViewedAt?: string;
   timestamps?: DeviceTimestamps;
 }

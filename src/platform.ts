@@ -171,11 +171,11 @@ implements DynamicPlatformPlugin {
       );
 
     this.catalogManager =
-  new CatalogManager(
-    this.deviceCatalog,
-    this.pluginStateStore,
-    this.log,
-  );
+      new CatalogManager(
+        this.deviceCatalog,
+        this.pluginStateStore,
+        this.log,
+      );
 
     this.accessoryManager =
       new AccessoryManager(
@@ -357,19 +357,29 @@ implements DynamicPlatformPlugin {
 
   private startCatalogWatcher():
     void {
-    const catalogPath =
+    const catalogDirectoryPath =
       join(
         this.api.user.storagePath(),
         'ha-virtual-devices',
-        'device-catalog.json',
       );
 
     this.catalogWatcher?.close();
 
     this.catalogWatcher =
       watch(
-        catalogPath,
-        () => {
+        catalogDirectoryPath,
+        (
+          _eventType,
+          filename,
+        ) => {
+          if (
+            filename &&
+            filename !==
+            'device-catalog.json'
+          ) {
+            return;
+          }
+
           if (
             this.catalogReloadTimer
           ) {
@@ -379,25 +389,54 @@ implements DynamicPlatformPlugin {
           }
 
           this.catalogReloadTimer =
-            setTimeout(() => {
-              void this.registryManager
-                .refreshFromCatalog()
-                .catch(error => {
-                  this.log.error(
-                    'Erreur lors du rechargement du catalogue :',
-                    error instanceof Error
-                      ? error.message
-                      : String(error),
-                  );
-                });
-            }, 250);
+            setTimeout(
+              () => {
+                this.catalogReloadTimer =
+                  undefined;
+
+                void this.registryManager
+                  .refreshFromCatalog()
+                  .catch(error => {
+                    this.log.error(
+                      'Erreur lors du rechargement du catalogue :',
+                      error instanceof Error
+                        ? error.message
+                        : String(error),
+                    );
+                  });
+              },
+              250,
+            );
         },
       );
+
+    this.catalogWatcher.on(
+      'error',
+      error => {
+        this.log.error(
+          'Erreur pendant la surveillance du catalogue :',
+          error.message,
+        );
+      },
+    );
 
     this.api.on(
       'shutdown',
       () => {
+        if (
+          this.catalogReloadTimer
+        ) {
+          clearTimeout(
+            this.catalogReloadTimer,
+          );
+
+          this.catalogReloadTimer =
+            undefined;
+        }
+
         this.catalogWatcher?.close();
+        this.catalogWatcher =
+          undefined;
       },
     );
   }

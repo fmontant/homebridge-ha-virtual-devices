@@ -8,25 +8,28 @@ import type {
 } from '../models/catalogDevice';
 
 declare global {
-    interface Window {
-        homebridge: IHomebridgePluginUi;
-    }
+  interface Window {
+    homebridge: IHomebridgePluginUi;
+  }
 }
 
 interface CatalogApiDevice {
-    id: string;
-    name: string;
-    source: string;
-    state: DeviceState;
-    capabilities: string[];
-    available?: boolean;
-    lastCommunication?: string;
-    preferences: {
-        enabled: boolean;
-        archived: boolean;
-        favorite: boolean;
-        room?: string;
-    };
+  id: string;
+  name: string;
+  source: string;
+  state: DeviceState;
+  capabilities: string[];
+  available?: boolean;
+  lastCommunication?: string;
+  timestamps?: {
+    firstViewedAt?: string;
+  };
+  preferences: {
+    enabled: boolean;
+    archived: boolean;
+    favorite: boolean;
+    room?: string;
+  };
 }
 
 interface CatalogDevicesResponse {
@@ -40,34 +43,39 @@ export interface CatalogDevicesResult {
 }
 
 interface CatalogDeviceResponse {
-    device: CatalogApiDevice;
+  device: CatalogApiDevice;
+}
+
+interface DeleteCatalogDeviceResponse {
+  deleted: boolean;
+  id: string;
 }
 
 export interface CatalogDevicePreferencesUpdate {
-    enabled?: boolean;
-    archived?: boolean;
-    favorite?: boolean;
-    room?: string;
+  enabled?: boolean;
+  archived?: boolean;
+  favorite?: boolean;
+  room?: string;
 }
 
 export class CatalogApi {
   public async getDevices():
-  Promise<CatalogDevicesResult> {
+    Promise<CatalogDevicesResult> {
     const response =
-    await window.homebridge.request(
-      '/catalog/devices',
-    ) as CatalogDevicesResponse;
+      await window.homebridge.request(
+        '/catalog/devices',
+      ) as CatalogDevicesResponse;
 
     return {
       devices:
-      response.devices.map(
-        device =>
-          this.toCatalogDevice(
-            device,
-          ),
-      ),
+        response.devices.map(
+          device =>
+            this.toCatalogDevice(
+              device,
+            ),
+        ),
       updatedAt:
-      response.updatedAt,
+        response.updatedAt,
     };
   }
 
@@ -75,12 +83,12 @@ export class CatalogApi {
     id: string,
   ): Promise<CatalogDevice> {
     const response =
-            await window.homebridge.request(
-              '/catalog/device',
-              {
-                id,
-              },
-            ) as CatalogDeviceResponse;
+      await window.homebridge.request(
+        '/catalog/device',
+        {
+          id,
+        },
+      ) as CatalogDeviceResponse;
 
     return this.toCatalogDevice(
       response.device,
@@ -92,32 +100,62 @@ export class CatalogApi {
     favorite: boolean,
   ): Promise<CatalogDevice> {
     const response =
-            await window.homebridge.request(
-              '/catalog/device/favorite',
-              {
-                id,
-                favorite,
-              },
-            ) as CatalogDeviceResponse;
+      await window.homebridge.request(
+        '/catalog/device/favorite',
+        {
+          id,
+          favorite,
+        },
+      ) as CatalogDeviceResponse;
 
     return this.toCatalogDevice(
       response.device,
     );
   }
 
+  public async markDeviceViewed(
+    id: string,
+  ): Promise<CatalogDevice> {
+    const response =
+      await window.homebridge.request(
+        '/catalog/device/viewed',
+        {
+          id,
+        },
+      ) as CatalogDeviceResponse;
+
+    return this.toCatalogDevice(
+      response.device,
+    );
+  }
+
+  public async deleteDevice(
+    id: string,
+  ): Promise<boolean> {
+    const response =
+      await window.homebridge.request(
+        '/catalog/device/delete',
+        {
+          id,
+        },
+      ) as DeleteCatalogDeviceResponse;
+
+    return response.deleted;
+  }
+
   public async updatePreferences(
     id: string,
     preferences:
-            CatalogDevicePreferencesUpdate,
+      CatalogDevicePreferencesUpdate,
   ): Promise<CatalogDevice> {
     const response =
-            await window.homebridge.request(
-              '/catalog/preferences',
-              {
-                id,
-                preferences,
-              },
-            ) as CatalogDeviceResponse;
+      await window.homebridge.request(
+        '/catalog/preferences',
+        {
+          id,
+          preferences,
+        },
+      ) as CatalogDeviceResponse;
 
     return this.toCatalogDevice(
       response.device,
@@ -129,31 +167,33 @@ export class CatalogApi {
   ): CatalogDevice {
     return {
       id:
-                device.id,
+        device.id,
       name:
-                device.name,
+        device.name,
       source:
-                device.source,
+        device.source,
       room:
-                device.preferences.room ?? '',
+        device.preferences.room ?? '',
       state:
-                device.state,
+        device.state,
       favorite:
-                device.preferences.favorite,
+        device.preferences.favorite,
       enabled:
-                device.preferences.enabled,
+        device.preferences.enabled,
       archived:
-                device.preferences.archived,
+        device.preferences.archived,
       capabilities: [
         ...device.capabilities,
       ],
       available:
-                device.available ?? true,
+        device.available ?? true,
       lastCommunication:
-                device.lastCommunication,
+        device.lastCommunication,
+      firstViewedAt:
+        device.timestamps?.firstViewedAt,
     };
   }
 }
 
 export const catalogApi =
-    new CatalogApi();
+  new CatalogApi();

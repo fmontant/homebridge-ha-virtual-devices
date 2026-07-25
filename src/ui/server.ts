@@ -50,14 +50,31 @@ interface FavoriteResponsePayload {
 interface PreferencesRequestPayload {
     id: string;
     preferences: {
-      enabled?: boolean;
-      archived?: boolean;
-      favorite?: boolean;
-      room?: string;
+        enabled?: boolean;
+        archived?: boolean;
+        favorite?: boolean;
+        room?: string;
     };
 }
 
 interface PreferencesResponsePayload {
+    device: CatalogApiDevice;
+}
+
+interface DeleteDeviceRequestPayload {
+    id: string;
+}
+
+interface DeleteDeviceResponsePayload {
+    deleted: boolean;
+    id: string;
+}
+
+interface ViewedRequestPayload {
+    id: string;
+}
+
+interface ViewedResponsePayload {
     device: CatalogApiDevice;
 }
 
@@ -161,6 +178,23 @@ export class HAVirtualDevicesUiServer
           payload,
         ),
     );
+
+    this.onRequest(
+      '/catalog/device/viewed',
+      async payload =>
+        this.markDeviceViewed(
+          payload,
+        ),
+    );
+
+    this.onRequest(
+      '/catalog/device/delete',
+      async payload =>
+        this.deleteDevice(
+          payload,
+        ),
+    );
+
     void this.initialize();
   }
 
@@ -360,6 +394,69 @@ export class HAVirtualDevicesUiServer
     };
   }
 
+  private async markDeviceViewed(
+    payload: unknown,
+  ): Promise<ViewedResponsePayload> {
+    if (
+      !this.catalogStore
+    ) {
+      throw new Error(
+        'Catalogue non initialisé',
+      );
+    }
+
+    const request =
+      payload as ViewedRequestPayload;
+
+    if (
+      !request ||
+            typeof request.id !== 'string'
+    ) {
+      throw new Error(
+        'Requête invalide',
+      );
+    }
+
+    const devices =
+            await this.catalogStore
+              .load();
+
+    const device =
+            devices.find(
+              value =>
+                value.id === request.id,
+            );
+
+    if (!device) {
+      throw new Error(
+        `Appareil introuvable : ${request.id}`,
+      );
+    }
+
+    if (
+      !device.timestamps.firstViewedAt
+    ) {
+      device.timestamps.firstViewedAt =
+                new Date().toISOString();
+
+      await this.catalogStore
+        .save(
+          devices,
+        );
+
+      await this.publishCatalog();
+    }
+
+    return {
+      device:
+                this.catalogApiMapper
+                  .toApiDevice(
+                    device,
+                  ),
+    };
+  }
+
+
   private async updatePreferences(
     payload: unknown,
   ): Promise<PreferencesResponsePayload> {
@@ -367,30 +464,118 @@ export class HAVirtualDevicesUiServer
       throw new Error('Catalogue non initialisé');
     }
     const request = payload as PreferencesRequestPayload;
-    if (!request || typeof request.id !== 'string' || typeof request.preferences !== 'object' || request.preferences===null) {
+    if (!request || typeof request.id !== 'string' || typeof request.preferences !== 'object' || request.preferences === null) {
       throw new Error('Requête invalide');
     }
     const devices = await this.catalogStore.load();
-    const device = devices.find(d=>d.id===request.id);
+    const device = devices.find(d => d.id === request.id);
     if (!device) {
       throw new Error(`Appareil introuvable : ${request.id}`);
     }
-    const pref=request.preferences;
-    if (typeof pref.enabled==='boolean') {
-      device.preferences.enabled=pref.enabled;
+    const pref = request.preferences;
+    if (typeof pref.enabled === 'boolean') {
+      device.preferences.enabled = pref.enabled;
     }
-    if (typeof pref.archived==='boolean') {
-      device.preferences.archived=pref.archived;
+    if (typeof pref.archived === 'boolean') {
+      device.preferences.archived = pref.archived;
     }
-    if (typeof pref.favorite==='boolean') {
-      device.preferences.favorite=pref.favorite;
+    if (typeof pref.favorite === 'boolean') {
+      device.preferences.favorite = pref.favorite;
     }
     if ('room' in pref) {
-      device.preferences.room=pref.room?.trim()?pref.room.trim():undefined;
+      device.preferences.room = pref.room?.trim() ? pref.room.trim() : undefined;
     }
     await this.catalogStore.save(devices);
     await this.publishCatalog();
-    return { device:this.catalogApiMapper.toApiDevice(device) };
+    return { device: this.catalogApiMapper.toApiDevice(device) };
+  }
+
+  private async deleteDevice(
+    payload: unknown,
+  ): Promise<DeleteDeviceResponsePayload> {
+    if (
+      !this.catalogStore
+    ) {
+      throw new Error(
+        'Catalogue non initialisé',
+      );
+    }
+
+    const request =
+            this.parseDeleteDeviceRequest(
+              payload,
+            );
+
+    const devices =
+            await this.catalogStore
+              .load();
+
+    const deviceIndex =
+            devices.findIndex(
+              device =>
+                device.id ===
+                    request.id,
+            );
+
+    if (
+      deviceIndex ===
+            -1
+    ) {
+      throw new Error(
+        `Appareil introuvable : ${request.id}`,
+      );
+    }
+
+    devices.splice(
+      deviceIndex,
+      1,
+    );
+
+    await this.catalogStore
+      .save(
+        devices,
+      );
+
+    await this.publishCatalog();
+
+    return {
+      deleted: true,
+      id: request.id,
+    };
+  }
+
+  private parseDeleteDeviceRequest(
+    payload: unknown,
+  ): DeleteDeviceRequestPayload {
+    if (
+      typeof payload !==
+            'object' ||
+            payload === null
+    ) {
+      throw new Error(
+        'Requête invalide',
+      );
+    }
+
+    const request =
+            payload as Partial<
+                DeleteDeviceRequestPayload
+            >;
+
+    if (
+      typeof request.id !==
+            'string' ||
+            request.id.trim().length ===
+            0
+    ) {
+      throw new Error(
+        'Identifiant invalide',
+      );
+    }
+
+    return {
+      id: request.id.trim(),
+    };
   }
 
   private parseFavoriteRequest(

@@ -41,7 +41,7 @@ export class CatalogManager {
       PluginStateStore,
     private readonly log:
       Logging,
-  ) {}
+  ) { }
 
   public async synchronizeClimateDevices(
     climateDevices: ClimateDevice[],
@@ -268,6 +268,18 @@ export class CatalogManager {
       );
   }
 
+  public async setFirstViewedAt(
+    id: string,
+  ): Promise<boolean> {
+    await this.load();
+
+    return this.deviceCatalog
+      .setFirstViewedAt(
+        id,
+      );
+  }
+
+
   public async setAvailability(
     id: string,
     available: boolean,
@@ -279,6 +291,33 @@ export class CatalogManager {
         id,
         available,
       );
+  }
+
+  public async removeDevice(
+    id: string,
+  ): Promise<boolean> {
+    await this.load();
+
+    const device =
+      this.deviceCatalog.get(
+        id,
+      );
+
+    if (!device) {
+      return false;
+    }
+
+    this.deviceCatalog.remove(
+      id,
+    );
+
+    await this.save();
+
+    this.log.info(
+      `Appareil supprimé du catalogue : ${id}`,
+    );
+
+    return true;
   }
 
   public getCatalog():

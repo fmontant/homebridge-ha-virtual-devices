@@ -359,11 +359,34 @@ void {
   roomFilter.value = '';
 }
 
-function selectDevice(
+async function selectDevice(
   device: CatalogDevice,
-): void {
+): Promise<void> {
   selectedDeviceId.value =
     device.id;
+
+  if (
+    device.firstViewedAt
+  ) {
+    return;
+  }
+
+  try {
+    const updatedDevice =
+      await catalogApi
+        .markDeviceViewed(
+          device.id,
+        );
+
+    updateDevice(
+      updatedDevice,
+    );
+  } catch (error) {
+    console.error(
+      '[UI] Impossible de marquer le capteur comme consulté',
+      error,
+    );
+  }
 }
 
 function updateDevice(
@@ -382,6 +405,23 @@ function updateDevice(
 
   devices.value[deviceIndex] =
     updatedDevice;
+}
+
+function deleteDevice(
+  deviceId: string,
+): void {
+  devices.value =
+    devices.value.filter(
+      device =>
+        device.id !== deviceId,
+    );
+
+  if (
+    selectedDeviceId.value === deviceId
+  ) {
+    selectedDeviceId.value =
+      null;
+  }
 }
 
 async function toggleFavorite(
@@ -678,6 +718,7 @@ onUnmounted(() => {
         <DeviceDetails
           :device="selectedDevice"
           @updated="updateDevice"
+          @deleted="deleteDevice"
         />
       </section>
     </section>

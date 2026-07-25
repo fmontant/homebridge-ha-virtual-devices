@@ -384,6 +384,32 @@ export class DeviceCatalog {
     );
   }
 
+  public async setFirstViewedAt(
+    id: string,
+  ): Promise<boolean> {
+    const device =
+      this.devices.get(
+        id,
+      );
+
+    if (!device) {
+      return false;
+    }
+
+    if (
+      device.timestamps.firstViewedAt
+    ) {
+      return true;
+    }
+
+    device.timestamps.firstViewedAt =
+      new Date().toISOString();
+
+    await this.save();
+
+    return true;
+  }
+
   public async setAvailability(
     id: string,
     available: boolean,

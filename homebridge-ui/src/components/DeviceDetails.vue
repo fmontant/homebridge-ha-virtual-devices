@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   computed,
+  nextTick,
   ref,
   watch,
 } from 'vue';
@@ -18,6 +19,7 @@ const props =
 const emit =
   defineEmits<{
     updated: [device: CatalogDevice];
+    deleted: [deviceId: string];
   }>();
 
 const room = ref('');
@@ -25,6 +27,8 @@ const favorite = ref(false);
 const enabled = ref(false);
 const archived = ref(false);
 const saving = ref(false);
+const deleting = ref(false);
+const showDeleteConfirmation = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 
@@ -282,6 +286,7 @@ watch(
     archived.value =
       device?.archived ?? false;
 
+    showDeleteConfirmation.value = false;
     errorMessage.value = '';
     successMessage.value = '';
   },
@@ -321,6 +326,8 @@ async function savePreferences():
       updatedDevice,
     );
 
+    await nextTick();
+
     successMessage.value =
       'Préférences enregistrées.';
   } catch (error: unknown) {
@@ -328,6 +335,72 @@ async function savePreferences():
       getErrorMessage(error);
   } finally {
     saving.value = false;
+  }
+}
+
+function requestDelete():
+  void {
+  if (
+    !props.device ||
+    saving.value ||
+    deleting.value
+  ) {
+    return;
+  }
+
+  errorMessage.value = '';
+  successMessage.value = '';
+  showDeleteConfirmation.value = true;
+}
+
+function cancelDelete():
+  void {
+  if (deleting.value) {
+    return;
+  }
+
+  showDeleteConfirmation.value = false;
+}
+
+async function confirmDelete():
+  Promise<void> {
+  if (
+    !props.device ||
+    deleting.value
+  ) {
+    return;
+  }
+
+  deleting.value = true;
+  errorMessage.value = '';
+  successMessage.value = '';
+
+  try {
+    const deviceId =
+      props.device.id;
+
+    const deleted =
+      await catalogApi.deleteDevice(
+        deviceId,
+      );
+
+    if (!deleted) {
+      throw new Error(
+        'Le capteur n’a pas été supprimé.',
+      );
+    }
+
+    showDeleteConfirmation.value = false;
+
+    emit(
+      'deleted',
+      deviceId,
+    );
+  } catch (error: unknown) {
+    errorMessage.value =
+      getErrorMessage(error);
+  } finally {
+    deleting.value = false;
   }
 }
 
@@ -461,14 +534,88 @@ function getErrorMessage(
 
           <button
             type="submit"
-            :disabled="saving"
+            class="primary-button"
+            :disabled="saving || deleting"
           >
+            <svg
+              class="button-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                d="M5 3h12l2 2v16H5V3Zm2 2v5h10V6.2L15.8 5H7Zm0 14h10v-7H7v7Zm2-12h5V5H9v2Z"
+              />
+            </svg>
             {{
               saving
                 ? 'Enregistrement…'
                 : 'Enregistrer'
             }}
           </button>
+
+          <button
+            type="button"
+            class="delete-button"
+            :disabled="saving || deleting"
+            @click="requestDelete"
+          >
+            <svg
+              class="button-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm3 2v8h2v-8H9Zm4 0v8h2v-8h-2Z"
+              />
+            </svg>
+            Supprimer le capteur du catalogue et de HomeKit
+          </button>
+
+          <div
+            v-if="showDeleteConfirmation"
+            class="delete-confirmation"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-confirmation-title"
+          >
+            <strong id="delete-confirmation-title">
+              Confirmer la suppression
+            </strong>
+
+            <p>
+              Supprimer « {{ device.name }} » du catalogue du plugin et de HomeKit ?
+            </p>
+
+            <p>
+              Si Home Assistant le détecte de nouveau, il sera automatiquement recréé.
+            </p>
+
+            <div class="delete-confirmation-actions">
+              <button
+                type="button"
+                class="cancel-button"
+                :disabled="deleting"
+                @click="cancelDelete"
+              >
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                class="confirm-delete-button"
+                :disabled="deleting"
+                @click="confirmDelete"
+              >
+                {{
+                  deleting
+                    ? 'Suppression…'
+                    : 'Confirmer la suppression'
+                }}
+              </button>
+            </div>
+          </div>
         </form>
       </details>
 
@@ -684,14 +831,102 @@ function getErrorMessage(
 }
 
 .preferences-form button {
+  display: inline-flex;
+  align-items: center;
   align-self: flex-start;
-  padding: 9px 14px;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.button-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.primary-button {
+  color: #ffffff;
+  background: #2563eb;
+  border: 1px solid #2563eb;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  box-shadow: 0 2px 5px rgb(37 99 235 / 20%);
+}
+
+.delete-button {
+  color: #ffffff;
+  background: #dc2626;
+  border: 1px solid #dc2626;
+}
+
+.delete-button:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  box-shadow: 0 2px 5px rgb(220 38 38 / 20%);
+}
+
+.delete-confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+
+.delete-confirmation p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.delete-confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.cancel-button {
+  color: #374151;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.confirm-delete-button {
+  color: #ffffff;
+  background: #dc2626;
+  border: 1px solid #dc2626;
+}
+
+.confirm-delete-button:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  box-shadow: 0 2px 5px rgb(220 38 38 / 20%);
 }
 
 .preferences-form button:disabled {
   cursor: wait;
-  opacity: 0.65;
+  opacity: 0.55;
 }
 
 .information-message,

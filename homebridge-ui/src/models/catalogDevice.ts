@@ -17,4 +17,5 @@ export interface CatalogDevice {
   capabilities: string[];
   available: boolean;
   lastCommunication?: string;
+  firstViewedAt?: string;
 }
