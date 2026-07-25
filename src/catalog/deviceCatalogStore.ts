@@ -1,7 +1,10 @@
+import { randomUUID } from 'node:crypto';
+
 import {
   mkdir,
   readFile,
   rename,
+  rm,
   writeFile,
 } from 'node:fs/promises';
 
@@ -13,6 +16,10 @@ import type {
 } from './catalogDevice.js';
 
 export class DeviceCatalogStore {
+  private saveQueue:
+    Promise<void> =
+      Promise.resolve();
+
   constructor(
     private readonly filePath: string,
   ) {}
@@ -64,8 +71,34 @@ export class DeviceCatalogStore {
     }
   }
 
-  public async save(
+  public save(
     devices: CatalogDevice[],
+  ): Promise<void> {
+    const content =
+      JSON.stringify(
+        devices,
+        null,
+        2,
+      );
+
+    const saveOperation =
+      this.saveQueue.then(
+        () =>
+          this.writeCatalog(
+            content,
+          ),
+      );
+
+    this.saveQueue =
+      saveOperation.catch(
+        () => undefined,
+      );
+
+    return saveOperation;
+  }
+
+  private async writeCatalog(
+    content: string,
   ): Promise<void> {
     const directory =
       dirname(
@@ -80,25 +113,33 @@ export class DeviceCatalogStore {
     );
 
     const temporaryFilePath =
-      `${this.filePath}.tmp`;
+      `${this.filePath}.${process.pid}.${randomUUID()}.tmp`;
 
-    const content =
-      JSON.stringify(
-        devices,
-        null,
-        2,
+    try {
+      await writeFile(
+        temporaryFilePath,
+        `${content}\n`,
+        'utf8',
       );
 
-    await writeFile(
-      temporaryFilePath,
-      `${content}\n`,
-      'utf8',
-    );
+      await rename(
+        temporaryFilePath,
+        this.filePath,
+      );
+    } catch (
+      error
+    ) {
+      await rm(
+        temporaryFilePath,
+        {
+          force: true,
+        },
+      ).catch(
+        () => undefined,
+      );
 
-    await rename(
-      temporaryFilePath,
-      this.filePath,
-    );
+      throw error;
+    }
   }
 
   private normalizeCatalogDevice(
