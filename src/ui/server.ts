@@ -47,6 +47,20 @@ interface FavoriteResponsePayload {
     device: CatalogApiDevice;
 }
 
+interface PreferencesRequestPayload {
+    id: string;
+    preferences: {
+      enabled?: boolean;
+      archived?: boolean;
+      favorite?: boolean;
+      room?: string;
+    };
+}
+
+interface PreferencesResponsePayload {
+    device: CatalogApiDevice;
+}
+
 export class HAVirtualDevicesUiServer
   extends HomebridgePluginUiServer {
 
@@ -131,6 +145,14 @@ export class HAVirtualDevicesUiServer
           .getInformation(),
     );
 
+
+    this.onRequest(
+      '/catalog/preferences',
+      async payload =>
+        this.updatePreferences(
+          payload,
+        ),
+    );
 
     this.onRequest(
       '/catalog/device/favorite',
@@ -336,6 +358,39 @@ export class HAVirtualDevicesUiServer
                     device,
                   ),
     };
+  }
+
+  private async updatePreferences(
+    payload: unknown,
+  ): Promise<PreferencesResponsePayload> {
+    if (!this.catalogStore) {
+      throw new Error('Catalogue non initialisé');
+    }
+    const request = payload as PreferencesRequestPayload;
+    if (!request || typeof request.id !== 'string' || typeof request.preferences !== 'object' || request.preferences===null) {
+      throw new Error('Requête invalide');
+    }
+    const devices = await this.catalogStore.load();
+    const device = devices.find(d=>d.id===request.id);
+    if (!device) {
+      throw new Error(`Appareil introuvable : ${request.id}`);
+    }
+    const pref=request.preferences;
+    if (typeof pref.enabled==='boolean') {
+      device.preferences.enabled=pref.enabled;
+    }
+    if (typeof pref.archived==='boolean') {
+      device.preferences.archived=pref.archived;
+    }
+    if (typeof pref.favorite==='boolean') {
+      device.preferences.favorite=pref.favorite;
+    }
+    if ('room' in pref) {
+      device.preferences.room=pref.room?.trim()?pref.room.trim():undefined;
+    }
+    await this.catalogStore.save(devices);
+    await this.publishCatalog();
+    return { device:this.catalogApiMapper.toApiDevice(device) };
   }
 
   private parseFavoriteRequest(
