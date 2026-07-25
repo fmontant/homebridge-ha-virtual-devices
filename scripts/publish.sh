@@ -1,4 +1,98 @@
 #!/usr/bin/env bash
+
+###############################################################################
+#
+# Homebridge HA Virtual Devices
+# Developer Toolkit
+#
+# ---------------------------------------------------------------------------
+# Script : publish.sh
+# Rôle   : Orchestrateur du cycle complet de publication.
+#
+# Ce script constitue le point d'entrée du Developer Toolkit.
+#
+# Il orchestre les différentes étapes nécessaires à la livraison d'une
+# nouvelle version du plugin en s'appuyant exclusivement sur les scripts
+# spécialisés du toolkit.
+#
+# Aucune logique métier n'est implémentée ici.
+# Chaque étape est entièrement déléguée aux scripts suivants :
+#
+#   • prepare-release.sh
+#       Préparation de la version
+#
+#   • release.sh
+#       Publication npm et GitHub
+#
+#   • install-on-nas.sh
+#       Déploiement automatique sur le NAS Homebridge
+#
+# ---------------------------------------------------------------------------
+# Commandes disponibles
+#
+# ► Publication complète
+#
+#   npm run toolkit:publish
+#
+#   Exécute automatiquement :
+#     1. la préparation de la nouvelle version ;
+#     2. la publication sur npm et GitHub ;
+#     3. le déploiement sur le NAS Homebridge.
+#
+# ---------------------------------------------------------------------------
+# ► Préparation uniquement
+#
+#   npm run toolkit:publish -- --prepare-only
+#
+#   Prépare une nouvelle version du plugin :
+#   • contrôle qualité (lint + build)
+#   • incrémentation de version
+#   • création du commit
+#   • publication du commit sur GitHub
+#
+# ---------------------------------------------------------------------------
+# ► Publication uniquement
+#
+#   npm run toolkit:publish -- --release-only
+#
+#   Publie une version déjà préparée :
+#   • création du paquet npm
+#   • publication sur npm
+#   • création du tag Git
+#   • publication du tag sur GitHub
+#
+# ---------------------------------------------------------------------------
+# ► Déploiement uniquement
+#
+#   npm run toolkit:publish -- --install-only
+#
+#   Déploie sur le NAS la dernière version disponible du plugin sans
+#   effectuer de publication sur npm.
+#
+# ---------------------------------------------------------------------------
+# ► Publication sans déploiement
+#
+#   npm run toolkit:publish -- --skip-nas
+#
+#   Exécute la préparation et la publication sans installer le plugin
+#   sur le NAS.
+#
+# ---------------------------------------------------------------------------
+# Prérequis
+#
+# • Git installé et configuré
+# • npm installé
+# • Authentification GitHub opérationnelle
+# • Authentification npm valide
+# • Accès SSH au NAS configuré (si déploiement)
+#
+# ---------------------------------------------------------------------------
+# Auteur  : Fabrice Montant
+# Projet  : Homebridge HA Virtual Devices
+# Licence : MIT
+#
+###############################################################################
+
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(
