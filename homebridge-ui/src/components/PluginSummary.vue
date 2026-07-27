@@ -6,6 +6,8 @@ import {
   ref,
 } from 'vue';
 
+import { useI18n } from 'vue-i18n';
+
 import type {
   CatalogDevice,
 } from '../models/catalogDevice';
@@ -16,6 +18,8 @@ import {
   systemInformationApi,
   type SystemInformation,
 } from '../api/systemInformationApi';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   devices: CatalogDevice[];
@@ -134,14 +138,14 @@ function formatRelativeTime(
   value?: string,
 ): string {
   if (!value) {
-    return 'Non disponible';
+    return t('pluginSummary.notAvailable');
   }
 
   const timestamp =
     Date.parse(value);
 
   if (Number.isNaN(timestamp)) {
-    return 'Non disponible';
+    return t('pluginSummary.notAvailable');
   }
 
   const elapsedSeconds =
@@ -157,8 +161,10 @@ function formatRelativeTime(
     );
 
   if (elapsedSeconds < 60) {
-  return 'À l’instant';
-}
+    return t(
+      'pluginSummary.relative.now',
+    );
+  }
 
   const elapsedMinutes =
     Math.floor(
@@ -167,11 +173,10 @@ function formatRelativeTime(
     );
 
   if (elapsedMinutes < 60) {
-    return `il y a ${elapsedMinutes} minute${
-      elapsedMinutes > 1
-        ? 's'
-        : ''
-    }`;
+    return t(
+      'pluginSummary.relative.minutes',
+      { count: elapsedMinutes },
+    );
   }
 
   const elapsedHours =
@@ -181,11 +186,10 @@ function formatRelativeTime(
     );
 
   if (elapsedHours < 24) {
-    return `il y a ${elapsedHours} heure${
-      elapsedHours > 1
-        ? 's'
-        : ''
-    }`;
+    return t(
+      'pluginSummary.relative.hours',
+      { count: elapsedHours },
+    );
   }
 
   const elapsedDays =
@@ -194,11 +198,10 @@ function formatRelativeTime(
       24,
     );
 
-  return `il y a ${elapsedDays} jour${
-    elapsedDays > 1
-      ? 's'
-      : ''
-  }`;
+  return t(
+    'pluginSummary.relative.days',
+    { count: elapsedDays },
+  );
 }
 
 onMounted(async () => {
@@ -228,20 +231,20 @@ onUnmounted(() => {
 <template>
   <CollapsibleSection
     v-model="expanded"
-    title="Récapitulatif du fonctionnement"
-    description="Informations récapitulatives du fonctionnement"
+    :title="t('pluginSummary.title')"
+    :description="t('pluginSummary.description')"
     content-id="plugin-functioning-summary"
   >
     <div class="summary-grid">
       <section class="summary-card">
         <h2>
-          🌐 Connexion
+          🌐 {{ t('pluginSummary.connection.title') }}
         </h2>
 
         <dl>
           <div>
             <dt>
-              Home Assistant
+              {{ t('pluginSummary.connection.homeAssistant') }}
             </dt>
 
             <dd class="connected-value">
@@ -250,13 +253,13 @@ onUnmounted(() => {
                 aria-hidden="true"
               />
 
-              Connecté
+              {{ t('pluginSummary.connection.connected') }}
             </dd>
           </div>
 
           <div>
             <dt>
-              Dernière synchronisation
+              {{ t('pluginSummary.connection.lastSynchronization') }}
             </dt>
 
             <dd>
@@ -266,7 +269,7 @@ onUnmounted(() => {
 
           <div>
             <dt>
-              Dernière communication
+              {{ t('pluginSummary.connection.lastCommunication') }}
             </dt>
 
             <dd>
@@ -278,13 +281,13 @@ onUnmounted(() => {
 
       <section class="summary-card">
         <h2>
-          📚 Catalogue
+          📚 {{ t('pluginSummary.catalog.title') }}
         </h2>
 
         <dl>
           <div>
             <dt>
-              Appareils découverts
+              {{ t('pluginSummary.catalog.discoveredDevices') }}
             </dt>
 
             <dd>
@@ -294,7 +297,7 @@ onUnmounted(() => {
 
           <div>
             <dt>
-              Actifs
+              {{ t('pluginSummary.catalog.activeDevices') }}
             </dt>
 
             <dd>
@@ -304,7 +307,7 @@ onUnmounted(() => {
 
           <div>
             <dt>
-              Favoris
+              {{ t('pluginSummary.catalog.favorites') }}
             </dt>
 
             <dd>
@@ -316,13 +319,13 @@ onUnmounted(() => {
 
       <section class="summary-card">
         <h2>
-          🏠 HomeKit
+          🏠 {{ t('pluginSummary.homeKit.title') }}
         </h2>
 
         <dl>
           <div>
             <dt>
-              Thermostats exposés
+              {{ t('pluginSummary.homeKit.exposedThermostats') }}
             </dt>
 
             <dd>
@@ -332,7 +335,7 @@ onUnmounted(() => {
 
           <div>
             <dt>
-              Thermostats restaurés
+              {{ t('pluginSummary.homeKit.restoredThermostats') }}
             </dt>
 
             <dd>
@@ -343,77 +346,77 @@ onUnmounted(() => {
       </section>
 
       <section class="summary-card">
-  <h2>
-    ⚙️ Système
-  </h2>
+        <h2>
+          ⚙️ {{ t('pluginSummary.system.title') }}
+        </h2>
 
-  <dl>
-    <div>
-      <dt>
-        Plugin
-      </dt>
+        <dl>
+          <div>
+            <dt>
+              {{ t('pluginSummary.system.plugin') }}
+            </dt>
 
-      <dd>
-        {{
-          systemInformation?.pluginVersion ??
-          'Non disponible'
-        }}
-      </dd>
-    </div>
+            <dd>
+              {{
+                systemInformation?.pluginVersion ??
+                t('pluginSummary.notAvailable')
+              }}
+            </dd>
+          </div>
 
-    <div>
-      <dt>
-        Homebridge
-      </dt>
+          <div>
+            <dt>
+              {{ t('pluginSummary.system.homebridge') }}
+            </dt>
 
-      <dd>
-        {{
-          systemInformation?.homebridgeVersion ??
-          'Non disponible'
-        }}
-      </dd>
-    </div>
+            <dd>
+              {{
+                systemInformation?.homebridgeVersion ??
+                t('pluginSummary.notAvailable')
+              }}
+            </dd>
+          </div>
 
-    <div>
-      <dt>
-        Homebridge UI
-      </dt>
+          <div>
+            <dt>
+              {{ t('pluginSummary.system.homebridgeUi') }}
+            </dt>
 
-      <dd>
-        {{
-          systemInformation?.homebridgeUiVersion ??
-          'Non disponible'
-        }}
-      </dd>
-    </div>
+            <dd>
+              {{
+                systemInformation?.homebridgeUiVersion ??
+                t('pluginSummary.notAvailable')
+              }}
+            </dd>
+          </div>
 
-    <div>
-      <dt>
-        Node.js
-      </dt>
+          <div>
+            <dt>
+              {{ t('pluginSummary.system.node') }}
+            </dt>
 
-      <dd>
-        {{
-          systemInformation?.nodeVersion ??
-          'Non disponible'
-        }}
-      </dd>
-    </div>
+            <dd>
+              {{
+                systemInformation?.nodeVersion ??
+                t('pluginSummary.notAvailable')
+              }}
+            </dd>
+          </div>
 
-    <div>
-      <dt>
-        Plateforme
-      </dt>
+          <div>
+            <dt>
+              {{ t('pluginSummary.system.platform') }}
+            </dt>
 
-      <dd>
-        {{
-          systemInformation?.platform ??
-          'Non disponible'
-        }}
-      </dd>
-    </div>
-  </dl>
-</section>
+            <dd>
+              {{
+                systemInformation?.platform ??
+                t('pluginSummary.notAvailable')
+              }}
+            </dd>
+          </div>
+        </dl>
+      </section>
     </div>
   </CollapsibleSection>
 </template>

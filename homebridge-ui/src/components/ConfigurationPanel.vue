@@ -9,10 +9,15 @@ import type {
   IHomebridgePluginUi,
 } from '@homebridge/plugin-ui-utils';
 
+import { useI18n } from 'vue-i18n';
+
 import CollapsibleSection from './CollapsibleSection.vue';
 
 declare const homebridge:
   IHomebridgePluginUi;
+
+const { t } =
+  useI18n();
 
 type PluginConfiguration = {
   platform?: string;
@@ -200,17 +205,29 @@ const statusLabel =
   computed(() => {
     switch (status.value) {
       case 'checking':
-        return 'Vérification…';
+        return t(
+          'configuration.status.checking',
+        );
       case 'connected':
-        return 'Connecté';
+        return t(
+          'configuration.status.connected',
+        );
       case 'dirty':
-        return 'Modifications non enregistrées';
+        return t(
+          'configuration.status.dirty',
+        );
       case 'verification-required':
-        return 'À vérifier';
+        return t(
+          'configuration.status.verificationRequired',
+        );
       case 'unreachable':
-        return 'Connexion impossible';
+        return t(
+          'configuration.status.unreachable',
+        );
       default:
-        return 'Non configuré';
+        return t(
+          'configuration.status.unconfigured',
+        );
     }
   });
 
@@ -318,11 +335,15 @@ Promise<void> {
       connected: false,
       state: 'unconfigured',
       message:
-        'Adresse ou jeton manquant',
+        t(
+          'configuration.messages.missingAddressOrToken',
+        ),
     };
 
     errorMessage.value =
-      'La configuration est incomplète.';
+      t(
+        'configuration.messages.incomplete',
+      );
     expanded.value = true;
 
     return;
@@ -354,9 +375,13 @@ Promise<void> {
       }
 
       errorMessage.value =
-        'Configuration non enregistrée : ' +
-        connectionStatus.message +
-        '.';
+        t(
+          'configuration.messages.notSaved',
+          {
+            message:
+              connectionStatus.message,
+          },
+        );
 
       expanded.value = true;
 
@@ -384,9 +409,12 @@ Promise<void> {
     }
 
     errorMessage.value =
-      'Configuration non enregistrée : ' +
-      message +
-      '.';
+      t(
+        'configuration.messages.notSaved',
+        {
+          message,
+        },
+      );
 
     expanded.value = true;
 
@@ -410,7 +438,9 @@ Promise<void> {
       '';
 
     successMessage.value =
-      'Connexion Home Assistant vérifiée.';
+      t(
+        'configuration.messages.connectionVerified',
+      );
 
     expanded.value = false;
 
@@ -457,7 +487,9 @@ Promise<void> {
       '';
 
     successMessage.value =
-      'Configuration enregistrée.';
+      t(
+        'configuration.messages.saved',
+      );
 
     expanded.value = false;
   } catch (error: unknown) {
@@ -472,16 +504,24 @@ Promise<void> {
 const primaryActionLabel =
   computed(() => {
     if (checking.value) {
-      return 'Vérification…';
+      return t(
+        'configuration.actions.checking',
+      );
     }
 
     if (saving.value) {
-      return 'Enregistrement…';
+      return t(
+        'configuration.actions.saving',
+      );
     }
 
     return hasChanges.value
-      ? 'Enregistrer'
-      : 'Vérifier';
+      ? t(
+        'configuration.actions.save',
+      )
+      : t(
+        'configuration.actions.verify',
+      );
   });
 
 async function requestConnectionStatus(
@@ -535,8 +575,8 @@ function normalizeConfiguration(
     token:
       normalizeText(value.token),
     autoDiscovery: true,
-includeHumidity: true,
-includeBattery: true,
+    includeHumidity: true,
+    includeBattery: true,
   };
 }
 
@@ -544,15 +584,14 @@ function comparableConfiguration(
   value: PluginConfiguration,
 ): PluginConfiguration {
   return {
-  haUrl:
-    normalizeText(value.haUrl),
-  token:
-    normalizeText(value.token),
-
-  autoDiscovery: true,
-  includeHumidity: true,
-  includeBattery: true,
-};
+    haUrl:
+      normalizeText(value.haUrl),
+    token:
+      normalizeText(value.token),
+    autoDiscovery: true,
+    includeHumidity: true,
+    includeBattery: true,
+  };
 }
 
 function normalizeText(
@@ -580,7 +619,9 @@ function getErrorMessage(
     return error;
   }
 
-  return 'La configuration n’a pas pu être enregistrée.';
+  return t(
+    'configuration.messages.saveFailed',
+  );
 }
 
 onMounted(() => {
@@ -591,8 +632,10 @@ onMounted(() => {
 <template>
   <CollapsibleSection
     v-model="expanded"
-    title="Configuration Home Assistant"
-    description="Connexion et options générales du plugin"
+    :title="t('configuration.title')"
+    :description="
+      t('configuration.description')
+    "
     content-id="home-assistant-configuration"
   >
     <template #status>
@@ -615,7 +658,11 @@ onMounted(() => {
       role="status"
       aria-live="polite"
     >
-      Chargement de la configuration…
+      {{
+        t(
+          'configuration.loading',
+        )
+      }}
     </div>
 
     <div
@@ -624,7 +671,11 @@ onMounted(() => {
     >
       <label class="configuration-field">
         <span>
-          Adresse Home Assistant
+          {{
+            t(
+              'configuration.fields.address.label',
+            )
+          }}
         </span>
 
         <input
@@ -637,7 +688,11 @@ onMounted(() => {
           spellcheck="false"
           inputmode="url"
           enterkeyhint="next"
-          aria-label="Adresse du serveur Home Assistant"
+          :aria-label="
+            t(
+              'configuration.fields.address.ariaLabel',
+            )
+          "
           placeholder="http://homeassistant.local:8123"
           :disabled="saving || checking"
           @input="clearMessages"
@@ -646,7 +701,11 @@ onMounted(() => {
 
       <label class="configuration-field">
         <span>
-          Jeton d’accès longue durée
+          {{
+            t(
+              'configuration.fields.token.label',
+            )
+          }}
         </span>
 
         <span class="token-field">
@@ -659,13 +718,21 @@ onMounted(() => {
             autocorrect="off"
             spellcheck="false"
             inputmode="text"
-            aria-label="Jeton d'accès Home Assistant"
+            :aria-label="
+              t(
+                'configuration.fields.token.ariaLabel',
+              )
+            "
             data-1p-ignore="true"
             data-lpignore="true"
             :class="{
               'token-masked': !showToken,
             }"
-            placeholder="Jeton Home Assistant"
+            :placeholder="
+              t(
+                'configuration.fields.token.placeholder',
+              )
+            "
             :disabled="saving || checking"
             @input="clearMessages"
           >
@@ -675,13 +742,25 @@ onMounted(() => {
             class="token-toggle"
             :aria-label="
               showToken
-                ? 'Masquer le jeton'
-                : 'Afficher le jeton'
+                ? t(
+                  'configuration.fields.token.hideAriaLabel',
+                )
+                : t(
+                  'configuration.fields.token.showAriaLabel',
+                )
             "
             :disabled="saving || checking"
             @click="showToken = !showToken"
           >
-            {{ showToken ? 'Masquer' : 'Afficher' }}
+            {{
+              showToken
+                ? t(
+                  'configuration.fields.token.hide',
+                )
+                : t(
+                  'configuration.fields.token.show',
+                )
+            }}
           </button>
         </span>
       </label>
@@ -726,7 +805,11 @@ onMounted(() => {
           "
           @click="resetConfiguration"
         >
-          Annuler
+          {{
+            t(
+              'configuration.actions.cancel',
+            )
+          }}
         </button>
 
         <button

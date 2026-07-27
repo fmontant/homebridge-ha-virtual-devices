@@ -1,0 +1,279 @@
+{
+  "app": {
+    "name": "Homebridge HA Virtual Devices",
+    "title": "Homebridge HA Virtual Devices",
+    "description": "Manage Home Assistant devices exposed to HomeKit.",
+    "configuration": "Configuration",
+    "devices": "Devices",
+    "loading": "Loading...",
+    "ready": "Ready"
+  },
+  "common": {
+    "yes": "Yes",
+    "no": "No",
+    "none": "None",
+    "unknown": "Unknown",
+    "notAvailable": "Not available",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "name": "Name",
+    "state": "State",
+    "type": "Type",
+    "value": "Value",
+    "room": "Room",
+    "source": "Source",
+    "search": "Search",
+    "filter": "Filter",
+    "details": "Details"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "reset": "Reset",
+    "verify": "Verify",
+    "show": "Show",
+    "hide": "Hide",
+    "enable": "Enable",
+    "disable": "Disable",
+    "apply": "Apply"
+  },
+  "toolbar": {
+    "search": {
+      "ariaLabel": "Search devices",
+      "placeholder": "Search devices…"
+    },
+    "filters": {
+      "state": "Filter by state",
+      "room": "Filter by room",
+      "allStates": "All states",
+      "allRooms": "All rooms",
+      "reset": "Reset"
+    },
+    "deviceCount": {
+      "one": "{count} device",
+      "other": "{count} devices"
+    }
+  },
+  "catalog": {
+    "loading": "Loading catalog…",
+    "headers": {
+      "state": "State",
+      "room": "Room"
+    },
+    "empty": {
+      "noDevice": "No devices.",
+      "noResult": "No devices match the current filters.",
+      "unavailable": "Catalog unavailable."
+    }
+  },
+  "status": {
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "checking": "Checking...",
+    "online": "Online",
+    "offline": "Offline",
+    "missing": "Missing",
+    "archived": "Archived",
+    "hidden": "Hidden",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "error": "Error",
+    "warning": "Warning",
+    "success": "Success",
+    "information": "Information",
+    "unsavedChanges": "Unsaved changes",
+    "verificationRequired": "Verification required",
+    "configurationRequired": "Configuration required"
+  },
+  "errors": {
+    "loading": "Loading error",
+    "refresh": "Refresh error"
+  },
+  "time": {
+    "never": "Never",
+    "justNow": "Just now",
+    "lessThanOneMinute": "Less than a minute ago",
+    "minuteAgo": "{count} minute ago",
+    "minutesAgo": "{count} minutes ago",
+    "hourAgo": "{count} hour ago",
+    "hoursAgo": "{count} hours ago",
+    "dayAgo": "{count} day ago",
+    "daysAgo": "{count} days ago",
+    "onDate": "{date} at {time}"
+  },
+  "configuration": {
+    "title": "Home Assistant configuration",
+    "description": "Connection and general plugin settings",
+    "loading": "Loading configuration…",
+    "status": {
+      "checking": "Checking…",
+      "connected": "Connected",
+      "dirty": "Unsaved changes",
+      "verificationRequired": "Verification required",
+      "unreachable": "Connection failed",
+      "unconfigured": "Not configured"
+    },
+    "fields": {
+      "address": {
+        "label": "Home Assistant URL",
+        "ariaLabel": "Home Assistant server URL"
+      },
+      "token": {
+        "label": "Long-lived access token",
+        "ariaLabel": "Home Assistant access token",
+        "placeholder": "Home Assistant token",
+        "show": "Show",
+        "hide": "Hide",
+        "showAriaLabel": "Show token",
+        "hideAriaLabel": "Hide token"
+      }
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "verify": "Verify",
+      "checking": "Checking…",
+      "saving": "Saving…"
+    },
+    "messages": {
+      "missingAddressOrToken": "URL or token missing.",
+      "incomplete": "Configuration is incomplete.",
+      "notSaved": "Configuration not saved: {message}.",
+      "connectionVerified": "Home Assistant connection verified.",
+      "saved": "Configuration saved.",
+      "saveFailed": "Could not save the configuration."
+    }
+  },
+  "states": {
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "missing": "Missing",
+    "error": "Error",
+    "archived": "Archived",
+    "offline": "Offline"
+  },
+  "deviceRow": {
+    "states": {
+      "archived": "Archived",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "missing": "Missing",
+      "error": "Error",
+      "offline": "Offline"
+    },
+    "favorite": {
+      "add": "Add {name} to favorites",
+      "remove": "Remove {name} from favorites"
+    },
+    "badges": {
+      "new": "NEW"
+    }
+  },
+  "pluginSummary": {
+    "title": "Overview",
+    "description": "Connection, catalog, HomeKit, and system status.",
+    "notAvailable": "Not available",
+    "relative": {
+      "now": "Just now",
+      "minutes": "{count} minute ago | {count} minutes ago",
+      "hours": "{count} hour ago | {count} hours ago",
+      "days": "{count} day ago | {count} days ago"
+    },
+    "connection": {
+      "title": "Connection",
+      "homeAssistant": "Home Assistant",
+      "connected": "Connected",
+      "lastSynchronization": "Last sync",
+      "lastCommunication": "Last seen"
+    },
+    "catalog": {
+      "title": "Catalog",
+      "discoveredDevices": "Discovered devices",
+      "activeDevices": "Active devices",
+      "favorites": "Favorites"
+    },
+    "homeKit": {
+      "title": "HomeKit",
+      "exposedThermostats": "Exposed thermostats",
+      "restoredThermostats": "Restored thermostats"
+    },
+    "system": {
+      "title": "System",
+      "plugin": "Plugin",
+      "homebridge": "Homebridge",
+      "homebridgeUi": "Homebridge UI",
+      "node": "Node.js",
+      "platform": "Platform"
+    }
+  },
+  "deviceDetails": {
+    "time": {
+      "lessThanMinute": "Less than a minute ago",
+      "minutes": "{count} minute ago | {count} minutes ago",
+      "hours": "{count} hour ago | {count} hours ago",
+      "days": "{count} day ago | {count} days ago",
+      "absolute": "{date} at {time}"
+    },
+    "sections": {
+      "preferences": "Preferences",
+      "general": "General",
+      "capabilities": "Capabilities"
+    },
+    "fields": {
+      "room": "Room",
+      "noRoom": "No room",
+      "favorite": "Favorite",
+      "enabled": "Enabled",
+      "archive": "Archive"
+    },
+    "information": {
+      "missing": "This device is missing. It remains exposed to HomeKit until archived.",
+      "archiveOnlyMissing": "Only missing devices can be archived."
+    },
+    "actions": {
+      "saving": "Saving…",
+      "save": "Save",
+      "deleting": "Removing…",
+      "delete": "Remove sensor"
+    },
+    "messages": {
+      "preferencesSaved": "Preferences saved."
+    },
+    "errors": {
+      "deleteFailed": "Could not remove the sensor.",
+      "saveFailed": "Could not save the preferences."
+    },
+    "delete": {
+      "confirmation": "Remove “{name}” from the plugin catalog and HomeKit?\n\nThis immediately removes the HomeKit tile and deletes the sensor from the plugin catalog.\n\nIf Home Assistant detects it again, it will be recreated automatically."
+    },
+    "general": {
+      "identifier": "Identifier",
+      "state": "State",
+      "availability": "Availability",
+      "lastCommunication": "Last seen"
+    },
+    "availability": {
+      "available": "Available",
+      "offline": "Offline"
+    },
+    "capabilities": {
+      "temperature": "Temperature",
+      "humidity": "Humidity",
+      "battery": "Battery",
+      "pressure": "Pressure",
+      "illuminance": "Illuminance",
+      "airQuality": "Air quality",
+      "co2": "CO₂",
+      "voc": "VOC",
+      "none": "No capabilities detected."
+    },
+    "emptySelection": "Select a device from the catalog."
+  }
+}

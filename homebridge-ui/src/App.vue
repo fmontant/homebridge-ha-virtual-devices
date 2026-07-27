@@ -5,6 +5,7 @@ import {
   onUnmounted,
   ref,
 } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 import { catalogApi } from './api/catalogApi';
 import ConfigurationPanel from './components/ConfigurationPanel.vue';
@@ -32,6 +33,11 @@ type SortDirection =
 type StateFilter =
   | DeviceState
   | '';
+
+const {
+  locale,
+  t,
+} = useI18n();
 
 const search =
   ref('');
@@ -103,7 +109,7 @@ const availableRooms =
       (left, right) =>
         left.localeCompare(
           right,
-          'fr',
+          locale.value,
           {
             numeric: true,
             sensitivity: 'base',
@@ -182,7 +188,7 @@ const sortedDevices =
                 right.device,
                 sortKey.value!,
               ),
-              'fr',
+              locale.value,
               {
                 numeric: true,
                 sensitivity: 'base',
@@ -291,7 +297,7 @@ function getErrorMessage(
     return error;
   }
 
-  return 'Le catalogue n’a pas pu être chargé.';
+  return t('catalog.empty.unavailable');
 }
 
 function getSortValue(
@@ -487,17 +493,17 @@ onUnmounted(() => {
   <header class="header">
   <div class="header-content">
     <h1>
-      Homebridge HA Virtual Devices
+      {{ t('app.title') }}
     </h1>
 
     <p>
-      Gestion des appareils Home Assistant exposés à HomeKit.
+      {{ t('app.description') }}
     </p>
   </div>
 
   <img
     src="/logo1.png"
-    alt="Homebridge HA Virtual Devices"
+    :alt="t('app.name')"
     class="app-logo"
   />
 </header>
@@ -522,42 +528,42 @@ onUnmounted(() => {
         spellcheck="false"
         inputmode="search"
         enterkeyhint="search"
-        aria-label="Rechercher un appareil"
-        placeholder="Rechercher un appareil…"
+        :aria-label="t('toolbar.search.ariaLabel')"
+        :placeholder="t('toolbar.search.placeholder')"
       />
       <select
         v-model="stateFilter"
         class="filter-select"
-        aria-label="Filtrer par état"
+        :aria-label="t('toolbar.filters.state')"
       >
         <option value="">
-          Tous les états
+          {{ t('toolbar.filters.allStates') }}
         </option>
 
         <option value="enabled">
-          Actif
+          {{ t('status.enabled') }}
         </option>
 
         <option value="disabled">
-          Désactivé
+          {{ t('status.disabled') }}
         </option>
 
         <option value="hidden">
-          Masqué
+          {{ t('status.hidden') }}
         </option>
 
         <option value="missing">
-          Manquant
+          {{ t('status.missing') }}
         </option>
       </select>
 
       <select
         v-model="roomFilter"
         class="filter-select"
-        aria-label="Filtrer par pièce"
+        :aria-label="t('toolbar.filters.room')"
       >
         <option value="">
-          Toutes les pièces
+          {{ t('toolbar.filters.allRooms') }}
         </option>
 
         <option
@@ -575,12 +581,20 @@ onUnmounted(() => {
         class="reset-button"
         @click="resetFilters"
       >
-        Réinitialiser
+        {{ t('buttons.reset') }}
       </button>
 
       <span class="device-count">
-        {{ sortedDevices.length }}
-        appareil{{ sortedDevices.length > 1 ? 's' : '' }}
+        {{
+          t(
+            sortedDevices.length === 1
+              ? 'toolbar.deviceCount.one'
+              : 'toolbar.deviceCount.other',
+            {
+              count: sortedDevices.length,
+            },
+          )
+        }}
       </span>
     </section>
 
@@ -593,8 +607,8 @@ onUnmounted(() => {
         <strong>
           {{
             initialized
-              ? 'Erreur d’actualisation'
-              : 'Erreur de chargement'
+              ? t('errors.refresh')
+              : t('errors.loading')
           }}
         </strong>
 
@@ -609,7 +623,7 @@ onUnmounted(() => {
         :disabled="loading"
         @click="loadDevices"
       >
-        Réessayer
+        {{ t('buttons.retry') }}
       </button>
     </section>
 
@@ -621,7 +635,7 @@ onUnmounted(() => {
             class="sort-button"
             @click="changeSort('state')"
           >
-            État
+            {{ t('catalog.headers.state') }}
 
             <span class="sort-indicator">
               {{ getSortIndicator('state') }}
@@ -637,7 +651,7 @@ onUnmounted(() => {
             class="sort-button"
             @click="changeSort('name')"
           >
-            Nom
+            {{ t('common.name') }}
 
             <span class="sort-indicator">
               {{ getSortIndicator('name') }}
@@ -649,7 +663,7 @@ onUnmounted(() => {
             class="sort-button"
             @click="changeSort('source')"
           >
-            Source
+            {{ t('common.source') }}
 
             <span class="sort-indicator">
               {{ getSortIndicator('source') }}
@@ -661,7 +675,7 @@ onUnmounted(() => {
             class="sort-button"
             @click="changeSort('room')"
           >
-            Pièce
+            {{ t('catalog.headers.room') }}
 
             <span class="sort-indicator">
               {{ getSortIndicator('room') }}
@@ -681,7 +695,7 @@ onUnmounted(() => {
           />
 
           <span>
-            Chargement du catalogue…
+            {{ t('catalog.loading') }}
           </span>
         </div>
 
@@ -705,10 +719,10 @@ onUnmounted(() => {
             {{
               errorMessage &&
               !initialized
-                ? 'Catalogue indisponible.'
+                ? t('catalog.empty.unavailable')
                 : filtersActive
-                  ? 'Aucun appareil ne correspond aux filtres.'
-                  : 'Aucun appareil.'
+                  ? t('catalog.empty.noResult')
+                  : t('catalog.empty.noDevice')
             }}
           </p>
         </template>

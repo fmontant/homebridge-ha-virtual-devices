@@ -1,0 +1,279 @@
+{
+  "app": {
+    "name": "Homebridge HA Virtual Devices",
+    "title": "Homebridge HA Virtual Devices",
+    "description": "Verwalten Sie Home-Assistant-Geräte, die in HomeKit veröffentlicht werden.",
+    "configuration": "Konfiguration",
+    "devices": "Geräte",
+    "loading": "Wird geladen...",
+    "ready": "Bereit"
+  },
+  "common": {
+    "yes": "Ja",
+    "no": "Nein",
+    "none": "Keine",
+    "unknown": "Unbekannt",
+    "notAvailable": "Nicht verfügbar",
+    "available": "Verfügbar",
+    "unavailable": "Nicht verfügbar",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "name": "Name",
+    "state": "Status",
+    "type": "Typ",
+    "value": "Wert",
+    "room": "Raum",
+    "source": "Quelle",
+    "search": "Suche",
+    "filter": "Filter",
+    "details": "Details"
+  },
+  "buttons": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "refresh": "Aktualisieren",
+    "retry": "Erneut versuchen",
+    "reset": "Zurücksetzen",
+    "verify": "Prüfen",
+    "show": "Anzeigen",
+    "hide": "Ausblenden",
+    "enable": "Aktivieren",
+    "disable": "Deaktivieren",
+    "apply": "Anwenden"
+  },
+  "toolbar": {
+    "search": {
+      "ariaLabel": "Gerät suchen",
+      "placeholder": "Gerät suchen…"
+    },
+    "filters": {
+      "state": "Nach Status filtern",
+      "room": "Nach Raum filtern",
+      "allStates": "Alle Status",
+      "allRooms": "Alle Räume",
+      "reset": "Zurücksetzen"
+    },
+    "deviceCount": {
+      "one": "{count} Gerät",
+      "other": "{count} Geräte"
+    }
+  },
+  "catalog": {
+    "loading": "Katalog wird geladen…",
+    "headers": {
+      "state": "Status",
+      "room": "Raum"
+    },
+    "empty": {
+      "noDevice": "Keine Geräte.",
+      "noResult": "Kein Gerät entspricht den Filtern.",
+      "unavailable": "Katalog nicht verfügbar."
+    }
+  },
+  "status": {
+    "connected": "Verbunden",
+    "disconnected": "Getrennt",
+    "checking": "Wird geprüft...",
+    "online": "Online",
+    "offline": "Offline",
+    "missing": "Fehlend",
+    "archived": "Archiviert",
+    "hidden": "Ausgeblendet",
+    "available": "Verfügbar",
+    "unavailable": "Nicht verfügbar",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "error": "Fehler",
+    "warning": "Warnung",
+    "success": "Erfolg",
+    "information": "Information",
+    "unsavedChanges": "Nicht gespeicherte Änderungen",
+    "verificationRequired": "Prüfung erforderlich",
+    "configurationRequired": "Konfiguration erforderlich"
+  },
+  "errors": {
+    "loading": "Fehler beim Laden",
+    "refresh": "Fehler beim Aktualisieren"
+  },
+  "time": {
+    "never": "Nie",
+    "justNow": "Gerade eben",
+    "lessThanOneMinute": "Vor weniger als einer Minute",
+    "minuteAgo": "Vor {count} Minute",
+    "minutesAgo": "Vor {count} Minuten",
+    "hourAgo": "Vor {count} Stunde",
+    "hoursAgo": "Vor {count} Stunden",
+    "dayAgo": "Vor {count} Tag",
+    "daysAgo": "Vor {count} Tagen",
+    "onDate": "Am {date} um {time}"
+  },
+  "configuration": {
+    "title": "Home-Assistant-Konfiguration",
+    "description": "Verbindung und allgemeine Plugin-Einstellungen",
+    "loading": "Konfiguration wird geladen…",
+    "status": {
+      "checking": "Wird geprüft…",
+      "connected": "Verbunden",
+      "dirty": "Nicht gespeicherte Änderungen",
+      "verificationRequired": "Prüfung erforderlich",
+      "unreachable": "Verbindung nicht möglich",
+      "unconfigured": "Nicht konfiguriert"
+    },
+    "fields": {
+      "address": {
+        "label": "Home-Assistant-Adresse",
+        "ariaLabel": "Adresse des Home-Assistant-Servers"
+      },
+      "token": {
+        "label": "Langzeit-Zugriffstoken",
+        "ariaLabel": "Home-Assistant-Zugriffstoken",
+        "placeholder": "Home-Assistant-Token",
+        "show": "Anzeigen",
+        "hide": "Ausblenden",
+        "showAriaLabel": "Token anzeigen",
+        "hideAriaLabel": "Token ausblenden"
+      }
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "verify": "Prüfen",
+      "checking": "Wird geprüft…",
+      "saving": "Wird gespeichert…"
+    },
+    "messages": {
+      "missingAddressOrToken": "Adresse oder Token fehlt",
+      "incomplete": "Die Konfiguration ist unvollständig.",
+      "notSaved": "Konfiguration nicht gespeichert: {message}.",
+      "connectionVerified": "Home-Assistant-Verbindung geprüft.",
+      "saved": "Konfiguration gespeichert.",
+      "saveFailed": "Die Konfiguration konnte nicht gespeichert werden."
+    }
+  },
+  "states": {
+    "enabled": "Aktiv",
+    "disabled": "Deaktiviert",
+    "missing": "Fehlend",
+    "error": "Fehler",
+    "archived": "Archiviert",
+    "offline": "Offline"
+  },
+  "deviceRow": {
+    "states": {
+      "archived": "Archiviert",
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert",
+      "missing": "Fehlend",
+      "error": "Fehler",
+      "offline": "Offline"
+    },
+    "favorite": {
+      "add": "{name} zu Favoriten hinzufügen",
+      "remove": "{name} aus Favoriten entfernen"
+    },
+    "badges": {
+      "new": "NEU"
+    }
+  },
+  "pluginSummary": {
+    "title": "Übersicht",
+    "description": "Überblick über Verbindung, Katalog, HomeKit und System.",
+    "notAvailable": "Nicht verfügbar",
+    "relative": {
+      "now": "Gerade eben",
+      "minutes": "Vor {count} Minute | Vor {count} Minuten",
+      "hours": "Vor {count} Stunde | Vor {count} Stunden",
+      "days": "Vor {count} Tag | Vor {count} Tagen"
+    },
+    "connection": {
+      "title": "Verbindung",
+      "homeAssistant": "Home Assistant",
+      "connected": "Verbunden",
+      "lastSynchronization": "Letzte Synchronisierung",
+      "lastCommunication": "Letzte Kommunikation"
+    },
+    "catalog": {
+      "title": "Katalog",
+      "discoveredDevices": "Erkannte Geräte",
+      "activeDevices": "Aktive Geräte",
+      "favorites": "Favoriten"
+    },
+    "homeKit": {
+      "title": "HomeKit",
+      "exposedThermostats": "Veröffentlichte Thermostate",
+      "restoredThermostats": "Wiederhergestellte Thermostate"
+    },
+    "system": {
+      "title": "System",
+      "plugin": "Plugin",
+      "homebridge": "Homebridge",
+      "homebridgeUi": "Homebridge UI",
+      "node": "Node.js",
+      "platform": "Plattform"
+    }
+  },
+  "deviceDetails": {
+    "time": {
+      "lessThanMinute": "Vor weniger als einer Minute",
+      "minutes": "Vor {count} Minute | Vor {count} Minuten",
+      "hours": "Vor {count} Stunde | Vor {count} Stunden",
+      "days": "Vor {count} Tag | Vor {count} Tagen",
+      "absolute": "Am {date} um {time}"
+    },
+    "sections": {
+      "preferences": "Einstellungen",
+      "general": "Allgemein",
+      "capabilities": "Funktionen"
+    },
+    "fields": {
+      "room": "Raum",
+      "noRoom": "Kein Raum",
+      "favorite": "Favorit",
+      "enabled": "Aktiv",
+      "archive": "Archivieren"
+    },
+    "information": {
+      "missing": "Dieses Gerät fehlt. Es bleibt in HomeKit veröffentlicht, bis es archiviert wird.",
+      "archiveOnlyMissing": "Nur fehlende Geräte können archiviert werden."
+    },
+    "actions": {
+      "saving": "Wird gespeichert…",
+      "save": "Speichern",
+      "deleting": "Wird entfernt…",
+      "delete": "Sensor entfernen"
+    },
+    "messages": {
+      "preferencesSaved": "Einstellungen gespeichert."
+    },
+    "errors": {
+      "deleteFailed": "Der Sensor konnte nicht entfernt werden.",
+      "saveFailed": "Die Einstellungen konnten nicht gespeichert werden."
+    },
+    "delete": {
+      "confirmation": "Sensor „{name}“ aus dem Plugin-Katalog und aus HomeKit entfernen?\n\nDadurch wird die HomeKit-Kachel sofort entfernt und der Sensor aus dem Plugin-Katalog gelöscht.\n\nWenn Home Assistant ihn erneut erkennt, wird er automatisch neu erstellt."
+    },
+    "general": {
+      "identifier": "Kennung",
+      "state": "Status",
+      "availability": "Verfügbarkeit",
+      "lastCommunication": "Letzte Kommunikation"
+    },
+    "availability": {
+      "available": "Verfügbar",
+      "offline": "Offline"
+    },
+    "capabilities": {
+      "temperature": "Temperatur",
+      "humidity": "Luftfeuchtigkeit",
+      "battery": "Batterie",
+      "pressure": "Luftdruck",
+      "illuminance": "Helligkeit",
+      "airQuality": "Luftqualität",
+      "co2": "CO₂",
+      "voc": "VOC",
+      "none": "Keine Funktionen erkannt."
+    },
+    "emptySelection": "Wählen Sie ein Gerät im Katalog aus."
+  }
+}

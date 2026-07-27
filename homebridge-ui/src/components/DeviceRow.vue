@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import type {
   CatalogDevice,
   DeviceState,
@@ -19,13 +20,7 @@ const emit = defineEmits<{
   favorite: [];
 }>();
 
-const labels: Record<DeviceState, string> = {
-  archived: 'Archivé',
-  enabled: 'Activé',
-  disabled: 'Désactivé',
-  missing: 'Manquant',
-  error: 'Erreur',
-};
+const { t } = useI18n();
 
 const badgeClass: Record<DeviceState, string> = {
   archived: 'state-archived',
@@ -39,8 +34,8 @@ const availabilityLabel = (
   device: CatalogDevice,
 ): string =>
   device.available
-    ? labels[device.state]
-    : 'Hors ligne';
+    ? t(`deviceRow.states.${device.state}`)
+    : t('deviceRow.states.offline');
 
 const availabilityClass = (
   device: CatalogDevice,
@@ -48,6 +43,17 @@ const availabilityClass = (
   device.available
     ? badgeClass[device.state]
     : 'state-offline';
+
+const favoriteAriaLabel = (
+  device: CatalogDevice,
+): string =>
+  device.favorite
+    ? t('deviceRow.favorite.remove', {
+        name: device.name,
+      })
+    : t('deviceRow.favorite.add', {
+        name: device.name,
+      });
 </script>
 
 <template>
@@ -62,33 +68,29 @@ const availabilityClass = (
     @keydown.space.prevent="emit('click')"
   >
     <span
-  class="badge"
-  :class="availabilityClass(device)"
->
-  {{ availabilityLabel(device) }}
-</span>
+      class="badge"
+      :class="availabilityClass(device)"
+    >
+      {{ availabilityLabel(device) }}
+    </span>
 
     <button
       type="button"
       class="favorite-button"
-      :aria-label="
-        device.favorite
-          ? `Retirer ${device.name} des favoris`
-          : `Ajouter ${device.name} aux favoris`
-      "
+      :aria-label="favoriteAriaLabel(device)"
       @click.stop="emit('favorite')"
     >
       {{ device.favorite ? '★' : '☆' }}
     </button>
 
-     <strong class="device-name">
+    <strong class="device-name">
       {{ device.name }}
 
       <span
         v-if="!device.firstViewedAt"
         class="new-badge"
       >
-        NEW
+        {{ t('deviceRow.badges.new') }}
       </span>
     </strong>
 

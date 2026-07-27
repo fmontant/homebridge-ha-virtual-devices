@@ -1,0 +1,72 @@
+# Changelog
+
+All notable changes to **Homebridge HA Virtual Devices** are documented in this file.
+
+This project follows **Semantic Versioning (SemVer)**.
+
+The format of this changelog is inspired by **Keep a Changelog** and is maintained in accordance with the project's **Publication Policy**.
+
+Its purpose is to provide a clear, factual and chronological record of every published release.
+
+Future features and planned improvements are documented in **ROADMAP.md**.
+
+---
+
+## [Unreleased]
+
+> [!NOTE]
+> This section contains completed changes that have not yet been published.
+> Entries are moved to the appropriate version section when a new release is published.
+
+---
+
+## [1.3.0] - 2026-07-27
+
+### Added
+
+- Added full multilingual support (French, English, German and Spanish).
+- Added German localization.
+- Added Spanish localization.
+
+### Changed
+
+- Added automatic browser language detection.
+- Changed the fallback language to French for unsupported locales.
+- Introduced a Vue I18n based internationalization framework.
+
+### Improved
+
+- Improved translation consistency across all supported languages.
+- Improved the overall localization architecture for future language additions.
+
+---
+
+## [1.2.1] - 2026-07-26
+
+### Documentation
+
+- Introduced the project's documentation framework.
+- Added a structured developer documentation toolkit.
+- Added deployment, publication and troubleshooting guides.
+- Added French and English project documentation.
+- Established the project's publication workflow.
+
+---
+
+## [1.2.0] - 2026-07-23
+
+### Added
+
+- Added a redesigned Homebridge administration interface.
+- Added dedicated **Configuration** and **Devices** views.
+- Added integrated plugin configuration from the Homebridge user interface.
+
+### Changed
+
+- Simplified the plugin configuration workflow.
+- Improved the overall administration experience.
+
+### Improved
+
+- Improved user interface consistency.
+- Improved project architecture and long-term maintainability.
