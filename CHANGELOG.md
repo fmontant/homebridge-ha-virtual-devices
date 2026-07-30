@@ -20,6 +20,24 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 
 ---
 
+## [1.3.1] - 2026-07-30
+
+### Changed
+
+- Reintroduced the sensor deletion confirmation dialog after resolving the issues identified in previous releases.
+- Improved the integrated Homebridge confirmation dialog for a clearer and more reliable deletion workflow.
+- Harmonized French, English, German and Spanish translations.
+- Refined several user interface texts for better consistency across all supported languages.
+
+### Fixed
+
+- Fixed the sensor deletion confirmation workflow.
+- Fixed the internationalization (i18n) resource structure.
+- Corrected German and Spanish wording and typography.
+- Fixed several user interface consistency issues.
+
+---
+
 ## [1.3.0] - 2026-07-27
 
 ### Added
