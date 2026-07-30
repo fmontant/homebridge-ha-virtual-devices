@@ -244,11 +244,98 @@ npm_require_login() {
       2>/dev/null
   )"
 
-  if [[ -z "$NPM_USER" ]]; then
-    fail "L'authentification npm n'a pas pu être confirmée."
+  [[ -n "$NPM_USER" ]] \
+    || fail "L'authentification npm n'a pas pu être confirmée."
+
+  return 0
+}
+
+gh_require_login() {
+  local hostname="${1:-github.com}"
+
+  if ! gh auth status \
+    --hostname "$hostname" >/dev/null 2>&1; then
+    printf '\nAucune session GitHub CLI valide.\n' >&2
+    printf 'Ouverture de la connexion GitHub dans le navigateur...\n\n' >&2
+
+    if ! gh auth login \
+      --hostname "$hostname" \
+      --git-protocol ssh \
+      --web; then
+      fail "La connexion à GitHub a échoué."
+    fi
   fi
 
-  success "Connexion npm établie"
+  GH_USER="$(
+    gh api user \
+      --hostname "$hostname" \
+      --jq '.login' \
+      2>/dev/null
+  )"
+
+  [[ -n "$GH_USER" ]] \
+    || fail "L'authentification GitHub n'a pas pu être confirmée."
+
+  return 0
+}
+
+extract_changelog_section() {
+  local version="${1:-}"
+  local changelog_file="${2:-CHANGELOG.md}"
+  local output_file="${3:-}"
+  local extractor="${COMMON_PROJECT_ROOT}/scripts/utils/extract-changelog.cjs"
+
+  [[ -n "$version" ]] \
+    || fail "Version manquante pour l'extraction du changelog."
+
+  [[ -f "$changelog_file" ]] \
+    || fail "Changelog introuvable : ${changelog_file}"
+
+  [[ -n "$output_file" ]] \
+    || fail "Fichier de sortie manquant pour les notes de publication."
+
+  [[ -f "$extractor" ]] \
+    || fail "Utilitaire d'extraction introuvable : ${extractor}"
+
+  if ! node "$extractor" \
+    "$version" \
+    "$changelog_file" \
+    > "$output_file"; then
+    fail "Impossible d'extraire les notes de la version ${version}."
+  fi
+
+  [[ -s "$output_file" ]] \
+    || fail "Les notes de publication de la version ${version} sont vides."
+}
+
+gh_release_exists() {
+  local release_tag="${1:-}"
+
+  [[ -n "$release_tag" ]] \
+    || return 1
+
+  gh release view "$release_tag" >/dev/null 2>&1
+}
+
+gh_create_release() {
+  local release_tag="${1:-}"
+  local release_title="${2:-$release_tag}"
+  local notes_file="${3:-}"
+
+  [[ -n "$release_tag" ]] \
+    || fail "Tag manquant pour la Release GitHub."
+
+  [[ -n "$notes_file" && -f "$notes_file" ]] \
+    || fail "Fichier de notes GitHub introuvable : ${notes_file}"
+
+  if gh_release_exists "$release_tag"; then
+    fail "La Release GitHub ${release_tag} existe déjà."
+  fi
+
+  gh release create "$release_tag" \
+    --verify-tag \
+    --title "$release_title" \
+    --notes-file "$notes_file"
 }
 
 npm_version_exists() {
