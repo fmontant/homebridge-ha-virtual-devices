@@ -12,6 +12,7 @@ source "${SCRIPT_DIR}/lib/common.sh"
 NPM_REGISTRY="${NPM_REGISTRY:-https://registry.npmjs.org}"
 RELEASE_BRANCH="${RELEASE_BRANCH:-main}"
 CHANGELOG_FILE="${CHANGELOG_FILE:-CHANGELOG.md}"
+EXTRACT_CHANGELOG_SCRIPT="${SCRIPT_DIR}/utils/extract-changelog.cjs"
 
 TMP_RELEASE_NOTES=""
 
@@ -31,6 +32,9 @@ banner "Homebridge HA Virtual Devices — Publication"
 step "Vérification des outils"
 require_commands git node npm gh mktemp
 success "Outils disponibles"
+
+[[ -f "$EXTRACT_CHANGELOG_SCRIPT" ]] \
+  || fail "Utilitaire introuvable : ${EXTRACT_CHANGELOG_SCRIPT}"
 
 git_require_repository
 git_require_head
@@ -92,10 +96,14 @@ TMP_RELEASE_NOTES="$(
   mktemp -t homebridge-release-notes.XXXXXX
 )"
 
-extract_changelog_section \
+node \
+  "$EXTRACT_CHANGELOG_SCRIPT" \
   "$PACKAGE_VERSION" \
   "$CHANGELOG_FILE" \
-  "$TMP_RELEASE_NOTES"
+  > "$TMP_RELEASE_NOTES"
+
+[[ -s "$TMP_RELEASE_NOTES" ]] \
+  || fail "Aucune note de publication extraite pour la version ${PACKAGE_VERSION}."
 
 success "Notes extraites depuis ${CHANGELOG_FILE}"
 
