@@ -229,13 +229,26 @@ npm_require_login() {
     return 0
   fi
 
-  printf '\nVous n'\''êtes pas connecté à npm.\n\n' >&2
-  printf 'Exécutez :\n\n' >&2
-  printf 'npm login --auth-type=web\n\n' >&2
-  printf 'Puis relancez :\n\n' >&2
-  printf 'npm run release\n\n' >&2
+  printf '\nAucune session npm valide.\n' >&2
+  printf 'Ouverture de la connexion npm dans le navigateur...\n\n' >&2
 
-  exit 1
+  if ! npm login \
+    --auth-type=web \
+    --registry "$registry"; then
+    fail "La connexion à npm a échoué."
+  fi
+
+  NPM_USER="$(
+    npm whoami \
+      --registry "$registry" \
+      2>/dev/null
+  )"
+
+  if [[ -z "$NPM_USER" ]]; then
+    fail "L'authentification npm n'a pas pu être confirmée."
+  fi
+
+  success "Connexion npm établie"
 }
 
 npm_version_exists() {
