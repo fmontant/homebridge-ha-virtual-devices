@@ -241,7 +241,9 @@
       "saving": "Guardando…",
       "save": "Guardar",
       "deleting": "Eliminando…",
-      "delete": "Eliminar sensor"
+      "delete": "Eliminar sensor",
+      "cancel": "Cancelar",
+      "confirmDelete": "Confirmar eliminación"
     },
     "messages": {
       "preferencesSaved": "Preferencias guardadas."
@@ -251,7 +253,8 @@
       "saveFailed": "No se pudieron guardar las preferencias."
     },
     "delete": {
-      "confirmation": "¿Eliminar el sensor «{name}» del catálogo del plugin y de HomeKit?\n\nEsta operación elimina inmediatamente la tarjeta de HomeKit y borra el sensor del catálogo del plugin.\n\nSi Home Assistant vuelve a detectarlo, se recreará automáticamente."
+      "confirmation": "¿Eliminar el sensor «{name}» del catálogo del plugin y de HomeKit?\n\nEsta operación elimina inmediatamente la tarjeta de HomeKit y borra el sensor del catálogo del plugin.\n\nSi Home Assistant vuelve a detectarlo, se recreará automáticamente.",
+      "title": "Confirmación de la eliminación"
     },
     "general": {
       "identifier": "Identificador",

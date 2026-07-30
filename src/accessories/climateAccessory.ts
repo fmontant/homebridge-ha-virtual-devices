@@ -108,16 +108,16 @@ export class ClimateAccessory {
     }
 
     const error =
-    new this.platform.api.hap
-      .HapStatusError(
-        this.platform.api.hap
-          .HAPStatus
-          .SERVICE_COMMUNICATION_FAILURE,
-      );
+      new this.platform.api.hap
+        .HapStatusError(
+          this.platform.api.hap
+            .HAPStatus
+            .SERVICE_COMMUNICATION_FAILURE,
+        );
 
     if (
       entityId ===
-    this.device.temperatureEntity
+      this.device.temperatureEntity
     ) {
       this.thermostatService
         .getCharacteristic(
@@ -131,8 +131,8 @@ export class ClimateAccessory {
 
     if (
       this.includeHumidity &&
-    entityId ===
-    this.device.humidityEntity
+      entityId ===
+      this.device.humidityEntity
     ) {
       this.thermostatService
         .getCharacteristic(
@@ -146,8 +146,8 @@ export class ClimateAccessory {
 
     if (
       this.includeBattery &&
-    entityId ===
-    this.device.batteryEntity
+      entityId ===
+      this.device.batteryEntity
     ) {
       this.thermostatService
         .getCharacteristic(
@@ -172,6 +172,7 @@ export class ClimateAccessory {
           temperature,
         ),
       );
+
 
     this.thermostatService
       .updateCharacteristic(
@@ -276,7 +277,7 @@ export class ClimateAccessory {
   }
 
   private configureAccessoryInformation():
-  void {
+    void {
     const manufacturer =
       this.device.manufacturer ??
       'HA Virtual Devices';
@@ -337,7 +338,7 @@ export class ClimateAccessory {
   }
 
   private configureThermostatService():
-  Service {
+    Service {
     const service =
       this.accessory.getService(
         this.platform.Service.Thermostat,
@@ -534,7 +535,7 @@ export class ClimateAccessory {
   }
 
   private removeTemperatureSensorService():
-  void {
+    void {
     const temperatureService =
       this.accessory.getService(
         this.platform.Service
@@ -555,7 +556,7 @@ export class ClimateAccessory {
   }
 
   private removeSeparateHumidityService():
-  void {
+    void {
     const humidityService =
       this.accessory.getService(
         this.platform.Service
@@ -576,7 +577,7 @@ export class ClimateAccessory {
   }
 
   private removeSeparateBatteryService():
-  void {
+    void {
     const batteryService =
       this.accessory.getService(
         this.platform.Service.Battery,
@@ -596,7 +597,7 @@ export class ClimateAccessory {
   }
 
   private applyInitialValues():
-  void {
+    void {
     if (
       typeof this.device.temperature ===
       'number'

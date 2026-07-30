@@ -241,7 +241,9 @@
       "saving": "Wird gespeichert…",
       "save": "Speichern",
       "deleting": "Wird entfernt…",
-      "delete": "Sensor entfernen"
+      "delete": "Sensor entfernen",
+      "cancel": "Abbrechen",
+      "confirmDelete": "Löschen bestätigen"
     },
     "messages": {
       "preferencesSaved": "Einstellungen gespeichert."
@@ -251,7 +253,8 @@
       "saveFailed": "Die Einstellungen konnten nicht gespeichert werden."
     },
     "delete": {
-      "confirmation": "Sensor „{name}“ aus dem Plugin-Katalog und aus HomeKit entfernen?\n\nDadurch wird die HomeKit-Kachel sofort entfernt und der Sensor aus dem Plugin-Katalog gelöscht.\n\nWenn Home Assistant ihn erneut erkennt, wird er automatisch neu erstellt."
+      "confirmation": "Den Sensor „{name}“ aus dem Plugin-Katalog und aus HomeKit entfernen?\n\nDadurch wird die HomeKit-Kachel sofort entfernt und der Sensor aus dem Plugin-Katalog gelöscht.\n\nWenn Home Assistant ihn erneut erkennt, wird er automatisch neu erstellt.",
+      "title": "Bestätigung des Löschvorgangs"
     },
     "general": {
       "identifier": "Kennung",

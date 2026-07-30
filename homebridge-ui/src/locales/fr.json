@@ -241,7 +241,9 @@
       "saving": "Enregistrement…",
       "save": "Enregistrer",
       "deleting": "Suppression…",
-      "delete": "Supprimer le capteur du catalogue et de HomeKit"
+      "delete": "Supprimer le capteur du catalogue et de HomeKit",
+      "cancel": "Annuler",
+      "confirmDelete": "Confirmer la suppression"
     },
     "messages": {
       "preferencesSaved": "Préférences enregistrées."
@@ -251,7 +253,8 @@
       "saveFailed": "Les préférences n’ont pas pu être enregistrées."
     },
     "delete": {
-      "confirmation": "Supprimer le capteur « {name} » du catalogue du plugin et de HomeKit ?\n\nCette opération retire immédiatement la tuile HomeKit et supprime le capteur du catalogue du plugin.\n\nSi Home Assistant le détecte de nouveau, il sera automatiquement recréé."
+      "confirmation": "Supprimer le capteur « {name} » du catalogue du plugin et de HomeKit ?\n\nCette opération retire immédiatement la tuile HomeKit et supprime le capteur du catalogue du plugin.\n\nSi Home Assistant le détecte de nouveau, il sera automatiquement recréé.",
+      "title": "Confirmation de suppression"
     },
     "general": {
       "identifier": "Identifiant",

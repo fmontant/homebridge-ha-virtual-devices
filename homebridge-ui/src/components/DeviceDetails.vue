@@ -33,6 +33,7 @@ const enabled = ref(false);
 const archived = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
+const showDeleteConfirmation = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 
@@ -244,6 +245,7 @@ watch(
 
     errorMessage.value = '';
     successMessage.value = '';
+    showDeleteConfirmation.value = false;
   },
   {
     immediate: true,
@@ -291,8 +293,8 @@ async function savePreferences():
   }
 }
 
-async function deleteDevice():
-  Promise<void> {
+function deleteDevice():
+  void {
   if (
     !props.device ||
     deleting.value
@@ -300,17 +302,24 @@ async function deleteDevice():
     return;
   }
 
-  const confirmed =
-    window.confirm(
-      t(
-        'deviceDetails.delete.confirmation',
-        {
-          name: props.device.name,
-        },
-      ),
-    );
+  showDeleteConfirmation.value = true;
+}
 
-  if (!confirmed) {
+function cancelDelete():
+  void {
+  if (deleting.value) {
+    return;
+  }
+
+  showDeleteConfirmation.value = false;
+}
+
+async function confirmDelete():
+  Promise<void> {
+  if (
+    !props.device ||
+    deleting.value
+  ) {
     return;
   }
 
@@ -332,7 +341,7 @@ async function deleteDevice():
         t('deviceDetails.errors.deleteFailed'),
       );
     }
-
+    showDeleteConfirmation.value = false;
     emit(
       'deleted',
       deviceId,
@@ -481,50 +490,116 @@ function getErrorMessage(
             {{ successMessage }}
           </p>
 
-          <button
-  type="submit"
-  class="primary-button"
-  :disabled="saving || deleting"
->
-  <svg
-    class="button-icon"
-    viewBox="0 0 24 24"
-    aria-hidden="true"
-  >
-    <path
-      d="M5 3h11l3 3v15H5V3Zm3 0v6h8V3M8 21v-7h8v7"
-    />
-  </svg>
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="primary-button"
+              :disabled="saving || deleting"
+            >
+              <svg
+                class="button-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 3h11l3 3v15H5V3Zm3 0v6h8V3M8 21v-7h8v7"
+                />
+              </svg>
 
-  {{
-    saving
-      ? t('deviceDetails.actions.saving')
-      : t('deviceDetails.actions.save')
-  }}
-  </button>
-          <button
-  type="button"
-  class="delete-button"
-  :disabled="saving || deleting"
-  @click="deleteDevice"
->
-  <svg
-    class="button-icon"
-    viewBox="0 0 24 24"
-    aria-hidden="true"
-  >
-    <path
-      d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"
-    />
-  </svg>
+              {{
+                saving
+                  ? t('deviceDetails.actions.saving')
+                  : t('deviceDetails.actions.save')
+              }}
+            </button>
 
-  {{
-    deleting
-      ? t('deviceDetails.actions.deleting')
-      : t('deviceDetails.actions.delete')
-  }}
-</button>
+            <button
+              v-if="!showDeleteConfirmation"
+              type="button"
+              class="delete-button"
+              :disabled="saving || deleting"
+              @click="deleteDevice"
+            >
+              <svg
+                class="button-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"
+                />
+              </svg>
+
+              {{ t('deviceDetails.actions.delete') }}
+            </button>
+          </div>
         </form>
+
+        <section
+          v-if="showDeleteConfirmation"
+          class="delete-confirmation"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="delete-confirmation-title"
+        >
+          <div class="delete-confirmation-heading">
+            <span
+              class="delete-confirmation-icon"
+              aria-hidden="true"
+            >
+              !
+            </span>
+
+            <h3 id="delete-confirmation-title">
+              {{ t('deviceDetails.delete.title') }}
+            </h3>
+          </div>
+
+          <p class="delete-confirmation-text">
+            {{
+              t(
+                'deviceDetails.delete.confirmation',
+                {
+                  name: device.name,
+                },
+              )
+            }}
+          </p>
+
+          <div class="delete-confirmation-actions">
+            <button
+              type="button"
+              class="secondary-button"
+              :disabled="deleting"
+              @click="cancelDelete"
+            >
+              {{ t('deviceDetails.actions.cancel') }}
+            </button>
+
+            <button
+              type="button"
+              class="delete-button"
+              :disabled="deleting"
+              @click="confirmDelete"
+            >
+              <svg
+                class="button-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"
+                />
+              </svg>
+
+              {{
+                deleting
+                  ? t('deviceDetails.actions.deleting')
+                  : t('deviceDetails.actions.confirmDelete')
+              }}
+            </button>
+          </div>
+        </section>
       </details>
 
       <details
@@ -738,8 +813,8 @@ function getErrorMessage(
   height: 16px;
 }
 
-.preferences-form button {
-  align-self: flex-start;
+.preferences-form button,
+.delete-confirmation button {
   min-height: 40px;
   padding: 9px 16px;
   border-radius: 8px;
@@ -753,10 +828,29 @@ function getErrorMessage(
     box-shadow 0.15s ease;
 }
 
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
 .primary-button {
   color: #ffffff;
   background: #2563eb;
   border: 1px solid #2563eb;
+}
+
+.secondary-button {
+  color: #2563eb;
+  background: #ffffff;
+  border: 1px solid #2563eb;
+}
+
+.secondary-button:hover:not(:disabled) {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: #1d4ed8;
 }
 
 .primary-button:hover:not(:disabled) {
@@ -777,10 +871,12 @@ function getErrorMessage(
   box-shadow: 0 2px 5px rgb(220 38 38 / 25%);
 }
 
-.preferences-form button:disabled {
+.preferences-form button:disabled,
+.delete-confirmation button:disabled {
   cursor: wait;
   opacity: 0.55;
 }
+
 .button-icon {
   width: 22px;
   height: 22px;
@@ -799,6 +895,55 @@ function getErrorMessage(
   justify-content: center;
 }
 
+
+.delete-confirmation {
+  margin: 0 16px 16px;
+  padding: 16px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef2f2;
+}
+
+.delete-confirmation-heading {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.delete-confirmation-heading h3 {
+  margin: 0;
+  color: #991b1b;
+  font-size: 16px;
+}
+
+.delete-confirmation-icon {
+  display: inline-flex;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #dc2626;
+  font-weight: 700;
+}
+
+.delete-confirmation-text {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+.delete-confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
 
 .information-message,
 .error-message,

@@ -456,6 +456,7 @@ export class AccessoryManager {
         entityId,
       );
 
+
     if (!accessory) {
       return false;
     }
@@ -587,13 +588,13 @@ export class AccessoryManager {
 
     const device =
       accessory.context.device as
-        ClimateDevice | undefined;
+      ClimateDevice | undefined;
 
     if (
       !device ||
       device.id !== deviceId ||
       typeof device.temperatureEntity !==
-        'string'
+      'string'
     ) {
       this.log.warn(
         `Contexte climatique invalide pour la tuile manquante : ${accessory.displayName}`,

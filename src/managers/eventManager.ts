@@ -18,39 +18,39 @@ export class EventManager {
     private readonly accessoryManager:
       AccessoryManager,
     private readonly log: Logging,
-  ) {}
+  ) { }
 
   public handleEvent(
     event: unknown,
   ): void {
     const message =
-    event as HomeAssistantStateChangedEvent;
+      event as HomeAssistantStateChangedEvent;
 
     const entityId =
-    message.event?.data
-      ?.entity_id;
+      message.event?.data
+        ?.entity_id;
 
     const rawState =
-    message.event?.data
-      ?.new_state?.state;
+      message.event?.data
+        ?.new_state?.state;
 
     if (
       !entityId ||
-    rawState === undefined
+      rawState === undefined
     ) {
       return;
     }
 
     if (
       rawState === 'unavailable' ||
-    rawState === 'unknown'
+      rawState === 'unknown'
     ) {
       const updated =
-      this.accessoryManager
-        .updateAvailability(
-          entityId,
-          false,
-        );
+        this.accessoryManager
+          .updateAvailability(
+            entityId,
+            false,
+          );
 
       if (!updated) {
         return;
@@ -64,7 +64,7 @@ export class EventManager {
     }
 
     const value =
-    Number(rawState);
+      Number(rawState);
 
     if (!Number.isFinite(value)) {
       this.log.debug(
@@ -80,12 +80,13 @@ export class EventManager {
         true,
       );
 
+
     const updated =
-    this.accessoryManager
-      .updateEntity(
-        entityId,
-        value,
-      );
+      this.accessoryManager
+        .updateEntity(
+          entityId,
+          value,
+        );
 
     if (!updated) {
       return;
@@ -93,7 +94,7 @@ export class EventManager {
 
     this.log.debug(
       'Mise à jour temps réel : ' +
-    `${entityId} = ${value}`,
+      `${entityId} = ${value}`,
     );
 
   }

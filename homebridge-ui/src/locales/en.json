@@ -44,8 +44,8 @@
   },
   "toolbar": {
     "search": {
-      "ariaLabel": "Search devices",
-      "placeholder": "Search devices…"
+      "ariaLabel": "Search for a device",
+      "placeholder": "Search for a device..."
     },
     "filters": {
       "state": "Filter by state",
@@ -60,7 +60,7 @@
     }
   },
   "catalog": {
-    "loading": "Loading catalog…",
+    "loading": "Loading catalog...",
     "headers": {
       "state": "State",
       "room": "Room"
@@ -99,18 +99,18 @@
   "time": {
     "never": "Never",
     "justNow": "Just now",
-    "lessThanOneMinute": "Less than a minute ago",
+    "lessThanOneMinute": "Less than one minute ago",
     "minuteAgo": "{count} minute ago",
     "minutesAgo": "{count} minutes ago",
     "hourAgo": "{count} hour ago",
     "hoursAgo": "{count} hours ago",
     "dayAgo": "{count} day ago",
     "daysAgo": "{count} days ago",
-    "onDate": "{date} at {time}"
+    "onDate": "On {date} at {time}"
   },
   "configuration": {
     "title": "Home Assistant configuration",
-    "description": "Connection and general plugin settings",
+    "description": "Plugin connection and general options",
     "loading": "Loading configuration…",
     "status": {
       "checking": "Checking…",
@@ -122,8 +122,8 @@
     },
     "fields": {
       "address": {
-        "label": "Home Assistant URL",
-        "ariaLabel": "Home Assistant server URL"
+        "label": "Home Assistant address",
+        "ariaLabel": "Home Assistant server address"
       },
       "token": {
         "label": "Long-lived access token",
@@ -143,16 +143,16 @@
       "saving": "Saving…"
     },
     "messages": {
-      "missingAddressOrToken": "URL or token missing.",
-      "incomplete": "Configuration is incomplete.",
+      "missingAddressOrToken": "Address or token is missing",
+      "incomplete": "The configuration is incomplete.",
       "notSaved": "Configuration not saved: {message}.",
       "connectionVerified": "Home Assistant connection verified.",
       "saved": "Configuration saved.",
-      "saveFailed": "Could not save the configuration."
+      "saveFailed": "The configuration could not be saved."
     }
   },
   "states": {
-    "enabled": "Enabled",
+    "enabled": "Active",
     "disabled": "Disabled",
     "missing": "Missing",
     "error": "Error",
@@ -177,8 +177,8 @@
     }
   },
   "pluginSummary": {
-    "title": "Overview",
-    "description": "Connection, catalog, HomeKit, and system status.",
+    "title": "Operation summary",
+    "description": "Overview of the connection, catalog, HomeKit, and system.",
     "notAvailable": "Not available",
     "relative": {
       "now": "Just now",
@@ -190,8 +190,8 @@
       "title": "Connection",
       "homeAssistant": "Home Assistant",
       "connected": "Connected",
-      "lastSynchronization": "Last sync",
-      "lastCommunication": "Last seen"
+      "lastSynchronization": "Last synchronization",
+      "lastCommunication": "Last communication"
     },
     "catalog": {
       "title": "Catalog",
@@ -219,7 +219,7 @@
       "minutes": "{count} minute ago | {count} minutes ago",
       "hours": "{count} hour ago | {count} hours ago",
       "days": "{count} day ago | {count} days ago",
-      "absolute": "{date} at {time}"
+      "absolute": "On {date} at {time}"
     },
     "sections": {
       "preferences": "Preferences",
@@ -229,35 +229,38 @@
     "fields": {
       "room": "Room",
       "noRoom": "No room",
-      "favorite": "Favorite",
-      "enabled": "Enabled",
-      "archive": "Archive"
+      "favorite": "Favorite device",
+      "enabled": "Active device",
+      "archive": "Archive device"
     },
     "information": {
-      "missing": "This device is missing. It remains exposed to HomeKit until archived.",
-      "archiveOnlyMissing": "Only missing devices can be archived."
+      "missing": "This device is missing. It remains published in HomeKit until it is archived.",
+      "archiveOnlyMissing": "Archiving is available only for a missing device."
     },
     "actions": {
       "saving": "Saving…",
       "save": "Save",
-      "deleting": "Removing…",
-      "delete": "Remove sensor"
+      "deleting": "Deleting…",
+      "delete": "Remove sensor from the catalog and HomeKit",
+      "cancel": "Cancel",
+      "confirmDelete": "Confirm deletion"
     },
     "messages": {
       "preferencesSaved": "Preferences saved."
     },
     "errors": {
-      "deleteFailed": "Could not remove the sensor.",
-      "saveFailed": "Could not save the preferences."
+      "deleteFailed": "The sensor could not be deleted.",
+      "saveFailed": "The preferences could not be saved."
     },
     "delete": {
-      "confirmation": "Remove “{name}” from the plugin catalog and HomeKit?\n\nThis immediately removes the HomeKit tile and deletes the sensor from the plugin catalog.\n\nIf Home Assistant detects it again, it will be recreated automatically."
+      "confirmation": "Remove sensor “{name}” from the plugin catalog and HomeKit?\n\nThis operation immediately removes the HomeKit tile and deletes the sensor from the plugin catalog.\n\nIf Home Assistant detects it again, it will be recreated automatically.",
+      "title": "Deletion confirmation"
     },
     "general": {
       "identifier": "Identifier",
       "state": "State",
       "availability": "Availability",
-      "lastCommunication": "Last seen"
+      "lastCommunication": "Last communication"
     },
     "availability": {
       "available": "Available",
@@ -272,7 +275,7 @@
       "airQuality": "Air quality",
       "co2": "CO₂",
       "voc": "VOC",
-      "none": "No capabilities detected."
+      "none": "No capability detected."
     },
     "emptySelection": "Select a device from the catalog."
   }
