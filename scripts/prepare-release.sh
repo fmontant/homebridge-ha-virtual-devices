@@ -10,6 +10,7 @@ SCRIPT_DIR="$(
 source "${SCRIPT_DIR}/lib/common.sh"
 
 RELEASE_BRANCH="${RELEASE_BRANCH:-main}"
+PREPARE_CHANGELOG_SCRIPT="${SCRIPT_DIR}/utils/prepare-changelog.cjs"
 
 trap_with_context "Préparation"
 
@@ -20,6 +21,9 @@ banner "Homebridge HA Virtual Devices — Préparation"
 step "Vérification des outils"
 require_commands git node npm
 success "Outils disponibles"
+
+[[ -f "$PREPARE_CHANGELOG_SCRIPT" ]] \
+  || fail "Utilitaire introuvable : ${PREPARE_CHANGELOG_SCRIPT}"
 
 git_require_repository
 git_require_head
@@ -92,6 +96,13 @@ require_confirmation \
   "Préparer la version ${TARGET_VERSION} ? [oui/N]" \
   "Préparation annulée."
 
+step "Validation du changelog"
+node \
+  "$PREPARE_CHANGELOG_SCRIPT" \
+  --dry-run \
+  "$TARGET_VERSION"
+success "Changelog prêt pour la version ${TARGET_VERSION}"
+
 step "Contrôle qualité"
 run_quality_checks
 success "Lint et build validés"
@@ -110,22 +121,52 @@ NEW_VERSION="$(get_package_version)"
 
 success "Version mise à jour : ${NEW_VERSION}"
 
+step "Mise à jour du changelog"
+node \
+  "$PREPARE_CHANGELOG_SCRIPT" \
+  --write \
+  "$NEW_VERSION"
+success "Changelog préparé pour la version ${NEW_VERSION}"
+
 step "Vérification des fichiers modifiés"
-MODIFIED_FILES="$(git status --porcelain | awk '{print $2}')"
-EXPECTED_FILES="$(printf '%s\n' package-lock.json package.json)"
-ACTUAL_FILES="$(printf '%s\n' "$MODIFIED_FILES" | sort)"
-EXPECTED_SORTED="$(printf '%s\n' "$EXPECTED_FILES" | sort)"
+MODIFIED_FILES="$(
+  git status --porcelain |
+    awk '{print $2}'
+)"
+
+EXPECTED_FILES="$(
+  printf '%s\n' \
+    CHANGELOG.md \
+    package-lock.json \
+    package.json
+)"
+
+ACTUAL_FILES="$(
+  printf '%s\n' "$MODIFIED_FILES" |
+    sort
+)"
+
+EXPECTED_SORTED="$(
+  printf '%s\n' "$EXPECTED_FILES" |
+    sort
+)"
 
 [[ "$ACTUAL_FILES" == "$EXPECTED_SORTED" ]] \
   || fail "Des fichiers inattendus ont été modifiés :
 ${MODIFIED_FILES}"
 
-success "Seuls package.json et package-lock.json ont été modifiés"
+success "Seuls CHANGELOG.md, package.json et package-lock.json ont été modifiés"
 
 step "Création du commit"
-git add package.json package-lock.json
-git commit -m "chore: bump version to ${NEW_VERSION}"
-success "Commit de version créé"
+git add \
+  CHANGELOG.md \
+  package.json \
+  package-lock.json
+
+git commit \
+  -m "chore: prepare version ${NEW_VERSION}"
+
+success "Commit de préparation créé"
 
 step "Publication du commit sur GitHub"
 git push origin "$RELEASE_BRANCH"
