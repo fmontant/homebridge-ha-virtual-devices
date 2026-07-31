@@ -330,7 +330,6 @@ line
 printf 'Prévisualisation des notes de publication\n'
 printf 'Version %s\n' "$TARGET_VERSION"
 line
-printf '\n'
 
 printf '%s\n' \
   "$PREVIEW_OUTPUT" |
