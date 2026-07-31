@@ -388,6 +388,7 @@ npm run prepare-release`,
     updatedContent:
       updated.join('\n') + '\n',
     entryCount,
+    releaseNotes: release.join('\n'),
   };
 }
 
@@ -427,6 +428,7 @@ function printSummary({
   releaseDate,
   changelogFile,
   entryCount,
+  releaseNotes,
 }) {
   const action =
     mode === '--write'
@@ -439,6 +441,11 @@ function printSummary({
       `Version   : ${version}`,
       `Date      : ${releaseDate}`,
       `Entrées   : ${entryCount}`,
+      '',
+      'Notes incluses :',
+      '',
+      releaseNotes,
+      '',
       `Résultat  : le fichier ${action}`,
       '',
     ].join('\n'),
@@ -485,6 +492,7 @@ if (options.mode === '--write') {
 printSummary({
   ...options,
   entryCount: result.entryCount,
+  releaseNotes: result.releaseNotes,
 });
 
 process.exit(EXIT.SUCCESS);
