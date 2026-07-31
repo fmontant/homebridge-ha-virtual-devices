@@ -18,6 +18,12 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 > This section contains completed changes that have not yet been published.
 > Entries are moved to the appropriate version section when a new release is published.
 
+### Changed
+- Improved catalog management and HomeKit accessory synchronization.
+- Improved the sensor administration interface.
+- Improved changelog preparation and empty-section guidance in the release toolkit.
+- Fixed Vue asset generation to ensure reproducible UI builds.
+
 ---
 
 ## [1.3.1] - 2026-07-30
