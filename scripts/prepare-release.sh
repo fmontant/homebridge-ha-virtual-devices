@@ -326,6 +326,7 @@ PREVIEW_OUTPUT="$(
     "$TARGET_VERSION"
 )"
 
+printf '\n'
 line
 printf 'Prévisualisation des notes de publication\n'
 printf 'Version %s\n' "$TARGET_VERSION"
@@ -339,7 +340,8 @@ printf '%s\n' \
     -e '/^Entrées[[:space:]]*:/d' \
     -e '/^Version[[:space:]]*:/d' \
     -e '/^Résultat[[:space:]]*:/d' \
-    -e '/^Notes incluses[[:space:]]*:/d'
+    -e '/^Notes incluses[[:space:]]*:/d' \
+    -e '/./,$!d'
 
 line
 
