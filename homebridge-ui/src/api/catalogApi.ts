@@ -29,6 +29,7 @@ interface CatalogApiDevice {
     archived: boolean;
     favorite: boolean;
     room?: string;
+    homeKitName?: string;
   };
 }
 
@@ -56,6 +57,7 @@ export interface CatalogDevicePreferencesUpdate {
   archived?: boolean;
   favorite?: boolean;
   room?: string;
+  homeKitName?: string;
 }
 
 export class CatalogApi {
@@ -174,6 +176,8 @@ export class CatalogApi {
         device.source,
       room:
         device.preferences.room ?? '',
+      homeKitName:
+        device.preferences.homeKitName ?? '',
       state:
         device.state,
       favorite:

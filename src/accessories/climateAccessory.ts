@@ -356,6 +356,11 @@ export class ClimateAccessory {
       )
       .setCharacteristic(
         this.platform.Characteristic
+          .ConfiguredName,
+        this.device.name,
+      )
+      .setCharacteristic(
+        this.platform.Characteristic
           .CurrentHeatingCoolingState,
         this.platform.Characteristic
           .CurrentHeatingCoolingState.OFF,

@@ -30,7 +30,20 @@ export interface DevicePreferences {
   favorite: boolean;
   hidden: boolean;
   archived: boolean;
+
+  /**
+   * Transition.
+   * Sera supprimé lorsque toute la chaîne
+   * utilisera homeKitName.
+   */
   room?: string;
+
+  /**
+   * Nom personnalisé de la tuile HomeKit.
+   * Si absent, le plugin utilise le nom
+   * découvert dans Home Assistant.
+   */
+  homeKitName?: string;
 }
 
 export interface DeviceTimestamps {
@@ -52,7 +65,7 @@ export interface DiscoveredCatalogDevice {
 }
 
 export interface CatalogDevice
-extends DiscoveredCatalogDevice {
+  extends DiscoveredCatalogDevice {
   preferences: DevicePreferences;
   timestamps: DeviceTimestamps;
 

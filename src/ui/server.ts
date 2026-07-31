@@ -54,6 +54,7 @@ interface PreferencesRequestPayload {
         archived?: boolean;
         favorite?: boolean;
         room?: string;
+        homeKitName?: string;
     };
 }
 
@@ -484,6 +485,12 @@ export class HAVirtualDevicesUiServer
     }
     if ('room' in pref) {
       device.preferences.room = pref.room?.trim() ? pref.room.trim() : undefined;
+    }
+    if ('homeKitName' in pref) {
+      device.preferences.homeKitName =
+        pref.homeKitName?.trim()
+          ? pref.homeKitName.trim()
+          : undefined;
     }
     await this.catalogStore.save(devices);
     await this.publishCatalog();

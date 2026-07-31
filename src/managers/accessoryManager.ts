@@ -456,7 +456,6 @@ export class AccessoryManager {
         entityId,
       );
 
-
     if (!accessory) {
       return false;
     }
@@ -696,6 +695,7 @@ export class AccessoryManager {
     return {
       ...climateDevice,
       name:
+        catalogDevice.preferences.homeKitName?.trim() ||
         DisplayNameFormatter.format(
           catalogDevice.name,
         ),

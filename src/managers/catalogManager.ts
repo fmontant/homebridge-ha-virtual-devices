@@ -268,6 +268,19 @@ export class CatalogManager {
       );
   }
 
+  public async setHomeKitName(
+    id: string,
+    homeKitName?: string,
+  ): Promise<boolean> {
+    await this.load();
+
+    return this.deviceCatalog
+      .setHomeKitName(
+        id,
+        homeKitName,
+      );
+  }
+
   public async setFirstViewedAt(
     id: string,
   ): Promise<boolean> {

@@ -196,23 +196,23 @@ function splitUnreleasedContent(lines) {
     }
 
     if (/^---$/.test(line)) {
-  current = permanent;
-  inReleaseSection = false;
-  continue;
-}
+      current = permanent;
+      inReleaseSection = false;
+      continue;
+    }
 
-if (
-  inReleaseSection &&
+    if (
+      inReleaseSection &&
   (
     /^>\s*/.test(line) ||
     /^<!--/.test(line)
   )
-) {
-  current = permanent;
-  inReleaseSection = false;
-}
+    ) {
+      current = permanent;
+      inReleaseSection = false;
+    }
 
-current.push(line);
+    current.push(line);
   }
 
   while (
@@ -311,9 +311,9 @@ function prepareChangelog(
     );
 
   const {
-  permanent,
-  release,
-} = splitUnreleasedContent(body);
+    permanent,
+    release,
+  } = splitUnreleasedContent(body);
 
   const entryCount =
     countEntries(release);

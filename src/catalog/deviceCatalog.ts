@@ -353,6 +353,37 @@ export class DeviceCatalog {
     );
   }
 
+  public async setHomeKitName(
+    id: string,
+    homeKitName?: string,
+  ): Promise<boolean> {
+    const normalizedHomeKitName =
+      homeKitName?.trim();
+
+    const nextHomeKitName =
+      normalizedHomeKitName &&
+        normalizedHomeKitName.length > 0
+        ? normalizedHomeKitName
+        : undefined;
+
+    return this.updatePreference(
+      id,
+      device => {
+        if (
+          device.preferences.homeKitName ===
+          nextHomeKitName
+        ) {
+          return false;
+        }
+
+        device.preferences.homeKitName =
+          nextHomeKitName;
+
+        return true;
+      },
+    );
+  }
+
   public async setRoom(
     id: string,
     room?: string,

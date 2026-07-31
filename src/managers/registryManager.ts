@@ -324,6 +324,15 @@ export class RegistryManager {
             archived:
               catalogDevice.preferences
                 .archived,
+            homeKitName:
+              catalogDevice.preferences
+                .homeKitName,
+            room:
+              catalogDevice.preferences
+                .room,
+            favorite:
+              catalogDevice.preferences
+                .favorite,
           }),
         ],
       ),

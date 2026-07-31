@@ -4,6 +4,7 @@ import {
   onMounted,
   onUnmounted,
   ref,
+  watch,
 } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -405,6 +406,7 @@ function updateDevice(
         updatedDevice.id,
     );
 
+
   if (deviceIndex === -1) {
     return;
   }
@@ -466,6 +468,27 @@ async function toggleFavorite(
       );
   }
 }
+
+watch(
+  sortedDevices,
+  visibleDevices => {
+    if (selectedDeviceId.value === null) {
+      return;
+    }
+
+    const stillVisible =
+      visibleDevices.some(
+        device =>
+          device.id ===
+          selectedDeviceId.value,
+      );
+
+    if (!stillVisible) {
+      selectedDeviceId.value =
+        null;
+    }
+  },
+);
 
 onMounted(() => {
   catalogEventListener

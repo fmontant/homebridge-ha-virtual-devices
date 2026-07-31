@@ -22,7 +22,7 @@ export class DeviceCatalogStore {
 
   constructor(
     private readonly filePath: string,
-  ) {}
+  ) { }
 
   public async load():
     Promise<CatalogDevice[]> {
@@ -147,7 +147,7 @@ export class DeviceCatalogStore {
   ): CatalogDevice {
     const storedPreferences =
       device.preferences as
-        Partial<DevicePreferences>;
+      Partial<DevicePreferences>;
 
     return {
       ...device,
@@ -166,6 +166,8 @@ export class DeviceCatalogStore {
           false,
         room:
           storedPreferences.room,
+        homeKitName:
+          storedPreferences.homeKitName,
       },
     };
   }

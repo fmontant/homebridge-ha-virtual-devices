@@ -10,6 +10,7 @@ export interface CatalogDevice {
   name: string;
   source: string;
   room: string;
+  homeKitName: string;
   state: DeviceState;
   favorite: boolean;
   enabled: boolean;

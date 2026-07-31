@@ -3,5 +3,6 @@ import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
   base: './',
+  publicDir: 'static',
   plugins: [vue()],
 });

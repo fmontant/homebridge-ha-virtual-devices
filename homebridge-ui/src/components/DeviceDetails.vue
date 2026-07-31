@@ -27,6 +27,7 @@ const {
   t,
 } = useI18n();
 
+const homeKitName = ref('');
 const room = ref('');
 const favorite = ref(false);
 const enabled = ref(false);
@@ -36,6 +37,12 @@ const deleting = ref(false);
 const showDeleteConfirmation = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
+
+const savedHomeKitName = ref('');
+const savedRoom = ref('');
+const savedFavorite = ref(false);
+const savedEnabled = ref(false);
+const savedArchived = ref(false);
 
 const hasDevice = computed(
   () => props.device !== null,
@@ -109,6 +116,20 @@ const displayedStateClass = computed(
 
 const displayedRoom = computed(
   () => room.value.trim(),
+);
+
+const hasUnsavedChanges = computed(
+  () =>
+    homeKitName.value.trim() !==
+      savedHomeKitName.value ||
+    room.value.trim() !==
+      savedRoom.value ||
+    favorite.value !==
+      savedFavorite.value ||
+    enabled.value !==
+      savedEnabled.value ||
+    archived.value !==
+      savedArchived.value,
 );
 
 function formatLastCommunication(
@@ -231,6 +252,9 @@ function getCapabilityIcon(
 watch(
   () => props.device,
   device => {
+    homeKitName.value =
+      device?.homeKitName ?? '';
+
     room.value =
       device?.room ?? '';
 
@@ -241,6 +265,21 @@ watch(
       device?.enabled ?? true;
 
     archived.value =
+      device?.archived ?? false;
+
+    savedHomeKitName.value =
+      device?.homeKitName?.trim() ?? '';
+
+    savedRoom.value =
+      device?.room?.trim() ?? '';
+
+    savedFavorite.value =
+      device?.favorite ?? false;
+
+    savedEnabled.value =
+      device?.enabled ?? true;
+
+    savedArchived.value =
       device?.archived ?? false;
 
     errorMessage.value = '';
@@ -267,6 +306,8 @@ async function savePreferences():
       await catalogApi.updatePreferences(
         props.device.id,
         {
+          homeKitName:
+            homeKitName.value.trim(),
           room:
             room.value.trim(),
           favorite:
@@ -277,6 +318,36 @@ async function savePreferences():
             archived.value,
         },
       );
+
+    homeKitName.value =
+      updatedDevice.homeKitName ?? '';
+
+    room.value =
+      updatedDevice.room ?? '';
+
+    favorite.value =
+      updatedDevice.favorite;
+
+    enabled.value =
+      updatedDevice.enabled;
+
+    archived.value =
+      updatedDevice.archived;
+
+    savedHomeKitName.value =
+      updatedDevice.homeKitName?.trim() ?? '';
+
+    savedRoom.value =
+      updatedDevice.room?.trim() ?? '';
+
+    savedFavorite.value =
+      updatedDevice.favorite;
+
+    savedEnabled.value =
+      updatedDevice.enabled;
+
+    savedArchived.value =
+      updatedDevice.archived;
 
     emit(
       'updated',
@@ -413,6 +484,22 @@ function getErrorMessage(
         >
           <label class="field">
             <span>
+              Nom HomeKit
+            </span>
+
+            <input
+              v-model="homeKitName"
+              type="text"
+              :placeholder="device.name"
+            />
+
+            <small class="field-help">
+              Laissez ce champ vide pour utiliser le nom Home Assistant.
+            </small>
+          </label>
+
+          <label class="field">
+            <span>
               {{ t('deviceDetails.fields.room') }}
             </span>
 
@@ -494,7 +581,7 @@ function getErrorMessage(
             <button
               type="submit"
               class="primary-button"
-              :disabled="saving || deleting"
+              :disabled="!hasUnsavedChanges || saving || deleting"
             >
               <svg
                 class="button-icon"
@@ -795,6 +882,12 @@ function getErrorMessage(
   border-radius: 6px;
   color: inherit;
   font: inherit;
+}
+
+.field-help {
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .checkbox-grid {
