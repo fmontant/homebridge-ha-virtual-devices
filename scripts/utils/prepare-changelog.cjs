@@ -320,7 +320,21 @@ function prepareChangelog(
 
   if (entryCount === 0) {
     fail(
-      'La section Unreleased ne contient aucune entrée exploitable.',
+      `La section [Unreleased] ne contient aucune entrée exploitable.
+
+Le toolkit exige qu'au moins une modification soit documentée
+dans CHANGELOG.md avant de préparer une nouvelle version.
+
+Exemple minimal :
+
+## [Unreleased]
+
+### Changed
+- Décrire les changements inclus dans cette version.
+
+Complétez CHANGELOG.md puis relancez :
+
+npm run prepare-release`,
       EXIT.INVALID_PROJECT_STATE,
     );
   }
