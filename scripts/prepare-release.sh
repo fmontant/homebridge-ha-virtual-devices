@@ -339,7 +339,8 @@ printf '%s\n' \
     -e '/^Date[[:space:]]*:/d' \
     -e '/^Entrées[[:space:]]*:/d' \
     -e '/^Version[[:space:]]*:/d' \
-    -e '/^Résultat[[:space:]]*:/d'
+    -e '/^Résultat[[:space:]]*:/d' \
+    -e '/^Notes incluses[[:space:]]*:/d'
 
 line
 
