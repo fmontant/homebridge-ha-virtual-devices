@@ -18,6 +18,10 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 > This section contains completed changes that have not yet been published.
 > Entries are moved to the appropriate version section when a new release is published.
 
+---
+
+## [1.3.2] - 2026-07-31
+
 ### Changed
 - Improved catalog management and HomeKit accessory synchronization.
 - Improved the sensor administration interface.
