@@ -327,9 +327,20 @@ PREVIEW_OUTPUT="$(
 )"
 
 line
-printf 'Version actuelle : %s\n' "$CURRENT_VERSION"
-printf 'Nouvelle version : %s\n' "$TARGET_VERSION"
-printf '\n%s\n' "$PREVIEW_OUTPUT"
+printf 'Prévisualisation des notes de publication\n'
+printf 'Version %s\n' "$TARGET_VERSION"
+line
+printf '\n'
+
+printf '%s\n' \
+  "$PREVIEW_OUTPUT" |
+  sed \
+    -e '/^CHANGELOG[[:space:]]*:/d' \
+    -e '/^Date[[:space:]]*:/d' \
+    -e '/^Entrées[[:space:]]*:/d' \
+    -e '/^Version[[:space:]]*:/d' \
+    -e '/^Résultat[[:space:]]*:/d'
+
 line
 
 require_confirmation \
