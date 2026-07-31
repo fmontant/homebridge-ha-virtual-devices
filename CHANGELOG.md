@@ -18,6 +18,11 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 > This section contains completed changes that have not yet been published.
 > Entries are moved to the appropriate version section when a new release is published.
 
+### Changed
+
+- Improved release preparation by prompting for missing changelog entries.
+- Improved generated changelog formatting and Unreleased section maintenance.
+
 ---
 
 ## [1.3.2] - 2026-07-31
