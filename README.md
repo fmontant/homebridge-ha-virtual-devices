@@ -257,17 +257,42 @@ docs/user-documentation/
 
 Technical documentation intended for developers and contributors.
 
-It includes:
+The documentation covers:
 
+- Getting started
 - Plugin architecture
-- Internal components
-- Architecture Decision Records
+- Development toolkit
+- Deployment workflow
+- Release workflow
+- Troubleshooting
+- Architecture Decision Records (ADR)
 - Technical diagrams
 
 Location:
 
-```
+```text
 docs/developer-documentation/
+```
+
+---
+
+## Development Toolkit
+
+The project includes a complete toolkit to automate development, deployment and diagnostics.
+
+| Command | Description |
+|----------|-------------|
+| `npm run dev` | Deploys the plugin to the NAS and runs a full diagnostic |
+| `npm run install-on-nas` | Builds and installs the plugin on the NAS |
+| `npm run doctor` | Checks the Homebridge environment and plugin health |
+| `npm run logs` | Displays Homebridge logs with optional filters |
+| `npm run prepare-release` | Prepares a new release |
+| `npm run release` | Publishes the package to npm |
+
+Detailed documentation is available in:
+
+```text
+docs/developer-documentation/toolkit/
 ```
 
 ---
@@ -396,33 +421,56 @@ The persistent catalog preserves:
 
 ## Roadmap
 
-Future improvements may include:
+The project continues to evolve with a focus on simplifying the Apple Home experience while reducing the configuration required from users.
 
-### User Interface
+### Near term
 
-- Additional filtering options
-- Bulk operations
-- Advanced search
-- Device statistics
-- Health dashboard
+#### User experience
 
-### Sensors
+- Bulk operations in the device catalog
+- Additional administration tools
+- Improved device management
+- Richer diagnostics
 
-Additional support for environmental sensors:
+#### Developer toolkit
+
+- Additional diagnostic checks
+- Improved troubleshooting tools
+- Extended development automation
+- Better developer documentation
+
+### Mid term
+
+#### Home Assistant integration
+
+- Improved device discovery
+- More resilient synchronization
+- Additional configuration options
+
+#### Environmental sensors
+
+Support for additional Home Assistant entities, including:
 
 - Air quality
 - CO₂
-- VOC
+- Volatile Organic Compounds (VOC)
 - Atmospheric pressure
 - Illuminance
 
-### HomeKit
+### Long term
 
-Future improvements may include:
+#### Native ecosystem integration
 
-- richer accessory information;
-- additional diagnostics;
-- improved synchronization reporting.
+Investigate ways to reduce the dependency on Home Assistant by leveraging information already available through Apple Home and Matter whenever technically possible.
+
+The long-term objective is to simplify installation while preserving a fully native HomeKit experience.
+
+#### Project sustainability
+
+- Continued documentation improvements
+- Community contributions
+- Long-term maintainability
+- Performance optimizations
 
 ---
 
