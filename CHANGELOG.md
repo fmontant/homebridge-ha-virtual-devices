@@ -24,6 +24,20 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 
 ---
 
+## [1.3.4] - 2026-08-05
+
+### Changed
+
+- Added a complete development toolkit including the `dev`, `doctor` and `logs` commands.
+- Improved automated NAS deployment with automatic Homebridge container detection.
+- Improved Homebridge diagnostics with plugin, catalog and storage information.
+- Added integrated Homebridge log filtering utilities.
+- Expanded the developer toolkit documentation.
+- Updated the project roadmap and README documentation.
+- Improved the release workflow by recreating a ready-to-use `Unreleased` section after each release.
+
+---
+
 ## [1.3.3] - 2026-07-31
 
 ### Changed
