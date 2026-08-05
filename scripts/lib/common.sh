@@ -79,12 +79,12 @@ detect_homebridge_container() {
     return 0
   fi
 
-detected_name="$(
-  "$docker_bin" ps \
-    --format '{{.Names}}' |
+d  detected_name="$(
+    "$docker_bin" ps \
+      --format '{{.Names}}' |
       grep -i '^homebridge' |
       head -n 1
-)"
+  )"
 
   [[ -n "$detected_name" ]] \
     || fail "Aucun conteneur Homebridge actif trouvé."

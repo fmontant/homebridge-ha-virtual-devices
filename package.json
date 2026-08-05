@@ -59,7 +59,9 @@
     "toolkit:prepare": "bash scripts/prepare-release.sh",
     "toolkit:release": "bash scripts/release.sh",
     "toolkit:install": "bash scripts/install-on-nas.sh",
-    "toolkit:publish": "bash scripts/publish.sh"
+    "toolkit:publish": "bash scripts/publish.sh",
+    "logs": "bash scripts/logs.sh",
+    "toolkit:logs": "bash scripts/logs.sh"
   },
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^2.2.5",
