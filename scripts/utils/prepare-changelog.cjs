@@ -347,7 +347,7 @@ npm run prepare-release`,
 
   if (
     replacement[
-    replacement.length - 1
+      replacement.length - 1
     ] !== ''
   ) {
     replacement.push('');
@@ -384,7 +384,7 @@ npm run prepare-release`,
   while (
     updated.length &&
     updated[
-    updated.length - 1
+      updated.length - 1
     ] === ''
   ) {
     updated.pop();
