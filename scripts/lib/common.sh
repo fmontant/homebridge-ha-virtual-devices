@@ -79,7 +79,7 @@ detect_homebridge_container() {
     return 0
   fi
 
-d  detected_name="$(
+  detected_name="$(
     "$docker_bin" ps \
       --format '{{.Names}}' |
       grep -i '^homebridge' |

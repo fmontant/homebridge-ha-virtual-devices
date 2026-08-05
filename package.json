@@ -61,7 +61,9 @@
     "toolkit:install": "bash scripts/install-on-nas.sh",
     "toolkit:publish": "bash scripts/publish.sh",
     "logs": "bash scripts/logs.sh",
-    "toolkit:logs": "bash scripts/logs.sh"
+    "toolkit:logs": "bash scripts/logs.sh",
+    "doctor": "bash scripts/doctor.sh",
+    "toolkit:doctor": "bash scripts/doctor.sh"
   },
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^2.2.5",
