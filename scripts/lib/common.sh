@@ -66,6 +66,32 @@ require_commands() {
   done
 }
 
+detect_homebridge_container() {
+  local docker_bin="${1:-docker}"
+  local configured_name="${HOMEBRIDGE_CONTAINER:-}"
+  local detected_name=""
+
+  if [[ -n "$configured_name" ]]; then
+    "$docker_bin" inspect "$configured_name" >/dev/null 2>&1 \
+      || fail "Conteneur Homebridge introuvable : ${configured_name}"
+
+    printf '%s\n' "$configured_name"
+    return 0
+  fi
+
+detected_name="$(
+  "$docker_bin" ps \
+    --format '{{.Names}}' |
+      grep -i '^homebridge' |
+      head -n 1
+)"
+
+  [[ -n "$detected_name" ]] \
+    || fail "Aucun conteneur Homebridge actif trouvé."
+
+  printf '%s\n' "$detected_name"
+}
+
 get_project_root() {
   printf '%s\n' "$COMMON_PROJECT_ROOT"
 }

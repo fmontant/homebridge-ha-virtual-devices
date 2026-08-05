@@ -16,7 +16,7 @@ REMOTE_LIB_DIR="${REMOTE_DIR}/lib"
 REMOTE_COMMON="${REMOTE_LIB_DIR}/common.sh"
 
 DOCKER_BIN="${DOCKER_BIN:-/Volume1/@apps/DockerEngine/dockerd/bin/docker}"
-CONTAINER_NAME="${HOMEBRIDGE_CONTAINER:-homebridge-homebridge_v13}"
+CONTAINER_NAME=""
 CONTAINER_PACKAGE_DIR="${HOMEBRIDGE_PACKAGE_DIR:-/tmp}"
 CONTAINER_PROJECT_DIR="${HOMEBRIDGE_PROJECT_DIR:-/homebridge}"
 
@@ -38,11 +38,11 @@ install_remotely() {
   [[ -x "$DOCKER_BIN" ]] \
     || fail "Docker introuvable : ${DOCKER_BIN}"
 
-  if ! run_docker inspect "$CONTAINER_NAME" >/dev/null 2>&1; then
-    printf 'Conteneurs disponibles :\n' >&2
-    run_docker ps --format '  {{.Names}}' >&2 || true
-    fail "Conteneur Homebridge introuvable : ${CONTAINER_NAME}"
-  fi
+  CONTAINER_NAME="$(
+    detect_homebridge_container "$DOCKER_BIN"
+  )"
+
+  success "Conteneur Homebridge détecté : ${CONTAINER_NAME}"
 
   local package_basename
   local container_package
