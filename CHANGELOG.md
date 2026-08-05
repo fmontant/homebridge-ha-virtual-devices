@@ -18,6 +18,10 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 > This section contains completed changes that have not yet been published.
 > Entries are moved to the appropriate version section when a new release is published.
 
+### Changed
+
+- Describe the changes included in this release.
+
 ---
 
 ## [1.3.3] - 2026-07-31
