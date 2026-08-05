@@ -182,8 +182,8 @@ export class ClimateAccessory {
       );
 
     this.platform.log.debug(
-      `${this.device.name} : ` +
-      `${normalizedTemperature} °C`,
+      `[HOMEKIT] ${this.device.name} = ` +
+      `${normalizedTemperature.toFixed(2)} °C`,
     );
   }
 
