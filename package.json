@@ -63,7 +63,9 @@
     "logs": "bash scripts/logs.sh",
     "toolkit:logs": "bash scripts/logs.sh",
     "doctor": "bash scripts/doctor.sh",
-    "toolkit:doctor": "bash scripts/doctor.sh"
+    "toolkit:doctor": "bash scripts/doctor.sh",
+    "dev": "bash scripts/dev.sh",
+    "toolkit:dev": "bash scripts/dev.sh"
   },
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^2.2.5",
