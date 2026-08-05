@@ -113,6 +113,12 @@ FILTER_QUOTED="$(printf '%q' "$FILTER")"
 
 step "Connexion aux journaux Homebridge"
 
+INTERRUPTED=false
+
+trap 'INTERRUPTED=true' INT
+trap - ERR
+set +e
+
 ssh -t "$REMOTE_HOST" "
   set -Eeuo pipefail
 
@@ -140,3 +146,20 @@ ssh -t "$REMOTE_HOST" "
     '$DOCKER_BIN' logs -f \"\$CONTAINER_NAME\" 2>&1
   fi
 "
+
+SSH_STATUS=$?
+
+set -e
+trap - INT
+trap_with_context "Journaux"
+
+if [[ "$INTERRUPTED" == "true" ||
+      "$SSH_STATUS" == "130" ||
+      "$SSH_STATUS" == "255" ]]; then
+  printf '\n'
+  success "Affichage des journaux terminé"
+  exit 0
+fi
+
+[[ "$SSH_STATUS" == "0" ]] \
+  || fail "La consultation des journaux a échoué."
