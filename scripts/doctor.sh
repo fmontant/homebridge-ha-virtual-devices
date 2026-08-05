@@ -121,6 +121,79 @@ ssh -t "$REMOTE_HOST" "
     || fail 'État du plugin introuvable : $STATE_DIR/plugin-state.json'
 
   success 'État du plugin présent'
+
+  CATALOG_SUMMARY=\"\$(
+    '$DOCKER_BIN' exec \
+      \"\$CONTAINER_NAME\" \
+      node -e \"
+const fs = require('fs');
+const devices = JSON.parse(
+  fs.readFileSync(
+    '$STATE_DIR/device-catalog.json',
+    'utf8',
+  ),
+);
+
+const total = devices.length;
+const enabled = devices.filter(
+  device => device.preferences?.enabled === true,
+).length;
+const available = devices.filter(
+  device => device.available === true,
+).length;
+const archived = devices.filter(
+  device => device.preferences?.archived === true,
+).length;
+
+process.stdout.write(
+  [total, enabled, available, archived].join('|'),
+);
+\"
+  )\"
+
+  IFS='|' read -r \
+    TOTAL_DEVICES \
+    ENABLED_DEVICES \
+    AVAILABLE_DEVICES \
+    ARCHIVED_DEVICES \
+    <<< \"\$CATALOG_SUMMARY\"
+
+  printf '✓ Capteurs : %s au total, %s activés, %s disponibles, %s archivés\n' \
+    \"\$TOTAL_DEVICES\" \
+    \"\$ENABLED_DEVICES\" \
+    \"\$AVAILABLE_DEVICES\" \
+    \"\$ARCHIVED_DEVICES\"
+
+  LAST_SYNCHRONIZATION=\"\$(
+    '$DOCKER_BIN' exec \
+      \"\$CONTAINER_NAME\" \
+      node -e \"
+const fs = require('fs');
+const state = JSON.parse(
+  fs.readFileSync(
+    '$STATE_DIR/plugin-state.json',
+    'utf8',
+  ),
+);
+
+process.stdout.write(
+  state.lastSynchronizationAt ?? 'inconnue',
+);
+\"
+  )\"
+
+  printf '✓ Dernière synchronisation : %s\n' \
+    \"\$LAST_SYNCHRONIZATION\"
+
+  DISK_SUMMARY=\"\$(
+    '$DOCKER_BIN' exec \
+      \"\$CONTAINER_NAME\" \
+      sh -lc \
+      \"df -h '$CONTAINER_PROJECT_DIR' | awk 'NR == 2 {print \\\$4 \\\" disponibles sur \\\" \\\$2 \\\" (\\\" \\\$5 \\\" utilisés)\\\"}'\"
+  )\"
+
+  printf '✓ Espace disque : %s\n' \
+    \"\$DISK_SUMMARY\"
 "
 
 line
