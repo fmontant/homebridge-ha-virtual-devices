@@ -203,10 +203,10 @@ function splitUnreleasedContent(lines) {
 
     if (
       inReleaseSection &&
-  (
-    /^>\s*/.test(line) ||
-    /^<!--/.test(line)
-  )
+      (
+        /^>\s*/.test(line) ||
+        /^<!--/.test(line)
+      )
     ) {
       current = permanent;
       inReleaseSection = false;
@@ -347,12 +347,18 @@ npm run prepare-release`,
 
   if (
     replacement[
-      replacement.length - 1
+    replacement.length - 1
     ] !== ''
   ) {
     replacement.push('');
   }
 
+  replacement.push('### Changed');
+  replacement.push('');
+  replacement.push(
+    '- Describe the changes included in this release.',
+  );
+  replacement.push('');
   replacement.push('---');
   replacement.push('');
   replacement.push(
@@ -378,7 +384,7 @@ npm run prepare-release`,
   while (
     updated.length &&
     updated[
-      updated.length - 1
+    updated.length - 1
     ] === ''
   ) {
     updated.pop();
