@@ -1,4 +1,8 @@
-import { watch, type FSWatcher } from 'node:fs';
+import {
+  mkdirSync,
+  watch,
+  type FSWatcher,
+} from 'node:fs';
 import { join } from 'node:path';
 
 import type {
@@ -393,6 +397,13 @@ implements DynamicPlatformPlugin {
         this.api.user.storagePath(),
         'ha-virtual-devices',
       );
+
+    mkdirSync(
+      catalogDirectoryPath,
+      {
+        recursive: true,
+      },
+    );
 
     this.catalogWatcher?.close();
 
