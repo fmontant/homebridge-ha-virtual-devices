@@ -234,6 +234,28 @@ implements DynamicPlatformPlugin {
       'HA Virtual Devices démarré',
     );
 
+    const haUrl =
+      typeof this.config.haUrl ===
+        'string'
+        ? this.config.haUrl.trim()
+        : '';
+
+    const token =
+      typeof this.config.token ===
+        'string'
+        ? this.config.token.trim()
+        : '';
+
+    if (!haUrl || !token) {
+      this.log.warn(
+        'Configuration Home Assistant incomplète. ' +
+        'Renseignez l’adresse et le jeton ' +
+        'dans les réglages du plugin.',
+      );
+
+      return;
+    }
+
     try {
       await this.deviceCatalog.load();
 
