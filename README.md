@@ -219,7 +219,7 @@ Configuration parameters:
 |-----------|----------|-------------|
 | name | Yes | Platform name displayed in Homebridge |
 | haUrl | Yes | Full Home Assistant URL |
-| token | Yes | Long-lived access token |
+| token | Yes | Long-lived Home Assistant access token |
 | ignoredDevices | No | Home Assistant device names or identifiers that must not be published to HomeKit |
 | debug | No | Enable detailed Homebridge logs |
 
