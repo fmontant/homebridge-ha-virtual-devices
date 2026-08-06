@@ -295,21 +295,30 @@ implements DynamicPlatformPlugin {
       'Connexion réussie',
     );
 
-    const states =
-      await this.homeAssistantClient
-        .getStates();
+    try {
+      const states =
+        await this.homeAssistantClient
+          .getStates();
 
-    this.climateDeviceManager
-      .loadInitialStates(
-        states as HomeAssistantState[],
+      this.climateDeviceManager
+        .loadInitialStates(
+          states as HomeAssistantState[],
+        );
+
+      this.log.info(
+        `${states.length} entités Home Assistant détectées`,
       );
 
-    this.log.info(
-      `${states.length} entités Home Assistant détectées`,
-    );
-
-    this.homeAssistantWebSocketClient
-      .connect();
+      this.homeAssistantWebSocketClient
+        .connect();
+    } catch (error) {
+      this.log.error(
+        'Impossible de charger les états Home Assistant :',
+        error instanceof Error
+          ? error.message
+          : String(error),
+      );
+    }
   }
 
   private configureWebSocketListeners():
