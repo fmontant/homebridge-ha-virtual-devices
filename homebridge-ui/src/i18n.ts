@@ -15,21 +15,12 @@ type SupportedLocale =
 const browserLocale =
   navigator.language.split('-')[0];
 
-console.log(
-  'Browser language:',
-  navigator.language,
-  '→',
-  browserLocale,
-); 
-
 const locale: SupportedLocale =
   ['de', 'en', 'es', 'fr'].includes(
     browserLocale,
   )
     ? (browserLocale as SupportedLocale)
     : 'en';
-
-console.log('Locale sélectionnée =', locale);
 
 const i18n = createI18n<
   [MessageSchema],

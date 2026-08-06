@@ -234,9 +234,6 @@ const filtersActive =
 
 async function loadDevices():
 Promise<void> {
-  console.log(
-    '[UI] loadDevices()',
-  );
 
   if (loading.value) {
     return;
@@ -247,25 +244,25 @@ Promise<void> {
 
   try {
     const result =
-  await catalogApi
-    .getDevices();
+      await catalogApi
+        .getDevices();
 
-devices.value =
-  result.devices;
+    devices.value =
+      result.devices;
 
-lastSynchronizationAt.value =
-  result.updatedAt ?? '';
+    lastSynchronizationAt.value =
+      result.updatedAt ?? '';
 
     if (
-  selectedDeviceId.value &&
-  !result.devices.some(
-    device =>
-      device.id ===
-      selectedDeviceId.value,
+      selectedDeviceId.value &&
+      !result.devices.some(
+         device =>
+           device.id ===
+           selectedDeviceId.value,
   )
 ) {
-      selectedDeviceId.value =
-        null;
+    selectedDeviceId.value =
+      null;
     }
 
     initialized.value =
@@ -388,12 +385,9 @@ async function selectDevice(
     updateDevice(
       updatedDevice,
     );
-  } catch (error) {
-    console.error(
-      '[UI] Impossible de marquer le capteur comme consulté',
-      error,
-    );
-  }
+  } catch {
+  return;
+}
 }
 
 function updateDevice(
@@ -492,15 +486,11 @@ watch(
 
 onMounted(() => {
   catalogEventListener
-    .subscribe(
-      () => {
-        console.log(
-          '[UI] catalog-updated reçu',
-        );
-
-        void loadDevices();
-      },
-    );
+  .subscribe(
+    () => {
+      void loadDevices();
+    },
+  );
 
   void loadDevices();
 });
