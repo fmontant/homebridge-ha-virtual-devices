@@ -24,6 +24,16 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 
 ---
 
+## [1.3.5] - 2026-08-06
+
+### Changed
+
+- Improved plugin startup validation and lifecycle management.
+- Removed unused Vue template assets and development traces from the Homebridge UI.
+- Improved overall project maintainability and code quality.
+
+---
+
 ## [1.3.4] - 2026-08-05
 
 ### Changed
