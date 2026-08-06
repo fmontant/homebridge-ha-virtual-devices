@@ -206,9 +206,9 @@ Example:
 
 ```json
 {
-  "platform": "HomeAssistantVirtualDevices",
-  "name": "Home Assistant Virtual Devices",
-  "host": "http://homeassistant.local:8123",
+  "platform": "HAVirtualDevices",
+  "name": "HA Virtual Devices",
+  "haUrl": "http://homeassistant.local:8123",
   "token": "YOUR_LONG_LIVED_ACCESS_TOKEN"
 }
 ```
@@ -217,11 +217,11 @@ Configuration parameters:
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| host | Yes | Home Assistant URL |
+| name | Yes | Platform name displayed in Homebridge |
+| haUrl | Yes | Full Home Assistant URL |
 | token | Yes | Long-lived access token |
-| includeHumidity | No | Publish humidity information when available |
-| includeBattery | No | Publish battery information when available |
-| logLevel | No | Logging verbosity |
+| ignoredDevices | No | Home Assistant device names or identifiers that must not be published to HomeKit |
+| debug | No | Enable detailed Homebridge logs |
 
 ---
 

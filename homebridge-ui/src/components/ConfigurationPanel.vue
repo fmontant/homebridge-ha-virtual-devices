@@ -24,9 +24,6 @@ type PluginConfiguration = {
   name?: string;
   haUrl?: string;
   token?: string;
-  autoDiscovery?: boolean;
-  includeHumidity?: boolean;
-  includeBattery?: boolean;
   [key: string]: unknown;
 };
 
@@ -53,9 +50,6 @@ const defaultConfiguration:
 PluginConfiguration = {
   haUrl: '',
   token: '',
-  autoDiscovery: true,
-  includeHumidity: true,
-  includeBattery: true,
 };
 
 const expanded =
@@ -567,17 +561,25 @@ void {
 function normalizeConfiguration(
   value: PluginConfiguration,
 ): PluginConfiguration {
-  return {
-    platform: value.platform,
-    name: value.name,
+  const normalizedConfiguration:
+  PluginConfiguration = {
+    ...value,
     haUrl:
       normalizeText(value.haUrl),
     token:
       normalizeText(value.token),
-    autoDiscovery: true,
-    includeHumidity: true,
-    includeBattery: true,
   };
+
+  delete normalizedConfiguration
+    .autoDiscovery;
+
+  delete normalizedConfiguration
+    .includeHumidity;
+
+  delete normalizedConfiguration
+    .includeBattery;
+
+  return normalizedConfiguration;
 }
 
 function comparableConfiguration(
@@ -588,9 +590,6 @@ function comparableConfiguration(
       normalizeText(value.haUrl),
     token:
       normalizeText(value.token),
-    autoDiscovery: true,
-    includeHumidity: true,
-    includeBattery: true,
   };
 }
 
