@@ -1,5 +1,10 @@
-# blank_issues_enabled: false
-# contact_links:
-#   - name: Homebridge Discord Community
-#     url: https://discord.gg/kqNCe2D
-#     about: Ask your questions in the #YOUR_CHANNEL_HERE channel
+blank_issues_enabled: false
+
+contact_links:
+  - name: Documentation
+    url: https://github.com/fmontant/homebridge-ha-virtual-devices#readme
+    about: Read the installation, configuration and troubleshooting documentation.
+
+  - name: Homebridge Community
+    url: https://github.com/homebridge/homebridge/discussions
+    about: Ask general Homebridge questions that are not specific to this plugin.

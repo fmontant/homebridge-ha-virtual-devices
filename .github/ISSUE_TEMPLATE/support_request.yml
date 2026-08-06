@@ -1,0 +1,77 @@
+name: Support request
+description: Ask for help configuring or using the plugin.
+title: "[Support]: "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for asking for help.
+
+        Please remove all passwords, tokens and other sensitive information before submitting.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe your objective and the problem you are experiencing.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you already tried?
+      description: Describe the checks or troubleshooting steps already performed.
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      placeholder: "1.3.4"
+    validations:
+      required: true
+
+  - type: input
+    id: homebridge-version
+    attributes:
+      label: Homebridge version
+      placeholder: "2.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      placeholder: "v24.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: homeassistant-version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.x"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Homebridge logs
+      description: Remove tokens, passwords and other sensitive information.
+      render: shell
+
+  - type: textarea
+    id: configuration
+    attributes:
+      label: Plugin configuration
+      description: Remove the Home Assistant token before submitting.
+      render: json
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
