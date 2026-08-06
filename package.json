@@ -8,7 +8,7 @@
     "name": "Fabrice Montant",
     "url": "https://github.com/fmontant"
   },
-  "license": "Apache-2.0",
+  "license": "MIT",
   "homepage": "https://github.com/fmontant/homebridge-ha-virtual-devices#readme",
   "repository": {
     "type": "git",
