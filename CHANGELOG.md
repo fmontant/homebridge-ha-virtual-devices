@@ -24,6 +24,14 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 
 ---
 
+## [1.3.6] - 2026-08-06
+
+### Changed
+
+- Prevent Homebridge startup failure on a fresh installation when the plugin storage directory does not yet exist.
+
+---
+
 ## [1.3.5] - 2026-08-06
 
 ### Changed
