@@ -79,6 +79,22 @@ export class HomeAssistantWebSocketClient {
     private readonly log: Logging,
   ) {}
 
+  public close(): void {
+    this.clearRegistryRefreshTimer();
+    this.pendingRequestManager.clear();
+
+    if (
+      this.socket &&
+      this.socket.readyState !==
+        WebSocket.CLOSED
+    ) {
+      this.socket.close();
+    }
+
+    this.socket =
+      undefined;
+  }
+
   public onEvent(
     callback: (event: unknown) => void,
   ): void {

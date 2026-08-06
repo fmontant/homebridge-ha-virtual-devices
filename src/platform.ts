@@ -456,6 +456,9 @@ implements DynamicPlatformPlugin {
             undefined;
         }
 
+        this.homeAssistantWebSocketClient
+          .close();
+
         this.catalogWatcher?.close();
         this.catalogWatcher =
           undefined;
