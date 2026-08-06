@@ -179,6 +179,18 @@ Aucune configuration manuelle des appareils n'est nécessaire.
 
 ---
 
+## Paramètres de configuration
+
+| Paramètre | Obligatoire | Description |
+|-----------|-------------|-------------|
+| name | Oui | Nom de la plateforme affiché dans Homebridge |
+| haUrl | Oui | URL complète de Home Assistant |
+| token | Oui | Jeton d'accès longue durée Home Assistant |
+| ignoredDevices | Non | Noms ou identifiants Home Assistant des appareils qui ne doivent pas être publiés dans HomeKit |
+| debug | Non | Active les journaux détaillés de Homebridge |
+
+---
+
 ## Appareils pris en charge
 
 Le plugin détecte automatiquement les entités Home Assistant suivantes lorsqu'elles sont disponibles :
