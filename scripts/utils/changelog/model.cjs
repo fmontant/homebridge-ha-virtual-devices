@@ -16,6 +16,12 @@ class Changelog {
   }
 
   addRelease(release) {
+    if (!(release instanceof Release)) {
+      throw new TypeError(
+        'release must be an instance of Release',
+      );
+    }
+
     this.releases.push(release);
   }
 }
