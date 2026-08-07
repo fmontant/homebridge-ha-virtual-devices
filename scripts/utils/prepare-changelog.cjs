@@ -224,6 +224,33 @@ function countEntries(lines) {
   return lines.filter((line) => /^\s*[-*]\s+\S/.test(line)).length;
 }
 
+function buildUnreleasedMarkdown(
+  permanent,
+) {
+  const lines = [
+    '## [Unreleased]',
+    '',
+    ...permanent,
+  ];
+
+  if (
+    lines[lines.length - 1] !== ''
+  ) {
+    lines.push('');
+  }
+
+  lines.push('### Changed');
+  lines.push('');
+  lines.push(
+    '- Describe the changes included in this release.',
+  );
+  lines.push('');
+  lines.push('---');
+  lines.push('');
+
+  return lines;
+}
+
 function buildReleaseMarkdown(
   version,
   releaseDate,
@@ -325,28 +352,10 @@ npm run prepare-release`,
     );
   }
 
-  const replacement = [
-    '## [Unreleased]',
-    '',
-    ...permanent,
-  ];
-
-  if (
-    replacement[
-      replacement.length - 1
-    ] !== ''
-  ) {
-    replacement.push('');
-  }
-
-  replacement.push('### Changed');
-  replacement.push('');
-  replacement.push(
-    '- Describe the changes included in this release.',
-  );
-  replacement.push('');
-  replacement.push('---');
-  replacement.push('');
+  const replacement =
+    buildUnreleasedMarkdown(
+      permanent,
+    );
   replacement.push(
     ...buildReleaseMarkdown(
       version,
