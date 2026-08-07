@@ -224,6 +224,21 @@ function countEntries(lines) {
   return lines.filter((line) => /^\s*[-*]\s+\S/.test(line)).length;
 }
 
+function buildReleaseMarkdown(
+  version,
+  releaseDate,
+  release,
+) {
+  return [
+    `## [${version}] - ${releaseDate}`,
+    '',
+    ...release,
+    '',
+    '---',
+    '',
+  ];
+}
+
 function prepareChangelog(
   content,
   version,
@@ -333,13 +348,12 @@ npm run prepare-release`,
   replacement.push('---');
   replacement.push('');
   replacement.push(
-    `## [${version}] - ${releaseDate}`,
+    ...buildReleaseMarkdown(
+      version,
+      releaseDate,
+      release,
+    ),
   );
-  replacement.push('');
-  replacement.push(...release);
-  replacement.push('');
-  replacement.push('---');
-  replacement.push('');
 
   const updated = [
     ...lines.slice(
