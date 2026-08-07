@@ -53,6 +53,8 @@
     "build:all": "npm run build && npm run build:ui",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
+    "fix": "npm run lint:fix && npm run lint",
+    "verify": "npm run lint && npm run build:all && git diff --check",
     "prepublishOnly": "npm run lint && npm run build:all",
     "watch": "npm run build && npm link && nodemon",
     "prepare-release": "bash scripts/prepare-release.sh",
