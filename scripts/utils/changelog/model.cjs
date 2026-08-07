@@ -6,13 +6,28 @@ class Release {
     this.date = date;
     this.sections = new Map();
   }
+  setSection(name, entries) {
+    this.sections.set(
+      name,
+      entries,
+    );
+  }
+  getSection(name) {
+    return this.sections.get(name);
+  }
+  hasSection(name) {
+    return this.sections.has(name);
+  }
+  getSections() {
+    return this.sections;
+  }
 }
 
 class Changelog {
   constructor() {
     this.header = [];
     this.unreleased = null;
-    this.releases = [];
+    this.releases = new Map();
   }
 
   addRelease(release) {
@@ -22,7 +37,13 @@ class Changelog {
       );
     }
 
-    this.releases.push(release);
+    this.releases.set(
+      release.version,
+      release,
+    );
+  }
+  getRelease(version) {
+    return this.releases.get(version);
   }
 }
 
