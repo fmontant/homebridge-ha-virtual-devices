@@ -4,18 +4,14 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const {
+  escapeRegExp,
+  normalizeLineEndings,
+} = require('./changelog/parser.cjs');
 
 function fail(message) {
   process.stderr.write(`✗ ${message}\n`);
   process.exit(1);
-}
-
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function normalizeLineEndings(value) {
-  return value.replace(/\r\n?/g, '\n');
 }
 
 function extractChangelogSection(content, version) {

@@ -5,6 +5,11 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const {
+  normalizeLineEndings,
+  findSection,
+} = require('./changelog/parser.cjs');
+
 const EXIT = Object.freeze({
   SUCCESS: 0,
   USAGE: 1,
@@ -19,10 +24,6 @@ function printError(message) {
 function fail(message, code) {
   printError(message);
   process.exit(code);
-}
-
-function normalizeLineEndings(value) {
-  return value.replace(/\r\n?/g, '\n');
 }
 
 function validateVersion(version) {
@@ -129,36 +130,6 @@ function parseArguments(argv) {
     version,
     changelogFile,
     releaseDate,
-  };
-}
-
-function findSection(lines, headingPattern) {
-  let headingIndex = -1;
-
-  for (let index = 0; index < lines.length; index += 1) {
-    if (headingPattern.test(lines[index])) {
-      headingIndex = index;
-      break;
-    }
-  }
-
-  if (headingIndex === -1) {
-    return null;
-  }
-
-  let endIndex = lines.length;
-
-  for (let index = headingIndex + 1; index < lines.length; index += 1) {
-    if (/^##\s+/.test(lines[index])) {
-      endIndex = index;
-      break;
-    }
-  }
-
-  return {
-    headingIndex,
-    contentStart: headingIndex + 1,
-    endIndex,
   };
 }
 
