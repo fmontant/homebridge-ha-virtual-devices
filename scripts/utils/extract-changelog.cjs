@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {
   escapeRegExp,
+  findSection,
   normalizeLineEndings,
 } = require('./changelog/parser.cjs');
 
@@ -20,36 +21,40 @@ function extractChangelogSection(content, version) {
   const targetHeading = new RegExp(
     `^## \\[${escapedVersion}\\](?:\\s+-\\s+.*)?\\s*$`,
   );
-  const nextVersionHeading = /^## \[[^\]]+\](?:\s+-\s+.*)?\s*$/;
+  const section =
+    findSection(
+      lines,
+      targetHeading,
+    );
 
-  let sectionStart = -1;
-
-  for (let index = 0; index < lines.length; index += 1) {
-    if (targetHeading.test(lines[index])) {
-      sectionStart = index + 1;
-      break;
-    }
+  if (!section) {
+    fail(
+      `Section ${version} introuvable dans le changelog.`,
+    );
   }
 
-  if (sectionStart === -1) {
-    fail(`Section ${version} introuvable dans le changelog.`);
-  }
+  const sectionLines =
+    lines.slice(
+      section.contentStart,
+      section.endIndex,
+    );
 
-  let sectionEnd = lines.length;
+  const separatorIndex =
+    sectionLines.findIndex(
+      line => line.trim() === '---',
+    );
 
-  for (let index = sectionStart; index < lines.length; index += 1) {
-    const line = lines[index];
-
-    if (nextVersionHeading.test(line) || line.trim() === '---') {
-      sectionEnd = index;
-      break;
-    }
-  }
-
-  const notes = lines
-    .slice(sectionStart, sectionEnd)
-    .join('\n')
-    .trim();
+  const notes =
+    (
+      separatorIndex === -1
+        ? sectionLines
+        : sectionLines.slice(
+          0,
+          separatorIndex,
+        )
+    )
+      .join('\n')
+      .trim();
 
   if (!notes) {
     fail(`La section ${version} ne contient aucune note.`);
