@@ -11,6 +11,8 @@ source "${SCRIPT_DIR}/lib/common.sh"
 
 RELEASE_BRANCH="${RELEASE_BRANCH:-main}"
 PREPARE_CHANGELOG_SCRIPT="${SCRIPT_DIR}/utils/prepare-changelog.cjs"
+UPDATE_CHANGED_ENTRIES_SCRIPT="${SCRIPT_DIR}/utils/update-changed-entries.cjs"
+EXTRACT_CHANGED_ENTRIES_SCRIPT="${SCRIPT_DIR}/utils/extract-changed-entries.cjs"
 CHANGELOG_FILE="CHANGELOG.md"
 
 TEMP_DIR=""
@@ -31,57 +33,10 @@ extract_changed_entries() {
   local changelog_file="$1"
   local output_file="$2"
 
-  node - "$changelog_file" "$output_file" <<'NODE'
-'use strict';
-
-const fs = require('node:fs');
-const path = require('node:path');
-
-const changelogFile = process.argv[2];
-const outputFile = process.argv[3];
-const content = fs.readFileSync(changelogFile, 'utf8').replace(/\r\n?/g, '\n');
-const lines = content.split('\n');
-
-const unreleasedIndex = lines.findIndex((line) => /^## \[Unreleased\]\s*$/.test(line));
-if (unreleasedIndex === -1) {
-  throw new Error('Section ## [Unreleased] introuvable.');
-}
-
-let unreleasedEnd = lines.length;
-for (let index = unreleasedIndex + 1; index < lines.length; index += 1) {
-  if (/^##\s+/.test(lines[index])) {
-    unreleasedEnd = index;
-    break;
-  }
-}
-
-let changedIndex = -1;
-for (let index = unreleasedIndex + 1; index < unreleasedEnd; index += 1) {
-  if (/^### Changed\s*$/.test(lines[index])) {
-    changedIndex = index;
-    break;
-  }
-}
-
-if (changedIndex === -1) {
-  throw new Error('Section ### Changed introuvable sous ## [Unreleased].');
-}
-
-const entries = [];
-for (let index = changedIndex + 1; index < unreleasedEnd; index += 1) {
-  const line = lines[index];
-  if (/^###\s+/.test(line) || /^---\s*$/.test(line)) {
-    break;
-  }
-
-  const match = line.match(/^\s*-\s+(.+?)\s*$/);
-  if (match && match[1]) {
-    entries.push(`- ${match[1]}`);
-  }
-}
-
-fs.writeFileSync(path.resolve(outputFile), entries.join('\n') + (entries.length ? '\n' : ''), 'utf8');
-NODE
+  node \
+    "$EXTRACT_CHANGED_ENTRIES_SCRIPT" \
+    "$changelog_file" \
+    "$output_file"
 }
 
 write_changed_entries() {
@@ -89,81 +44,11 @@ write_changed_entries() {
   local notes_file="$2"
   local output_file="$3"
 
-  node - "$source_file" "$notes_file" "$output_file" <<'NODE'
-'use strict';
-
-const fs = require('node:fs');
-const path = require('node:path');
-
-const sourceFile = process.argv[2];
-const notesFile = process.argv[3];
-const outputFile = process.argv[4];
-
-const content = fs.readFileSync(sourceFile, 'utf8').replace(/\r\n?/g, '\n');
-const notes = fs.readFileSync(notesFile, 'utf8')
-  .replace(/\r\n?/g, '\n')
-  .split('\n')
-  .map((line) => line.trim())
-  .filter(Boolean)
-  .map((line) => line.startsWith('- ') ? line : `- ${line}`);
-
-if (notes.length === 0) {
-  throw new Error('Aucune note de publication fournie.');
-}
-
-const lines = content.split('\n');
-const hadFinalNewline = content.endsWith('\n');
-if (hadFinalNewline) {
-  lines.pop();
-}
-
-const unreleasedIndex = lines.findIndex((line) => /^## \[Unreleased\]\s*$/.test(line));
-if (unreleasedIndex === -1) {
-  throw new Error('Section ## [Unreleased] introuvable.');
-}
-
-let unreleasedEnd = lines.length;
-for (let index = unreleasedIndex + 1; index < lines.length; index += 1) {
-  if (/^##\s+/.test(lines[index])) {
-    unreleasedEnd = index;
-    break;
-  }
-}
-
-let changedIndex = -1;
-for (let index = unreleasedIndex + 1; index < unreleasedEnd; index += 1) {
-  if (/^### Changed\s*$/.test(lines[index])) {
-    changedIndex = index;
-    break;
-  }
-}
-
-if (changedIndex === -1) {
-  throw new Error('Section ### Changed introuvable sous ## [Unreleased].');
-}
-
-let changedEnd = unreleasedEnd;
-for (let index = changedIndex + 1; index < unreleasedEnd; index += 1) {
-  if (/^###\s+/.test(lines[index]) || /^---\s*$/.test(lines[index])) {
-    changedEnd = index;
-    break;
-  }
-}
-
-const replacement = [
-  ...lines.slice(0, changedIndex + 1),
-  '',
-  ...notes,
-  '',
-  ...lines.slice(changedEnd),
-];
-
-while (replacement.length > 0 && replacement[replacement.length - 1] === '') {
-  replacement.pop();
-}
-
-fs.writeFileSync(path.resolve(outputFile), `${replacement.join('\n')}\n`, 'utf8');
-NODE
+  node \
+    "$UPDATE_CHANGED_ENTRIES_SCRIPT" \
+    "$source_file" \
+    "$notes_file" \
+    "$output_file"
 }
 
 print_notes() {
