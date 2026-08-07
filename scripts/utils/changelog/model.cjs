@@ -14,6 +14,10 @@ class Changelog {
     this.unreleased = null;
     this.releases = [];
   }
+
+  addRelease(release) {
+    this.releases.push(release);
+  }
 }
 
 module.exports = {
