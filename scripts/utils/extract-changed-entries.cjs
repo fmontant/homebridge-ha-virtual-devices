@@ -4,7 +4,16 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const [, , changelogFile, outputFile] = process.argv;
+const {
+  getLanguageLines,
+} = require('./changelog/parser.cjs');
+
+const [, , changelogFile, outputFile, languageArgument] = process.argv;
+
+const language =
+  languageArgument === '--lang=fr'
+    ? 'fr'
+    : 'en';
 
 if (!changelogFile) {
   throw new Error('Changelog manquant.');
@@ -14,7 +23,22 @@ if (!outputFile) {
   throw new Error('Fichier de sortie manquant.');
 }
 const content = fs.readFileSync(changelogFile, 'utf8').replace(/\r\n?/g, '\n');
-const lines = content.split('\n');
+
+const allLines = content.split('\n');
+
+const lines =
+  getLanguageLines(
+    allLines,
+    language,
+  );
+
+if (!lines) {
+  throw new Error(
+    language === 'fr'
+      ? 'Section # Français introuvable.'
+      : 'Section # English introuvable.',
+  );
+}
 
 const unreleasedIndex = lines.findIndex((line) => /^## \[Unreleased\]\s*$/.test(line));
 if (unreleasedIndex === -1) {

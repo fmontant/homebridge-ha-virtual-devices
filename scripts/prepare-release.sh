@@ -16,8 +16,10 @@ EXTRACT_CHANGED_ENTRIES_SCRIPT="${SCRIPT_DIR}/utils/extract-changed-entries.cjs"
 CHANGELOG_FILE="CHANGELOG.md"
 
 TEMP_DIR=""
-CURRENT_NOTES_FILE=""
-FINAL_NOTES_FILE=""
+CURRENT_NOTES_EN_FILE=""
+FINAL_NOTES_EN_FILE=""
+CURRENT_NOTES_FR_FILE=""
+FINAL_NOTES_FR_FILE=""
 PREVIEW_CHANGELOG_FILE=""
 
 cleanup() {
@@ -32,23 +34,27 @@ trap_with_context "Préparation"
 extract_changed_entries() {
   local changelog_file="$1"
   local output_file="$2"
+  local language="${3:---lang=en}"
 
   node \
     "$EXTRACT_CHANGED_ENTRIES_SCRIPT" \
     "$changelog_file" \
-    "$output_file"
+    "$output_file" \
+    "$language"
 }
 
 write_changed_entries() {
   local source_file="$1"
   local notes_file="$2"
   local output_file="$3"
+  local language="${4:---lang=en}"
 
   node \
     "$UPDATE_CHANGED_ENTRIES_SCRIPT" \
     "$source_file" \
     "$notes_file" \
-    "$output_file"
+    "$output_file" \
+    "$language"
 }
 
 print_notes() {
@@ -158,50 +164,82 @@ require_semver \
   || fail "La nouvelle version doit être différente de ${CURRENT_VERSION}."
 
 TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/prepare-release.XXXXXX")"
-CURRENT_NOTES_FILE="${TEMP_DIR}/current-notes.md"
-FINAL_NOTES_FILE="${TEMP_DIR}/final-notes.md"
+CURRENT_NOTES_EN_FILE="${TEMP_DIR}/current-notes-en.md"
+FINAL_NOTES_EN_FILE="${TEMP_DIR}/final-notes-en.md"
+CURRENT_NOTES_FR_FILE="${TEMP_DIR}/current-notes-fr.md"
+FINAL_NOTES_FR_FILE="${TEMP_DIR}/final-notes-fr.md"
 PREVIEW_CHANGELOG_FILE="${TEMP_DIR}/CHANGELOG.md"
 
 step "Préparation des notes de publication"
-extract_changed_entries "$CHANGELOG_FILE" "$CURRENT_NOTES_FILE"
 
-if [[ -s "$CURRENT_NOTES_FILE" ]]; then
-  printf 'Notes actuellement présentes :\n'
-  print_notes "$CURRENT_NOTES_FILE"
+cp "$CHANGELOG_FILE" "$PREVIEW_CHANGELOG_FILE"
 
-  printf '\n[C] Conserver  [A] Ajouter  [R] Remplacer  [Q] Annuler : '
-  read -r NOTES_CHOICE
+for LANGUAGE in en fr; do
 
-  case "$NOTES_CHOICE" in
-    C|c|'')
-      cp "$CURRENT_NOTES_FILE" "$FINAL_NOTES_FILE"
-      ;;
-    A|a)
-      cp "$CURRENT_NOTES_FILE" "$FINAL_NOTES_FILE"
-      collect_notes "$FINAL_NOTES_FILE" true
-      ;;
-    R|r)
-      collect_notes "$FINAL_NOTES_FILE" false
-      ;;
-    Q|q)
-      fail "Préparation annulée."
-      ;;
-    *)
-      fail "Choix invalide : ${NOTES_CHOICE}"
-      ;;
-  esac
-else
-  printf 'Aucune note de publication trouvée sous ### Changed.\n'
-  collect_notes "$FINAL_NOTES_FILE" false
-fi
+  if [[ "$LANGUAGE" == "en" ]]; then
+    CURRENT_NOTES_FILE="$CURRENT_NOTES_EN_FILE"
+    FINAL_NOTES_FILE="$FINAL_NOTES_EN_FILE"
+    LANGUAGE_LABEL="English"
+  else
+    CURRENT_NOTES_FILE="$CURRENT_NOTES_FR_FILE"
+    FINAL_NOTES_FILE="$FINAL_NOTES_FR_FILE"
+    LANGUAGE_LABEL="Français"
+  fi
 
-[[ -s "$FINAL_NOTES_FILE" ]] \
-  || fail "Au moins une note de publication est requise."
+  printf '\n'
+  line
+  printf 'Notes de publication (%s)\n' "$LANGUAGE_LABEL"
+  line
 
-write_changed_entries \
-  "$CHANGELOG_FILE" \
-  "$FINAL_NOTES_FILE" \
-  "$PREVIEW_CHANGELOG_FILE"
+  extract_changed_entries \
+    "$PREVIEW_CHANGELOG_FILE" \
+    "$CURRENT_NOTES_FILE" \
+    "--lang=$LANGUAGE"
+
+  if [[ -s "$CURRENT_NOTES_FILE" ]]; then
+
+    printf 'Notes actuellement présentes :\n'
+    print_notes "$CURRENT_NOTES_FILE"
+
+    printf '\n[C] Conserver  [A] Ajouter  [R] Remplacer  [Q] Annuler : '
+    read -r NOTES_CHOICE
+
+    case "$NOTES_CHOICE" in
+      C|c|'')
+        cp "$CURRENT_NOTES_FILE" "$FINAL_NOTES_FILE"
+        ;;
+      A|a)
+        cp "$CURRENT_NOTES_FILE" "$FINAL_NOTES_FILE"
+        collect_notes "$FINAL_NOTES_FILE" true
+        ;;
+      R|r)
+        collect_notes "$FINAL_NOTES_FILE" false
+        ;;
+      Q|q)
+        fail "Préparation annulée."
+        ;;
+      *)
+        fail "Choix invalide : ${NOTES_CHOICE}"
+        ;;
+    esac
+
+  else
+
+    printf 'Aucune note trouvée pour %s.\n' "$LANGUAGE_LABEL"
+    collect_notes "$FINAL_NOTES_FILE" false
+
+  fi
+
+  [[ -s "$FINAL_NOTES_FILE" ]] \
+    || fail "Au moins une note est requise pour ${LANGUAGE_LABEL}."
+
+  write_changed_entries \
+    "$PREVIEW_CHANGELOG_FILE" \
+    "$FINAL_NOTES_FILE" \
+    "$PREVIEW_CHANGELOG_FILE" \
+    "--lang=$LANGUAGE"
+
+done
 
 PREVIEW_OUTPUT="$(
   node \
@@ -244,10 +282,21 @@ ensure_no_generated_changes
 success "Le build n'a généré aucune modification"
 
 step "Mise à jour du changelog de travail"
+
+cp "$CHANGELOG_FILE" "$PREVIEW_CHANGELOG_FILE"
+
 write_changed_entries \
+  "$PREVIEW_CHANGELOG_FILE" \
+  "$FINAL_NOTES_EN_FILE" \
+  "$PREVIEW_CHANGELOG_FILE" \
+  --lang=en
+
+write_changed_entries \
+  "$PREVIEW_CHANGELOG_FILE" \
+  "$FINAL_NOTES_FR_FILE" \
   "$CHANGELOG_FILE" \
-  "$FINAL_NOTES_FILE" \
-  "$CHANGELOG_FILE"
+  --lang=fr
+
 success "Notes de publication enregistrées"
 
 step "Mise à jour de la version"
@@ -261,9 +310,11 @@ NEW_VERSION="$(get_package_version)"
 success "Version mise à jour : ${NEW_VERSION}"
 
 step "Mise à jour du changelog"
+
 node \
   "$PREPARE_CHANGELOG_SCRIPT" \
   --write \
+  --file "$CHANGELOG_FILE" \
   "$NEW_VERSION"
 success "Changelog préparé pour la version ${NEW_VERSION}"
 

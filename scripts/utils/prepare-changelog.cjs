@@ -7,6 +7,7 @@ const path = require('node:path');
 
 const {
   normalizeLineEndings,
+  findLanguageSection,
   findSection,
 } = require('./changelog/parser.cjs');
 
@@ -35,6 +36,7 @@ function parseArguments(argv) {
   let mode = null;
   let version = null;
   let changelogFile = 'CHANGELOG.md';
+  let language = null;
   let releaseDate = new Date().toISOString().slice(0, 10);
 
   for (let index = 0; index < args.length; index += 1) {
@@ -77,6 +79,19 @@ function parseArguments(argv) {
       }
 
       index += 1;
+      continue;
+    }
+
+    if (argument.startsWith('--lang=')) {
+      language = argument.slice('--lang='.length);
+
+      if (!['en', 'fr'].includes(language)) {
+        fail(
+          `Langue non prise en charge : ${language}`,
+          EXIT.USAGE,
+        );
+      }
+
       continue;
     }
 
@@ -130,6 +145,7 @@ function parseArguments(argv) {
     version,
     changelogFile,
     releaseDate,
+    language,
   };
 }
 
@@ -226,6 +242,7 @@ function countEntries(lines) {
 
 function buildUnreleasedMarkdown(
   permanent,
+  language,
 ) {
   const lines = [
     '## [Unreleased]',
@@ -242,7 +259,9 @@ function buildUnreleasedMarkdown(
   lines.push('### Changed');
   lines.push('');
   lines.push(
-    '- Describe the changes included in this release.',
+    language === 'fr'
+      ? '- Décrire les changements inclus dans cette version.'
+      : '- Describe the changes included in this release.',
   );
   lines.push('');
   lines.push('---');
@@ -266,10 +285,59 @@ function buildReleaseMarkdown(
   ];
 }
 
-function prepareChangelog(
+function prepareLanguage(
+  lines,
+  language,
+) {
+  const languageSection =
+    findLanguageSection(
+      lines,
+      language,
+    );
+
+  if (!languageSection) {
+    fail(
+      language === 'fr'
+        ? 'Section # Français introuvable.'
+        : 'Section # English introuvable.',
+      EXIT.INVALID_PROJECT_STATE,
+    );
+  }
+
+  const languageLines =
+    lines.slice(
+      languageSection.contentStart,
+      languageSection.endIndex,
+    );
+
+  const unreleased =
+    findSection(
+      languageLines,
+      /^## \[Unreleased\]\s*$/,
+    );
+
+  if (!unreleased) {
+    fail(
+      `Section ## [Unreleased] introuvable dans ${language === 'fr'
+        ? '# Français'
+        : '# English'
+      }.`,
+      EXIT.INVALID_PROJECT_STATE,
+    );
+  }
+
+  return {
+    languageSection,
+    languageLines,
+    unreleased,
+  };
+}
+
+function prepareLanguageChangelog(
   content,
   version,
   releaseDate,
+  language = 'en',
 ) {
   const normalized =
     normalizeLineEndings(content);
@@ -284,18 +352,23 @@ function prepareChangelog(
     lines.pop();
   }
 
-  const unreleased =
-    findSection(
+  const currentLanguage =
+    prepareLanguage(
       lines,
-      /^## \[Unreleased\]\s*$/,
+      language,
     );
 
-  if (!unreleased) {
-    fail(
-      'Section ## [Unreleased] introuvable.',
-      EXIT.INVALID_PROJECT_STATE,
-    );
-  }
+  const unreleased = {
+    headingIndex:
+      currentLanguage.languageSection.contentStart +
+      currentLanguage.unreleased.headingIndex,
+    contentStart:
+      currentLanguage.languageSection.contentStart +
+      currentLanguage.unreleased.contentStart,
+    endIndex:
+      currentLanguage.languageSection.contentStart +
+      currentLanguage.unreleased.endIndex,
+  };
 
   const versionPattern =
     new RegExp(
@@ -307,7 +380,7 @@ function prepareChangelog(
 
   if (
     findSection(
-      lines,
+      currentLanguage.languageLines,
       versionPattern,
     )
   ) {
@@ -355,6 +428,7 @@ npm run prepare-release`,
   const replacement =
     buildUnreleasedMarkdown(
       permanent,
+      language,
     );
   replacement.push(
     ...buildReleaseMarkdown(
@@ -389,6 +463,56 @@ npm run prepare-release`,
       updated.join('\n') + '\n',
     entryCount,
     releaseNotes: release.join('\n'),
+  };
+}
+
+function prepareChangelog(
+  content,
+  version,
+  releaseDate,
+  language = null,
+) {
+  if (language) {
+    return prepareLanguageChangelog(
+      content,
+      version,
+      releaseDate,
+      language,
+    );
+  }
+
+  const english =
+    prepareLanguageChangelog(
+      content,
+      version,
+      releaseDate,
+      'en',
+    );
+
+  const french =
+    prepareLanguageChangelog(
+      english.updatedContent,
+      version,
+      releaseDate,
+      'fr',
+    );
+
+  return {
+    updatedContent:
+      french.updatedContent,
+    entryCount:
+      english.entryCount +
+      french.entryCount,
+    releaseNotes:
+      [
+        '# English',
+        '',
+        english.releaseNotes,
+        '',
+        '# Français',
+        '',
+        french.releaseNotes,
+      ].join('\n'),
   };
 }
 
@@ -480,6 +604,7 @@ const result = prepareChangelog(
   content,
   options.version,
   options.releaseDate,
+  options.language,
 );
 
 if (options.mode === '--write') {

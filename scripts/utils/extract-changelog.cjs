@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {
   escapeRegExp,
+  getLanguageLines,
   findSection,
   normalizeLineEndings,
 } = require('./changelog/parser.cjs');
@@ -15,26 +16,44 @@ function fail(message) {
   process.exit(1);
 }
 
-function extractChangelogSection(content, version) {
+function extractChangelogSection(content, version, language) {
   const lines = normalizeLineEndings(content).split('\n');
+
+  const languageHeading =
+    language === 'fr'
+      ? '# Français'
+      : '# English';
+
+  const languageLines =
+    getLanguageLines(
+      lines,
+      language,
+    );
+
+  if (!languageLines) {
+    fail(
+      `Section ${languageHeading} introuvable.`,
+    );
+  }
   const escapedVersion = escapeRegExp(version);
   const targetHeading = new RegExp(
     `^## \\[${escapedVersion}\\](?:\\s+-\\s+.*)?\\s*$`,
   );
+
   const section =
     findSection(
-      lines,
+      languageLines,
       targetHeading,
     );
 
   if (!section) {
     fail(
-      `Section ${version} introuvable dans le changelog.`,
+      `Section ${version} introuvable dans ${languageHeading}.`,
     );
   }
 
   const sectionLines =
-    lines.slice(
+    languageLines.slice(
       section.contentStart,
       section.endIndex,
     );
@@ -63,7 +82,34 @@ function extractChangelogSection(content, version) {
   return `${notes}\n`;
 }
 
-const [, , version, changelogArgument] = process.argv;
+const args = process.argv.slice(2);
+
+let version;
+let changelogArgument = 'CHANGELOG.md';
+let language = 'en';
+
+for (const arg of args) {
+  if (arg === '--lang=fr') {
+    language = 'fr';
+    continue;
+  }
+
+  if (arg === '--lang=en') {
+    language = 'en';
+    continue;
+  }
+  if (!['en', 'fr'].includes(language)) {
+    fail(`Langue non prise en charge : ${language}`);
+  }
+  if (!version && !arg.startsWith('--')) {
+    version = arg;
+    continue;
+  }
+
+  if (!arg.startsWith('--')) {
+    changelogArgument = arg;
+  }
+}
 
 if (!version) {
   fail('Version manquante.');
@@ -85,5 +131,9 @@ try {
 }
 
 process.stdout.write(
-  extractChangelogSection(content, version),
+  extractChangelogSection(
+    content,
+    version,
+    language,
+  ),
 );

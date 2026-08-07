@@ -4,7 +4,24 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const [, , sourceFile, notesFile, outputFile] = process.argv;
+const {
+  findLanguageSection,
+} = require('./changelog/parser.cjs');
+
+const [
+  ,
+  ,
+  sourceFile,
+  notesFile,
+  outputFile,
+  languageArgument,
+] = process.argv;
+
+const language =
+  languageArgument === '--lang=fr'
+    ? 'fr'
+    : 'en';
+
 if (!sourceFile) {
   throw new Error('Changelog source manquant.');
 }
@@ -29,11 +46,33 @@ if (notes.length === 0) {
   throw new Error('Aucune note de publication fournie.');
 }
 
-const lines = content.split('\n');
+const allLines = content.split('\n');
+
 const hadFinalNewline = content.endsWith('\n');
+
 if (hadFinalNewline) {
-  lines.pop();
+  allLines.pop();
 }
+
+const languageSection =
+  findLanguageSection(
+    allLines,
+    language,
+  );
+
+if (!languageSection) {
+  throw new Error(
+    language === 'fr'
+      ? 'Section # Français introuvable.'
+      : 'Section # English introuvable.',
+  );
+}
+
+const lines =
+  allLines.slice(
+    languageSection.contentStart,
+    languageSection.endIndex,
+  );
 
 const unreleasedIndex = lines.findIndex((line) => /^## \[Unreleased\]\s*$/.test(line));
 if (unreleasedIndex === -1) {
@@ -68,12 +107,25 @@ for (let index = changedIndex + 1; index < unreleasedEnd; index += 1) {
   }
 }
 
+const globalChangedIndex =
+  languageSection.contentStart +
+  changedIndex;
+
+const globalChangedEnd =
+  languageSection.contentStart +
+  changedEnd;
+
 const replacement = [
-  ...lines.slice(0, changedIndex + 1),
+  ...allLines.slice(
+    0,
+    globalChangedIndex + 1,
+  ),
   '',
   ...notes,
   '',
-  ...lines.slice(changedEnd),
+  ...allLines.slice(
+    globalChangedEnd,
+  ),
 ];
 
 while (replacement.length > 0 && replacement[replacement.length - 1] === '') {

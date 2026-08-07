@@ -11,6 +11,9 @@ Its purpose is to provide a clear, factual and chronological record of every pub
 Future features and planned improvements are documented in **ROADMAP.md**.
 
 ---
+[English](#english) | [Français](#français)
+
+# English
 
 ## [Unreleased]
 
@@ -143,3 +146,145 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 
 - Improved user interface consistency.
 - Improved project architecture and long-term maintainability.
+
+<!-- ====================================================================== -->
+
+---
+
+# Français
+
+## [Unreleased]
+
+> [!NOTE]
+> Cette section recense les changements terminées mais qui n'ont pas encore été publiées.
+> Son contenu est déplacé vers la version correspondante lors de chaque publication.
+
+### Changed
+
+- Décrire les changements inclus dans cette version.
+
+---
+
+## [1.3.6] - 2026-08-06
+
+### Changed
+
+- Correction d'un échec du démarrage de Homebridge lors d'une nouvelle installation lorsque le répertoire de stockage du plugin n'existe pas encore.
+
+---
+
+## [1.3.5] - 2026-08-06
+
+### Changed
+
+- Amélioration de la validation du démarrage du plugin et de la gestion de son cycle de vie.
+- Suppression des ressources Vue inutilisées ainsi que des traces de développement de l'interface Homebridge.
+- Amélioration de la maintenabilité globale du projet et de la qualité du code.
+
+---
+
+## [1.3.4] - 2026-08-05
+
+### Changed
+
+- Ajout d'un toolkit de développement complet incluant les commandes `dev`, `doctor` et `logs`.
+- Amélioration du déploiement automatisé sur NAS avec détection automatique du conteneur Homebridge.
+- Amélioration des outils de diagnostic Homebridge avec les informations du plugin, du catalogue et du stockage.
+- Ajout d’outils intégrés de filtrage des journaux Homebridge.
+- Enrichissement de la documentation destinée aux développeurs.
+- Mise à jour de la feuille de route du projet ainsi que de la documentation README.
+- Amélioration du workflow de publication avec la recréation automatique d’une section `Unreleased` prête à l’emploi après chaque publication.
+
+---
+
+## [1.3.3] - 2026-07-31
+
+### Changed
+
+- Amélioration de la préparation des publications en demandant les entrées manquantes du changelog.
+- Amélioration de la mise en forme du changelog généré et de la gestion de la section `Unreleased`.
+
+---
+
+## [1.3.2] - 2026-07-31
+
+### Changed
+
+- Amélioration de la gestion du catalogue et de la synchronisation des accessoires HomeKit.
+- Amélioration de l’interface d’administration des capteurs.
+- Amélioration de la préparation du changelog et des indications affichées lorsque les sections sont vides dans le toolkit de publication.
+
+### Fixed
+
+- Correction de la génération des ressources Vue afin de garantir des compilations reproductibles de l’interface utilisateur.
+
+---
+
+## [1.3.1] - 2026-07-30
+
+### Changed
+
+- Réintroduction de la boîte de dialogue de confirmation de suppression des capteurs après résolution des problèmes identifiés dans les versions précédentes.
+- Amélioration de la boîte de dialogue de confirmation intégrée à Homebridge afin d’offrir un processus de suppression plus clair et plus fiable.
+- Harmonisation des traductions françaises, anglaises, allemandes et espagnoles.
+- Harmonisation de plusieurs textes de l’interface utilisateur afin d'améliorer la cohérence entre toutes les langues prises en charge.
+
+### Fixed
+
+- Correction du fonctionnement de la confirmation de suppression des capteurs.
+- Correction de la structure des ressources d’internationalisation (i18n).
+- Correction des formulations et de la typographie en allemand et en espagnol.
+- Correction de plusieurs incohérences de l’interface utilisateur.
+
+---
+
+## [1.3.0] - 2026-07-27
+
+### Added
+
+- Ajout de la prise en charge complète du multilinguisme (français, anglais, allemand et espagnol).
+- Ajout de la traduction allemande.
+- Ajout de la traduction espagnole.
+
+### Changed
+
+- Ajout de la détection automatique de la langue du navigateur.
+- Le français devient la langue de repli lorsque la langue du navigateur n'est pas prise en charge.
+- Mise en place de l'internationalisation avec Vue I18n.
+
+### Improved
+
+- Amélioration de la cohérence des traductions pour l'ensemble des langues prises en charge.
+- Préparation de l'architecture afin de faciliter l'ajout de nouvelles langues.
+
+---
+
+## [1.2.1] - 2026-07-26
+
+### Documentation
+
+- Mise en place du cadre documentaire du projet.
+- Ajout d'un ensemble structuré de documentation destiné aux développeurs.
+- Ajout des guides de déploiement, de publication et de dépannage.
+- Ajout de la documentation du projet en français et en anglais.
+- Formalisation du processus de publication du projet.
+
+---
+
+## [1.2.0] - 2026-07-23
+
+### Added
+
+- Ajout d'une nouvelle interface d'administration Homebridge.
+- Ajout de vues dédiées **Configuration** et **Capteurs**.
+- Ajout de la configuration intégrée du plugin depuis l'interface utilisateur Homebridge.
+
+### Changed
+
+- Simplification du processus de configuration du plugin.
+- Amélioration de l'expérience d'administration.
+
+### Improved
+
+- Amélioration de la cohérence de l'interface utilisateur.
+- Amélioration de l'architecture du projet et de sa maintenabilité à long terme.

@@ -38,8 +38,82 @@ function findSection(lines, headingPattern) {
   };
 }
 
+function findLanguageSection(
+  lines,
+  language,
+) {
+  const heading =
+    language === 'fr'
+      ? '# Français'
+      : '# English';
+
+  const headingIndex =
+    lines.findIndex(
+      line => line.trim() === heading,
+    );
+
+  if (headingIndex === -1) {
+    return null;
+  }
+
+  let endIndex = lines.length;
+
+  for (
+    let index = headingIndex + 1;
+    index < lines.length;
+    index += 1
+  ) {
+    if (/^#\s+/.test(lines[index])) {
+      endIndex = index;
+      break;
+    }
+  }
+
+  return {
+    headingIndex,
+    contentStart: headingIndex + 1,
+    endIndex,
+  };
+}
+
+function getLanguageLines(lines, language) {
+  const heading =
+    language === 'fr'
+      ? '# Français'
+      : '# English';
+
+  const startIndex =
+    lines.findIndex(
+      line => line.trim() === heading,
+    );
+
+  if (startIndex === -1) {
+    return null;
+  }
+
+  let endIndex = lines.length;
+
+  for (
+    let index = startIndex + 1;
+    index < lines.length;
+    index += 1
+  ) {
+    if (/^#\s+/.test(lines[index])) {
+      endIndex = index;
+      break;
+    }
+  }
+
+  return lines.slice(
+    startIndex,
+    endIndex,
+  );
+}
+
 module.exports = {
   normalizeLineEndings,
   escapeRegExp,
   findSection,
+  findLanguageSection,
+  getLanguageLines,
 };
