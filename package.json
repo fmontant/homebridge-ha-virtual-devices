@@ -52,6 +52,7 @@
     "build:ui": "npm --prefix homebridge-ui run build && rm -f homebridge-ui/public/assets/index-*.js homebridge-ui/public/assets/index-*.css && cp -R homebridge-ui/dist/. homebridge-ui/public/",
     "build:all": "npm run build && npm run build:ui",
     "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
     "prepublishOnly": "npm run lint && npm run build:all",
     "watch": "npm run build && npm link && nodemon",
     "prepare-release": "bash scripts/prepare-release.sh",
