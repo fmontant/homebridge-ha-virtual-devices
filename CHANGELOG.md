@@ -27,6 +27,15 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 
 ---
 
+## [1.3.7] - 2026-08-17
+
+### Changed
+
+- Fixed automatic reconnection to the Home Assistant WebSocket after a connection loss, allowing HomeKit virtual thermostats to resume state updates without restarting Homebridge.
+- Added bilingual English/French CHANGELOG and release notes management to the release toolkit.
+
+---
+
 ## [1.3.6] - 2026-08-06
 
 ### Changed
@@ -162,6 +171,15 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 ### Changed
 
 - Décrire les changements inclus dans cette version.
+
+---
+
+## [1.3.7] - 2026-08-17
+
+### Changed
+
+- Ajout de la gestion bilingue anglais/français du CHANGELOG et des notes de publication dans le toolkit de release.
+- Correction de la reconnexion automatique au WebSocket Home Assistant après une perte de connexion, permettant aux thermostats virtuels HomeKit de reprendre leurs mises à jour sans redémarrer Homebridge.
 
 ---
 
