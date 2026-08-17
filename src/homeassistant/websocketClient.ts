@@ -62,6 +62,11 @@ export class HomeAssistantWebSocketClient {
   private registryRefreshTimer?:
     ReturnType<typeof setTimeout>;
 
+  private reconnectTimer?:
+    ReturnType<typeof setTimeout>;
+
+  private intentionalClose = false;
+
   private eventCallback?: (
     event: unknown,
   ) => void;
@@ -80,7 +85,10 @@ export class HomeAssistantWebSocketClient {
   ) {}
 
   public close(): void {
+    this.intentionalClose = true;
+
     this.clearRegistryRefreshTimer();
+    this.clearReconnectTimer();
     this.pendingRequestManager.clear();
 
     if (
@@ -144,6 +152,9 @@ export class HomeAssistantWebSocketClient {
   }
 
   public connect(): void {
+    this.intentionalClose = false;
+    this.clearReconnectTimer();
+
     const websocketUrl =
       this.config.haUrl
         .replace(/^http:/, 'ws:')
@@ -194,6 +205,17 @@ export class HomeAssistantWebSocketClient {
 
         this.pendingRequestManager.clear();
         this.clearRegistryRefreshTimer();
+
+        this.socket =
+          undefined;
+
+        if (
+          this.intentionalClose
+        ) {
+          return;
+        }
+
+        this.scheduleReconnect();
       },
     );
   }
@@ -462,6 +484,50 @@ export class HomeAssistantWebSocketClient {
         },
         500,
       );
+  }
+
+  private scheduleReconnect(): void {
+    if (this.reconnectTimer) {
+      return;
+    }
+
+    this.log.warn(
+      'Reconnexion WebSocket programmée dans 5 secondes',
+    );
+
+    this.reconnectTimer =
+      setTimeout(
+        () => {
+          this.reconnectTimer =
+            undefined;
+
+          if (
+            this.intentionalClose
+          ) {
+            return;
+          }
+
+          this.log.info(
+            'Tentative de reconnexion WebSocket',
+          );
+
+          this.connect();
+        },
+        5000,
+      );
+  }
+
+  private clearReconnectTimer(): void {
+    if (!this.reconnectTimer) {
+      return;
+    }
+
+    clearTimeout(
+      this.reconnectTimer,
+    );
+
+    this.reconnectTimer =
+      undefined;
   }
 
   private clearRegistryRefreshTimer():
