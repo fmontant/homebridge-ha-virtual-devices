@@ -11,6 +11,7 @@ export class MatterDeviceDiscovery {
     const devices: MatterDeviceDescriptor[] = [];
 
     for (const peer of node.peers) {
+
       devices.push(
         await this.createDescriptor(peer),
       );
@@ -61,23 +62,34 @@ export class MatterDeviceDiscovery {
     }
 
     const nodeId = peerAddress.nodeId.toString();
-
     const basicInformation =
-            await peer.act(
-              agent =>
-                agent.get(
-                  BasicInformationBehavior,
-                ).state,
-            );
+  await peer.act(
+    agent => {
+      const state =
+        agent.get(
+          BasicInformationBehavior,
+        ).state;
+
+      return {
+        nodeLabel: state.nodeLabel,
+        productLabel: state.productLabel,
+        productName: state.productName,
+        vendorName: state.vendorName,
+        serialNumber: state.serialNumber,
+      };
+    },
+  );
+
+    const deviceName =
+  basicInformation.nodeLabel?.trim() ||
+  basicInformation.productLabel?.trim() ||
+  basicInformation.productName?.trim() ||
+peer.id;
 
     return {
       id: `matter:${nodeId}`,
       peerId: peer.id,
-      name:
-                basicInformation.nodeLabel?.trim() ||
-                basicInformation.productLabel?.trim() ||
-                basicInformation.productName?.trim() ||
-                peer.id,
+      name: deviceName,
       nodeId,
       vendorName:
                 basicInformation.vendorName,
