@@ -46,14 +46,28 @@ export class MatterProvider {
         this.storagePath,
       );
   }
+
   public async start(): Promise<void> {
     await this.controller.start();
+    await this.synchronize();
+  }
 
+  public async commission(
+    pairingCode: string,
+  ): Promise<void> {
+    await this.controller.commission(
+      pairingCode,
+    );
+
+    await this.synchronize();
+  }
+
+  private async synchronize(): Promise<void> {
     const node =
-            this.controller.getNode();
+      this.controller.getNode();
 
     const descriptors =
-        await this.discovery.discover(node);
+      await this.discovery.discover(node);
 
     this.log.info(
       `${descriptors.length} appareil(s) Matter détecté(s)`,
@@ -65,7 +79,7 @@ export class MatterProvider {
                 descriptors,
               );
 
-     
+
     await this.catalogManager
       .synchronizeDiscoveredDevices(
         discoveredCatalogDevices,

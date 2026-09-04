@@ -39,6 +39,16 @@ export class MatterController {
     this.node = node;
   }
 
+  public async commission(
+    pairingCode: string,
+  ): Promise<void> {
+    const node = this.getNode();
+
+    await node.peers.commission({
+      pairingCode,
+    });
+  }
+
   public async stop(): Promise<void> {
 
     if (!this.node) {
