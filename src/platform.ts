@@ -196,11 +196,16 @@ implements DynamicPlatformPlugin {
       );
 
     this.matterProvider =
-      new MatterProvider(
-        this.accessoryManager,
-        this.catalogManager,
-        this.log,
-      );
+    new MatterProvider(
+      this.accessoryManager,
+      this.catalogManager,
+      this.log,
+      join(
+        this.api.user.storagePath(),
+        'ha-virtual-devices',
+        'matter',
+      ),
+    );
 
     this.eventManager =
       new EventManager(

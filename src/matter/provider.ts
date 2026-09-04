@@ -19,8 +19,7 @@ import {
 } from './subscriptionManager.js';
 
 export class MatterProvider {
-  private readonly controller =
-    new MatterController();
+  private readonly controller: MatterController;
 
   private readonly discovery =
     new MatterDeviceDiscovery();
@@ -35,12 +34,18 @@ export class MatterProvider {
     new MatterSubscriptionManager();
 
   public constructor(
-        private readonly accessoryManager:
-            AccessoryManager,
-        private readonly catalogManager:
-            CatalogManager,
-        private readonly log: Logging,
-  ) { }
+    private readonly accessoryManager:
+      AccessoryManager,
+    private readonly catalogManager:
+      CatalogManager,
+    private readonly log: Logging,
+    private readonly storagePath: string,
+  ) {
+    this.controller =
+      new MatterController(
+        this.storagePath,
+      );
+  }
   public async start(): Promise<void> {
     await this.controller.start();
 
