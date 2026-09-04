@@ -142,7 +142,7 @@
       "checking": "Wird geprüft…",
       "saving": "Wird gespeichert…"
     },
-    "messages": {
+        "messages": {
       "missingAddressOrToken": "Adresse oder Token fehlt",
       "incomplete": "Die Konfiguration ist unvollständig.",
       "notSaved": "Konfiguration nicht gespeichert: {message}.",
@@ -151,6 +151,29 @@
       "saveFailed": "Die Konfiguration konnte nicht gespeichert werden."
     }
   },
+
+  "matter": {
+    "title": "Matter-Verbindung",
+    "description": "Fügen Sie ein bereits in Ihrem Zuhause vorhandenes Matter-Gerät direkt zum Plugin hinzu",
+    "fields": {
+      "pairingCode": {
+        "label": "Matter-Freigabecode",
+        "ariaLabel": "Matter-Freigabecode",
+        "placeholder": "1234-12-1234"
+      }
+    },
+    "actions": {
+      "commission": "Gerät hinzufügen",
+      "commissioning": "Gerät wird hinzugefügt…"
+    },
+    "messages": {
+      "instructions": "Aktivieren Sie in der Home-App den Kopplungsmodus des Geräts, erstellen Sie anschließend einen neuen Matter-Freigabecode und geben Sie ihn hier ein.",
+      "missingCode": "Geben Sie den Matter-Freigabecode ein.",
+      "success": "Das Matter-Gerät wurde erfolgreich hinzugefügt.",
+      "failed": "Das Matter-Gerät konnte nicht hinzugefügt werden: {message}."
+    }
+  },
+
   "states": {
     "enabled": "Aktiv",
     "disabled": "Deaktiviert",

@@ -122,6 +122,9 @@ export class HAVirtualDevicesUiServer
   private matterCommissioningStore?:
         MatterCommissioningStore;
 
+  private matterCommissioningInProgress =
+    false;
+
   private catalogWatcher?:
         ReturnType<typeof watch>;
 
@@ -565,58 +568,83 @@ export class HAVirtualDevicesUiServer
       };
     }
 
-    const requestId =
+    if (
+      this.matterCommissioningInProgress
+    ) {
+      return {
+        success: false,
+        error:
+          'Un commissioning Matter est déjà en cours',
+      };
+    }
+
+    this.matterCommissioningInProgress =
+      true;
+
+    try {
+      const requestId =
       crypto.randomUUID();
 
-    await this.matterCommissioningStore
-      .deleteResponse();
+      await this.matterCommissioningStore
+        .deleteResponse();
 
-    await this.matterCommissioningStore
-      .saveRequest({
-        id: requestId,
-        pairingCode,
-        createdAt:
+      await this.matterCommissioningStore
+        .saveRequest({
+          id: requestId,
+          pairingCode,
+          createdAt:
           new Date().toISOString(),
-      });
+        });
 
-    const deadline =
+      const deadline =
       Date.now() + 190000;
 
-    while (
-      Date.now() < deadline
-    ) {
-      const response =
+      while (
+        Date.now() < deadline
+      ) {
+        const response =
         await this.matterCommissioningStore
           .loadResponse();
 
-      if (
-        response?.id === requestId
-      ) {
-        await this.matterCommissioningStore
-          .deleteResponse();
+        if (
+          response?.id === requestId
+        ) {
+          await this.matterCommissioningStore
+            .deleteResponse();
 
-        return {
-          success:
+          return {
+            success:
             response.success,
-          error:
+            error:
             response.error,
-        };
+          };
+        }
+
+        await new Promise(
+          resolve =>
+            setTimeout(
+              resolve,
+              500,
+            ),
+        );
       }
 
-      await new Promise(
-        resolve =>
-          setTimeout(
-            resolve,
-            500,
-          ),
-      );
-    }
 
-    return {
-      success: false,
-      error:
+      await this.matterCommissioningStore
+        .deleteRequest();
+
+      await this.matterCommissioningStore
+        .deleteResponse();
+
+      return {
+        success: false,
+        error:
         'Délai de commissioning Matter dépassé',
-    };
+      };
+    } finally {
+      this.matterCommissioningInProgress =
+        false;
+    }
   }
 
   private async deleteDevice(

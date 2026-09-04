@@ -142,7 +142,7 @@
       "checking": "Verificando…",
       "saving": "Guardando…"
     },
-    "messages": {
+        "messages": {
       "missingAddressOrToken": "Falta la dirección o el token",
       "incomplete": "La configuración está incompleta.",
       "notSaved": "Configuración no guardada: {message}.",
@@ -151,6 +151,29 @@
       "saveFailed": "No se pudo guardar la configuración."
     }
   },
+
+  "matter": {
+    "title": "Conexión Matter",
+    "description": "Añada directamente al plugin un dispositivo Matter que ya esté presente en su hogar",
+    "fields": {
+      "pairingCode": {
+        "label": "Código para compartir Matter",
+        "ariaLabel": "Código para compartir Matter",
+        "placeholder": "1234-12-1234"
+      }
+    },
+    "actions": {
+      "commission": "Añadir dispositivo",
+      "commissioning": "Añadiendo dispositivo…"
+    },
+    "messages": {
+      "instructions": "En la app Casa, active el modo de emparejamiento del dispositivo, genere un nuevo código para compartir Matter e introdúzcalo aquí.",
+      "missingCode": "Introduzca el código para compartir Matter.",
+      "success": "El dispositivo Matter se ha añadido correctamente.",
+      "failed": "No se ha podido añadir el dispositivo Matter: {message}."
+    }
+  },
+
   "states": {
     "enabled": "Activo",
     "disabled": "Desactivado",

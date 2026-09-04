@@ -142,7 +142,7 @@
       "checking": "Checking…",
       "saving": "Saving…"
     },
-    "messages": {
+        "messages": {
       "missingAddressOrToken": "Address or token is missing",
       "incomplete": "The configuration is incomplete.",
       "notSaved": "Configuration not saved: {message}.",
@@ -151,6 +151,29 @@
       "saveFailed": "The configuration could not be saved."
     }
   },
+
+  "matter": {
+    "title": "Matter Connection",
+    "description": "Add a Matter device already present in your home directly to the plugin",
+    "fields": {
+      "pairingCode": {
+        "label": "Matter sharing code",
+        "ariaLabel": "Matter sharing code",
+        "placeholder": "1234-12-1234"
+      }
+    },
+    "actions": {
+      "commission": "Add device",
+      "commissioning": "Adding device…"
+    },
+    "messages": {
+      "instructions": "In the Home app, enable pairing mode for the device, then generate a new Matter sharing code and enter it here.",
+      "missingCode": "Enter the Matter sharing code.",
+      "success": "The Matter device was added successfully.",
+      "failed": "Unable to add the Matter device: {message}."
+    }
+  },
+
   "states": {
     "enabled": "Active",
     "disabled": "Disabled",

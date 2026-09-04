@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n';
 
 import { catalogApi } from './api/catalogApi';
 import ConfigurationPanel from './components/ConfigurationPanel.vue';
+import MatterCommissioningPanel from './components/MatterCommissioningPanel.vue';
 import DeviceDetails from './components/DeviceDetails.vue';
 import DeviceRow from './components/DeviceRow.vue';
 import PluginSummary from './components/PluginSummary.vue';
@@ -521,12 +522,16 @@ onUnmounted(() => {
   />
 </header>
 
-    <section class="configuration-panel">
+   <section class="configuration-panel">
       <ConfigurationPanel />
     </section>
 
-   <PluginSummary
-    :devices="devices"
+    <section class="configuration-panel">
+      <MatterCommissioningPanel />
+    </section>
+
+    <PluginSummary
+      :devices="devices"
     :last-synchronization-at="lastSynchronizationAt"
   />
     <section class="toolbar">

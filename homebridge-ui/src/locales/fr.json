@@ -151,6 +151,29 @@
       "saveFailed": "La configuration n’a pas pu être enregistrée."
     }
   },
+
+  "matter": {
+    "title": "Connexion Matter",
+    "description": "Ajoutez directement au plugin un appareil Matter déjà présent dans votre domicile",
+    "fields": {
+      "pairingCode": {
+        "label": "Code de partage Matter",
+        "ariaLabel": "Code de partage Matter",
+        "placeholder": "1234-12-1234"
+      }
+    },
+    "actions": {
+      "commission": "Ajouter l’appareil",
+      "commissioning": "Ajout en cours…"
+    },
+    "messages": {
+      "instructions": "Dans l’app Maison, activez le mode de jumelage de l’appareil puis générez un nouveau code de partage Matter et saisissez-le ici.",
+      "missingCode": "Saisissez le code de partage Matter.",
+      "success": "L’appareil Matter a été ajouté avec succès.",
+      "failed": "Impossible d’ajouter l’appareil Matter : {message}."
+    }
+  },
+
   "states": {
     "enabled": "Actif",
     "disabled": "Désactivé",
