@@ -22,6 +22,10 @@ import {
   PluginStateStore,
 } from '../catalog/pluginStateStore.js';
 
+import {
+  MatterCommissioningStore,
+} from '../matter/commissioningStore.js';
+
 import type {
   CatalogApiDevice,
 } from './catalogApi.js';
@@ -71,6 +75,15 @@ interface DeleteDeviceResponsePayload {
     id: string;
 }
 
+interface MatterCommissioningRequestPayload {
+  pairingCode: string;
+}
+
+interface MatterCommissioningResponsePayload {
+  success: boolean;
+  error?: string;
+}
+
 interface ViewedRequestPayload {
     id: string;
 }
@@ -105,6 +118,9 @@ export class HAVirtualDevicesUiServer
 
   private pluginStateStore?:
         PluginStateStore;
+
+  private matterCommissioningStore?:
+        MatterCommissioningStore;
 
   private catalogWatcher?:
         ReturnType<typeof watch>;
@@ -163,6 +179,13 @@ export class HAVirtualDevicesUiServer
           .getInformation(),
     );
 
+    this.onRequest(
+      '/matter/commission',
+      async payload =>
+        this.commissionMatterDevice(
+          payload,
+        ),
+    );
 
     this.onRequest(
       '/catalog/preferences',
@@ -241,6 +264,18 @@ export class HAVirtualDevicesUiServer
                   pluginStateFilePath,
                 );
 
+      this.matterCommissioningStore =
+                new MatterCommissioningStore(
+                  join(
+                    this.catalogDirectoryPath,
+                    'matter-commissioning-request.json',
+                  ),
+                  join(
+                    this.catalogDirectoryPath,
+                    'matter-commissioning-response.json',
+                  ),
+                );
+
       await mkdir(
         this.catalogDirectoryPath,
         {
@@ -274,12 +309,23 @@ export class HAVirtualDevicesUiServer
     }
 
     this.catalogWatcher =
-            watch(
-              this.catalogDirectoryPath,
-              () => {
-                this.scheduleCatalogPublication();
-              },
-            );
+                        watch(
+                          this.catalogDirectoryPath,
+                          (
+                            _eventType,
+                            filename,
+                          ) => {
+                            if (
+                              filename &&
+                  filename !==
+                  'device-catalog.json'
+                            ) {
+                              return;
+                            }
+
+                            this.scheduleCatalogPublication();
+                          },
+                        );
 
     this.catalogWatcher.on(
       'error',
@@ -495,6 +541,82 @@ export class HAVirtualDevicesUiServer
     await this.catalogStore.save(devices);
     await this.publishCatalog();
     return { device: this.catalogApiMapper.toApiDevice(device) };
+  }
+
+  private async commissionMatterDevice(
+    payload: MatterCommissioningRequestPayload,
+  ): Promise<MatterCommissioningResponsePayload> {
+    if (
+      !this.matterCommissioningStore
+    ) {
+      throw new Error(
+        'Commissioning Matter non initialisé',
+      );
+    }
+
+    const pairingCode =
+      payload.pairingCode?.trim();
+
+    if (!pairingCode) {
+      return {
+        success: false,
+        error:
+          'Code de partage Matter manquant',
+      };
+    }
+
+    const requestId =
+      crypto.randomUUID();
+
+    await this.matterCommissioningStore
+      .deleteResponse();
+
+    await this.matterCommissioningStore
+      .saveRequest({
+        id: requestId,
+        pairingCode,
+        createdAt:
+          new Date().toISOString(),
+      });
+
+    const deadline =
+      Date.now() + 190000;
+
+    while (
+      Date.now() < deadline
+    ) {
+      const response =
+        await this.matterCommissioningStore
+          .loadResponse();
+
+      if (
+        response?.id === requestId
+      ) {
+        await this.matterCommissioningStore
+          .deleteResponse();
+
+        return {
+          success:
+            response.success,
+          error:
+            response.error,
+        };
+      }
+
+      await new Promise(
+        resolve =>
+          setTimeout(
+            resolve,
+            500,
+          ),
+      );
+    }
+
+    return {
+      success: false,
+      error:
+        'Délai de commissioning Matter dépassé',
+    };
   }
 
   private async deleteDevice(

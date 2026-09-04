@@ -22,6 +22,7 @@ import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
 import { DeviceCatalog } from './catalog/deviceCatalog.js';
 import { DeviceCatalogStore } from './catalog/deviceCatalogStore.js';
 import { PluginStateStore } from './catalog/pluginStateStore.js';
+import { MatterCommissioningStore } from './matter/commissioningStore.js';
 import { AccessoryFactory } from './factories/accessoryFactory.js';
 import { HomeAssistantClient } from './homeassistant/client.js';
 import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
@@ -77,6 +78,8 @@ implements DynamicPlatformPlugin {
   private readonly pluginStateStore:
     PluginStateStore;
 
+  private readonly matterCommissioningStore:
+    MatterCommissioningStore;
 
   private readonly deviceCatalog:
     DeviceCatalog;
@@ -95,6 +98,9 @@ implements DynamicPlatformPlugin {
 
   private catalogReloadTimer?:
     NodeJS.Timeout;
+
+  private matterCommissioningInProgress =
+    false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public readonly CustomServices: any;
@@ -172,6 +178,20 @@ implements DynamicPlatformPlugin {
     this.pluginStateStore =
       new PluginStateStore(
         pluginStateFilePath,
+      );
+
+    this.matterCommissioningStore =
+      new MatterCommissioningStore(
+        join(
+          this.api.user.storagePath(),
+          'ha-virtual-devices',
+          'matter-commissioning-request.json',
+        ),
+        join(
+          this.api.user.storagePath(),
+          'ha-virtual-devices',
+          'matter-commissioning-response.json',
+        ),
       );
 
     this.deviceCatalog =
@@ -446,6 +466,24 @@ implements DynamicPlatformPlugin {
           filename,
         ) => {
           if (
+            filename ===
+            'matter-commissioning-request.json'
+          ) {
+            void this
+              .processMatterCommissioningRequest()
+              .catch(error => {
+                this.log.error(
+                  'Erreur pendant le commissioning Matter :',
+                  error instanceof Error
+                    ? error.message
+                    : String(error),
+                );
+              });
+
+            return;
+          }
+
+          if (
             filename &&
             filename !==
             'device-catalog.json'
@@ -526,6 +564,60 @@ implements DynamicPlatformPlugin {
           undefined;
       },
     );
+  }
+
+  private async processMatterCommissioningRequest():
+    Promise<void> {
+    if (
+      this.matterCommissioningInProgress
+    ) {
+      return;
+    }
+
+    this.matterCommissioningInProgress =
+      true;
+
+    try {
+      const request =
+        await this.matterCommissioningStore
+          .loadRequest();
+
+      if (!request) {
+        return;
+      }
+
+      try {
+        await this.matterProvider.commission(
+          request.pairingCode,
+        );
+
+        await this.matterCommissioningStore
+          .saveResponse({
+            id: request.id,
+            success: true,
+            completedAt:
+              new Date().toISOString(),
+          });
+      } catch (error) {
+        await this.matterCommissioningStore
+          .saveResponse({
+            id: request.id,
+            success: false,
+            completedAt:
+              new Date().toISOString(),
+            error:
+              error instanceof Error
+                ? error.message
+                : String(error),
+          });
+      } finally {
+        await this.matterCommissioningStore
+          .deleteRequest();
+      }
+    } finally {
+      this.matterCommissioningInProgress =
+        false;
+    }
   }
 
   private readIgnoredDevices():
