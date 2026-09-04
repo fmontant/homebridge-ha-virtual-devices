@@ -70,20 +70,27 @@ export class ClimateDeviceBuilder {
       ) {
         climateDevice.humidityEntity =
           entity.entityId;
+        climateDevice.supportsHumidity =
+          true;
       }
+
 
       if (
         /_(batterie|battery)(_\d+)?$/.test(
           entity.entityId,
         ) &&
         entity.translationKey !==
-          'battery_voltage' &&
+        'battery_voltage' &&
         entity.translationKey !==
-          'battery_replacement_description'
+        'battery_replacement_description'
       ) {
         climateDevice.batteryEntity =
           entity.entityId;
+        climateDevice.supportsBattery =
+          true;
       }
+
+
 
       climateDevices.set(
         entity.deviceId,

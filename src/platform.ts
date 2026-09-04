@@ -15,6 +15,8 @@ import type {
   Service,
 } from 'homebridge';
 
+import { MatterProvider } from './matter/provider.js';
+
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
 
 import { DeviceCatalog } from './catalog/deviceCatalog.js';
@@ -84,6 +86,9 @@ implements DynamicPlatformPlugin {
 
   private readonly registryManager:
     RegistryManager;
+
+  private readonly matterProvider:
+    MatterProvider;
 
   private catalogWatcher?:
     FSWatcher;
@@ -190,6 +195,13 @@ implements DynamicPlatformPlugin {
         this.catalogManager,
       );
 
+    this.matterProvider =
+      new MatterProvider(
+        this.accessoryManager,
+        this.catalogManager,
+        this.log,
+      );
+
     this.eventManager =
       new EventManager(
         this.accessoryManager,
@@ -250,16 +262,6 @@ implements DynamicPlatformPlugin {
         ? this.config.token.trim()
         : '';
 
-    if (!haUrl || !token) {
-      this.log.warn(
-        'Configuration Home Assistant incomplète. ' +
-        'Renseignez l’adresse et le jeton ' +
-        'dans les réglages du plugin.',
-      );
-
-      return;
-    }
-
     try {
       await this.deviceCatalog.load();
 
@@ -278,6 +280,30 @@ implements DynamicPlatformPlugin {
     }
 
     this.startCatalogWatcher();
+
+    try {
+      await this.matterProvider.start();
+
+      this.log.info(
+        'Provider Matter démarré',
+      );
+    } catch (error) {
+      this.log.error(
+        'Impossible de démarrer le provider Matter :',
+        error instanceof Error
+          ? error.message
+          : String(error),
+      );
+    }
+
+    if (!haUrl || !token) {
+      this.log.warn(
+        'Configuration Home Assistant incomplète. ' +
+        'Le provider Home Assistant ne sera pas démarré.',
+      );
+
+      return;
+    }
 
     this.log.info(
       'Test de connexion à Home Assistant...',
@@ -478,6 +504,17 @@ implements DynamicPlatformPlugin {
 
         this.homeAssistantWebSocketClient
           .close();
+
+        void this.matterProvider
+          .stop()
+          .catch(error => {
+            this.log.error(
+              'Erreur pendant l’arrêt du provider Matter :',
+              error instanceof Error
+                ? error.message
+                : String(error),
+            );
+          });
 
         this.catalogWatcher?.close();
         this.catalogWatcher =

@@ -4,6 +4,7 @@ import type {
 
 import type {
   CatalogDevice,
+  DiscoveredCatalogDevice,
 } from '../catalog/catalogDevice.js';
 
 import type {
@@ -46,19 +47,32 @@ export class CatalogManager {
   public async synchronizeClimateDevices(
     climateDevices: ClimateDevice[],
   ): Promise<CatalogSynchronizationResult> {
+    const discoveredCatalogDevices =
+    this.climateDeviceCatalogMapper
+      .toDiscoveredCatalogDevices(
+        climateDevices,
+      );
+
+    return this.synchronizeDiscoveredDevices(
+      discoveredCatalogDevices,
+      'home-assistant',
+    );
+  }
+
+
+
+  public async synchronizeDiscoveredDevices(
+    discoveredDevices:
+    DiscoveredCatalogDevice[],
+    source: string,
+  ): Promise<CatalogSynchronizationResult> {
     await this.load();
 
-    const discoveredCatalogDevices =
-      this.climateDeviceCatalogMapper
-        .toDiscoveredCatalogDevices(
-          climateDevices,
-        );
-
     const synchronizationResult =
-      this.deviceCatalog
-        .synchronize(
-          discoveredCatalogDevices,
-        );
+    this.deviceCatalog.synchronize(
+      discoveredDevices,
+      source,
+    );
 
     await this.save();
 

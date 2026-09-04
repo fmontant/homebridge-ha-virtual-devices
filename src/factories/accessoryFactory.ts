@@ -1,7 +1,9 @@
 import type { PlatformAccessory } from 'homebridge';
 
 import { ClimateAccessory } from '../accessories/climateAccessory.js';
-import type { ClimateDevice } from '../models/climateDevice.js';
+import type {
+  PublishedClimateDevice,
+} from '../models/publishedClimateDevice.js';
 import type { HAVirtualDevicesPlatform } from '../platform.js';
 
 export class AccessoryFactory {
@@ -11,7 +13,7 @@ export class AccessoryFactory {
   ) {}
 
   public createClimateAccessory(
-    device: ClimateDevice,
+    device: PublishedClimateDevice,
     accessory: PlatformAccessory,
   ): ClimateAccessory {
 
