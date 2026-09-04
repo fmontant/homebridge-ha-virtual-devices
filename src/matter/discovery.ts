@@ -1,27 +1,27 @@
 import type { ClientNode, ServerNode } from '@matter/node';
-
+import { BasicInformationBehavior } from '@matter/node/behaviors';
 import type {
   MatterDeviceDescriptor,
 } from './types.js';
 
 export class MatterDeviceDiscovery {
-  public discover(
+  public async discover(
     node: ServerNode,
-  ): MatterDeviceDescriptor[] {
+  ): Promise<MatterDeviceDescriptor[]> {
     const devices: MatterDeviceDescriptor[] = [];
 
     for (const peer of node.peers) {
       devices.push(
-        this.createDescriptor(peer),
+        await this.createDescriptor(peer),
       );
     }
 
     return devices;
   }
 
-  private createDescriptor(
+  private async createDescriptor(
     peer: ClientNode,
-  ): MatterDeviceDescriptor {
+  ): Promise<MatterDeviceDescriptor> {
     let temperatureEndpointId: number | undefined;
     let humidityEndpointId: number | undefined;
     let batteryEndpointId: number | undefined;
@@ -62,11 +62,29 @@ export class MatterDeviceDiscovery {
 
     const nodeId = peerAddress.nodeId.toString();
 
+    const basicInformation =
+            await peer.act(
+              agent =>
+                agent.get(
+                  BasicInformationBehavior,
+                ).state,
+            );
+
     return {
       id: `matter:${nodeId}`,
       peerId: peer.id,
-      name: peer.id,
+      name:
+                basicInformation.nodeLabel?.trim() ||
+                basicInformation.productLabel?.trim() ||
+                basicInformation.productName?.trim() ||
+                peer.id,
       nodeId,
+      vendorName:
+                basicInformation.vendorName,
+      productName:
+                basicInformation.productName,
+      serialNumber:
+                basicInformation.serialNumber,
       temperatureEndpointId,
       humidityEndpointId,
       batteryEndpointId,

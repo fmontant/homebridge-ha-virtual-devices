@@ -53,7 +53,7 @@ export class MatterProvider {
             this.controller.getNode();
 
     const descriptors =
-            this.discovery.discover(node);
+        await this.discovery.discover(node);
 
     this.log.info(
       `${descriptors.length} appareil(s) Matter détecté(s)`,
