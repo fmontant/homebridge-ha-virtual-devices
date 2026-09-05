@@ -8,6 +8,10 @@ import type {
   CatalogManager,
 } from '../managers/catalogManager.js';
 
+import type {
+  RegistryManager,
+} from '../managers/registryManager.js';
+
 import { MatterController } from './controller.js';
 import { MatterDeviceDiscovery } from './discovery.js';
 import { MatterDeviceMapper } from './mapper.js';
@@ -38,6 +42,10 @@ export class MatterProvider {
       AccessoryManager,
     private readonly catalogManager:
       CatalogManager,
+
+    private readonly registryManager:
+      RegistryManager,
+
     private readonly log: Logging,
     private readonly storagePath: string,
   ) {
@@ -181,6 +189,12 @@ export class MatterProvider {
         },
       );
     }
+
+    this.registryManager
+      .rememberPublishedClimateDevices(
+        publishedDevices,
+      );
+
     const deviceCatalog =
             this.catalogManager.getCatalog();
 

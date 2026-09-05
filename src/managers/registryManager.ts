@@ -9,6 +9,10 @@ import type {
 } from '../models/climateDevice.js';
 
 import type {
+  PublishedClimateDevice,
+} from '../models/publishedClimateDevice.js';
+
+import type {
   DeviceRegistryEntry,
 } from '../models/deviceRegistryEntry.js';
 
@@ -47,7 +51,7 @@ export class RegistryManager {
       Promise.resolve();
 
   private readonly lastClimateDevices =
-    new Map<string, ClimateDevice>();
+    new Map<string, PublishedClimateDevice>();
 
   private catalogPublicationState =
     new Map<string, string>();
@@ -109,8 +113,21 @@ export class RegistryManager {
     await synchronization;
   }
 
+  public rememberPublishedClimateDevices(
+    devices: PublishedClimateDevice[],
+  ): void {
+    for (const device of devices) {
+      this.lastClimateDevices.set(
+        device.id,
+        device,
+      );
+    }
+  }
+
   public async refreshFromCatalog():
     Promise<void> {
+
+
     if (
       this.lastClimateDevices.size === 0
     ) {
@@ -252,7 +269,19 @@ export class RegistryManager {
         discoveredClimateDevices,
       );
 
-    this.lastClimateDevices.clear();
+    for (
+      const [deviceId, climateDevice]
+      of this.lastClimateDevices
+    ) {
+      if (
+        climateDevice.source ===
+        'home-assistant'
+      ) {
+        this.lastClimateDevices.delete(
+          deviceId,
+        );
+      }
+    }
 
     for (
       const climateDevice

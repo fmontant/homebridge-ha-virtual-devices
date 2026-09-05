@@ -215,18 +215,6 @@ implements DynamicPlatformPlugin {
         this.catalogManager,
       );
 
-    this.matterProvider =
-    new MatterProvider(
-      this.accessoryManager,
-      this.catalogManager,
-      this.log,
-      join(
-        this.api.user.storagePath(),
-        'ha-virtual-devices',
-        'matter',
-      ),
-    );
-
     this.eventManager =
       new EventManager(
         this.accessoryManager,
@@ -246,6 +234,19 @@ implements DynamicPlatformPlugin {
         this.catalogManager,
         this.log,
         ignoredDevices,
+      );
+
+    this.matterProvider =
+      new MatterProvider(
+        this.accessoryManager,
+        this.catalogManager,
+        this.registryManager,
+        this.log,
+        join(
+          this.api.user.storagePath(),
+          'ha-virtual-devices',
+          'matter',
+        ),
       );
 
     const eveHomeKitTypes =
