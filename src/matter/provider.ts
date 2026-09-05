@@ -120,6 +120,8 @@ export class MatterProvider {
 
     const publishedDevices = [];
 
+    this.subscriptions.stop();
+
     for (const descriptor of descriptors) {
       const peer =
                 node.peers.get(
@@ -244,9 +246,11 @@ export class MatterProvider {
     }
 
     return descriptors;
-
   }
+
   public async stop(): Promise<void> {
+    this.subscriptions.stop();
+
     await this.controller.stop();
   }
 }
