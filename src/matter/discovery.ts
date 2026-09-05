@@ -76,6 +76,11 @@ export class MatterDeviceDiscovery {
         productName: state.productName,
         vendorName: state.vendorName,
         serialNumber: state.serialNumber,
+        uniqueId: state.uniqueId,
+        softwareVersion:
+          state.softwareVersionString,
+        hardwareVersion:
+          state.hardwareVersionString,
       };
     },
   );
@@ -97,6 +102,12 @@ peer.id;
                 basicInformation.productName,
       serialNumber:
                 basicInformation.serialNumber,
+      uniqueId:
+        basicInformation.uniqueId,
+      softwareVersion:
+        basicInformation.softwareVersion,
+      hardwareVersion:
+        basicInformation.hardwareVersion,
       temperatureEndpointId,
       humidityEndpointId,
       batteryEndpointId,

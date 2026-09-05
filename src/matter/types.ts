@@ -6,6 +6,9 @@ export interface MatterDeviceDescriptor {
   vendorName?: string;
   productName?: string;
   serialNumber?: string;
+  uniqueId?: string;
+  softwareVersion?: string;
+  hardwareVersion?: string;
   temperatureEndpointId?: number;
   humidityEndpointId?: number;
   batteryEndpointId?: number;

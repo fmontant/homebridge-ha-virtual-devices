@@ -11,7 +11,8 @@ extends Device {
   supportsBattery?: boolean;
   manufacturer?: string;
   model?: string;
+  serialNumber?: string;
+  uniqueId?: string;
   softwareVersion?: string;
   hardwareVersion?: string;
-  serialNumber?: string;
 }

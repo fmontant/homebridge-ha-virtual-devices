@@ -56,6 +56,12 @@ export class MatterDeviceCatalogMapper {
           descriptor.productName,
         serialNumber:
           descriptor.serialNumber,
+        uniqueId:
+          descriptor.uniqueId,
+        softwareVersion:
+          descriptor.softwareVersion,
+        hardwareVersion:
+          descriptor.hardwareVersion,
       },
     };
   }
