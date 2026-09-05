@@ -312,6 +312,7 @@ export class ClimateAccessory {
 
     const serialNumber =
       this.device.serialNumber ??
+      this.device.uniqueId ??
       this.device.id;
 
     const softwareVersion =
