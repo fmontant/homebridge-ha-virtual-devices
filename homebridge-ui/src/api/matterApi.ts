@@ -9,8 +9,15 @@ declare global {
 }
 
 interface MatterCommissioningResponse {
+
   success: boolean;
+
+  deviceId?: string;
+
+  deviceName?: string;
+
   error?: string;
+
 }
 
 export class MatterApi {

@@ -81,6 +81,8 @@ interface MatterCommissioningRequestPayload {
 
 interface MatterCommissioningResponsePayload {
   success: boolean;
+  deviceId?: string;
+  deviceName?: string;
   error?: string;
 }
 
@@ -615,6 +617,10 @@ export class HAVirtualDevicesUiServer
           return {
             success:
             response.success,
+            deviceId:
+            response.deviceId,
+            deviceName:
+            response.deviceName,
             error:
             response.error,
           };

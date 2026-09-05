@@ -152,9 +152,9 @@
     }
   },
 
-  "matter": {
-    "title": "Connexion Matter",
-    "description": "Ajoutez directement au plugin un appareil Matter déjà présent dans votre domicile",
+    "matter": {
+    "title": "Ajouter un capteur Matter",
+    "description": "Ajoutez au plugin un capteur Matter déjà présent dans Apple Home, sans passer par Home Assistant.",
     "fields": {
       "pairingCode": {
         "label": "Code de partage Matter",
@@ -163,14 +163,14 @@
       }
     },
     "actions": {
-      "commission": "Ajouter l’appareil",
-      "commissioning": "Ajout en cours…"
+      "commission": "Ajouter le capteur",
+      "commissioning": "Ajout du capteur…"
     },
     "messages": {
-      "instructions": "Dans l’app Maison, activez le mode de jumelage de l’appareil puis générez un nouveau code de partage Matter et saisissez-le ici.",
+      "instructions": "Dans l’app Maison, générez un nouveau code de partage Matter pour le capteur que vous souhaitez ajouter, puis saisissez ce code ici.",
       "missingCode": "Saisissez le code de partage Matter.",
-      "success": "L’appareil Matter a été ajouté avec succès.",
-      "failed": "Impossible d’ajouter l’appareil Matter : {message}."
+      "success": "Le capteur Matter a été ajouté avec succès. Il apparaît maintenant dans la liste des appareils. Vous pouvez le renommer pour l’identifier plus facilement.",
+      "failed": "Impossible d’ajouter le capteur Matter : {message}."
     }
   },
 

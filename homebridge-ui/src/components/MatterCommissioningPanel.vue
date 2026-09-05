@@ -67,8 +67,16 @@ async function commissionDevice(): Promise<void> {
       return;
     }
 
-    successMessage.value =
-      t('matter.messages.success');
+successMessage.value =
+  t(
+    'matter.messages.success',
+    {
+      name:
+        response.deviceName ??
+        response.deviceId ??
+        'Capteur Matter',
+    },
+  );
 
     pairingCode.value = '';
   } catch (error) {
@@ -176,3 +184,59 @@ async function commissionDevice(): Promise<void> {
     </div>
   </CollapsibleSection>
 </template>
+<style scoped>
+
+.configuration-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.configuration-field {
+  display: grid;
+  gap: 7px;
+  font-weight: 600;
+}
+
+.configuration-field input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-weight: 400;
+}
+
+.configuration-field input:focus {
+  border-color: #2563eb;
+  outline: 2px solid rgb(37 99 235 / 18%);
+}
+
+.configuration-field input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.configuration-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.primary-button {
+  padding: 8px 14px;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+</style>

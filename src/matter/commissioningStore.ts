@@ -14,10 +14,19 @@ export interface MatterCommissioningRequest {
 }
 
 export interface MatterCommissioningResponse {
+
   id: string;
+
   success: boolean;
+
   completedAt: string;
+
+  deviceId?: string;
+
+  deviceName?: string;
+
   error?: string;
+
 }
 
 export class MatterCommissioningStore {

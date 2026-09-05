@@ -22,6 +22,10 @@ import {
   MatterSubscriptionManager,
 } from './subscriptionManager.js';
 
+import type {
+  MatterDeviceDescriptor,
+} from './types.js';
+
 export class MatterProvider {
   private readonly controller: MatterController;
 
@@ -61,16 +65,36 @@ export class MatterProvider {
   }
 
   public async commission(
+
     pairingCode: string,
-  ): Promise<void> {
+
+  ): Promise<MatterDeviceDescriptor> {
+
+    const clientNode =
     await this.controller.commission(
       pairingCode,
     );
 
+    const descriptors =
     await this.synchronize();
+
+    const descriptor =
+    descriptors.find(
+      candidate =>
+        candidate.peerId ===
+        clientNode.id,
+    );
+
+    if (!descriptor) {
+      throw new Error(
+        'Appareil Matter ajouté mais introuvable après synchronisation',
+      );
+    }
+
+    return descriptor;
   }
 
-  private async synchronize(): Promise<void> {
+  private async synchronize(): Promise<MatterDeviceDescriptor[]> {
     const node =
       this.controller.getNode();
 
@@ -218,6 +242,9 @@ export class MatterProvider {
           deviceCatalog,
         );
     }
+
+    return descriptors;
+
   }
   public async stop(): Promise<void> {
     await this.controller.stop();

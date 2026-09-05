@@ -1,7 +1,10 @@
 import '@matter/nodejs';
 
 import { Environment } from '@matter/general';
-import { ServerNode } from '@matter/node';
+import {
+  ClientNode,
+  ServerNode,
+} from '@matter/node';
 
 export class MatterController {
 
@@ -40,13 +43,19 @@ export class MatterController {
   }
 
   public async commission(
+
     pairingCode: string,
-  ): Promise<void> {
+
+  ): Promise<ClientNode> {
+
     const node = this.getNode();
 
-    await node.peers.commission({
+    return await node.peers.commission({
+
       pairingCode,
+
     });
+
   }
 
   public async stop(): Promise<void> {

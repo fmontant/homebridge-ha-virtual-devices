@@ -588,9 +588,10 @@ implements DynamicPlatformPlugin {
       }
 
       try {
-        await this.matterProvider.commission(
-          request.pairingCode,
-        );
+        const descriptor =
+          await this.matterProvider.commission(
+            request.pairingCode,
+          );
 
         await this.matterCommissioningStore
           .saveResponse({
@@ -598,6 +599,10 @@ implements DynamicPlatformPlugin {
             success: true,
             completedAt:
               new Date().toISOString(),
+            deviceId:
+              descriptor.id,
+            deviceName:
+              descriptor.name,
           });
       } catch (error) {
         await this.matterCommissioningStore
