@@ -19,6 +19,7 @@ export interface DeviceMetadata {
   manufacturer?: string;
   model?: string;
   serialNumber?: string;
+  uniqueId?: string;
   softwareVersion?: string;
   hardwareVersion?: string;
 }

@@ -19,6 +19,10 @@ interface CatalogApiDevice {
   source: string;
   state: DeviceState;
   capabilities: string[];
+    metadata?: {
+      manufacturer?: string;
+      uniqueId?: string;
+  };
   available?: boolean;
   lastCommunication?: string;
   timestamps?: {
@@ -187,9 +191,17 @@ export class CatalogApi {
       archived:
         device.preferences.archived,
       capabilities: [
+
         ...device.capabilities,
+
       ],
+
+      metadata:
+
+        device.metadata,
+
       available:
+
         device.available ?? true,
       lastCommunication:
         device.lastCommunication,

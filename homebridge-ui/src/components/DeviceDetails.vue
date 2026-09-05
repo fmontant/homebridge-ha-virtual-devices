@@ -494,7 +494,7 @@ function getErrorMessage(
             />
 
             <small class="field-help">
-              Laissez ce champ vide pour utiliser le nom Home Assistant.
+              Laissez ce champ vide pour utiliser le nom détecté de l'appareil.
             </small>
           </label>
 

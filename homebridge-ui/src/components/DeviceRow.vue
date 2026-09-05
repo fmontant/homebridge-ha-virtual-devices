@@ -44,6 +44,33 @@ const availabilityClass = (
     ? badgeClass[device.state]
     : 'state-offline';
 
+const displayedName = (
+  device: CatalogDevice,
+): string => {
+  if (device.homeKitName) {
+    return device.homeKitName;
+  }
+
+  if (device.source === 'matter') {
+    const manufacturer =
+      device.metadata?.manufacturer?.trim();
+
+    if (manufacturer) {
+  const displayManufacturer =
+    manufacturer === 'IKEA of Sweden'
+      ? 'IKEA'
+      : manufacturer;
+
+  return `Capteur ${displayManufacturer} (à renommer)`;
+}
+
+    return 'Capteur Matter (à renommer)';
+  }
+
+  return device.name;
+};
+
+
 const favoriteAriaLabel = (
   device: CatalogDevice,
 ): string =>
@@ -83,15 +110,22 @@ const favoriteAriaLabel = (
       {{ device.favorite ? '★' : '☆' }}
     </button>
 
-    <strong class="device-name">
-      {{ device.name }}
+        <strong class="device-name">
+
+      {{ displayedName(device) }}
 
       <span
+
         v-if="!device.firstViewedAt"
+
         class="new-badge"
+
       >
+
         {{ t('deviceRow.badges.new') }}
+
       </span>
+
     </strong>
 
     <span>{{ device.source }}</span>
@@ -175,12 +209,20 @@ const favoriteAriaLabel = (
 }
 
 .device-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
 
+  display: flex;
+
+  flex-wrap: wrap;
+
+  align-items: center;
+
+  column-gap: 8px;
+
+  row-gap: 2px;
+
+  min-width: 0;
+
+}
 .new-badge {
   display: inline-flex;
   flex-shrink: 0;
