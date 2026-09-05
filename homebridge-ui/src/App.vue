@@ -364,6 +364,26 @@ void {
   roomFilter.value = '';
 }
 
+async function handleMatterCommissioned(
+  deviceId: string,
+): Promise<void> {
+  await loadDevices();
+
+  const device =
+    devices.value.find(
+      candidate =>
+        candidate.id === deviceId,
+    );
+
+  if (!device) {
+    return;
+  }
+
+  await selectDevice(
+    device,
+  );
+}
+
 async function selectDevice(
   device: CatalogDevice,
 ): Promise<void> {
@@ -527,7 +547,9 @@ onUnmounted(() => {
     </section>
 
     <section class="configuration-panel">
-      <MatterCommissioningPanel />
+      <MatterCommissioningPanel
+        @commissioned="handleMatterCommissioned"
+      />
     </section>
 
     <PluginSummary

@@ -7,6 +7,11 @@ import CollapsibleSection from './CollapsibleSection.vue';
 const { t } =
   useI18n();
 
+const emit =
+  defineEmits<{
+    commissioned: [deviceId: string];
+  }>();
+
 const expanded =
   ref(true);
 
@@ -77,6 +82,13 @@ successMessage.value =
         'Capteur Matter',
     },
   );
+
+if (response.deviceId) {
+  emit(
+    'commissioned',
+    response.deviceId,
+  );
+}
 
     pairingCode.value = '';
   } catch (error) {
@@ -222,6 +234,17 @@ successMessage.value =
 .configuration-actions {
   display: flex;
   justify-content: flex-start;
+}
+
+.configuration-message {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.success-message {
+  background: #f0fdf4;
+  color: #166534;
 }
 
 .primary-button {
