@@ -293,6 +293,14 @@ implements DynamicPlatformPlugin {
       'HA Virtual Devices démarré',
     );
 
+    const homeAssistantEnabled =
+      this.config.homeAssistantEnabled !==
+        false;
+
+    const matterEnabled =
+      this.config.matterEnabled ===
+        true;
+
     const haUrl =
       typeof this.config.haUrl ===
         'string'
@@ -324,21 +332,31 @@ implements DynamicPlatformPlugin {
 
     this.startCatalogWatcher();
 
-    try {
-      const matterProvider =
-        await this.getMatterProvider();
+    if (matterEnabled) {
+      try {
+        const matterProvider =
+          await this.getMatterProvider();
 
-      await matterProvider.start();
+        await matterProvider.start();
+        this.log.info(
+          'Provider Matter démarré',
+        );
+      } catch (error) {
+        this.log.error(
+          'Impossible de démarrer le provider Matter :',
+          error instanceof Error
+            ? error.message
+            : String(error),
+        );
+      }
+    }
+
+    if (!homeAssistantEnabled) {
       this.log.info(
-        'Provider Matter démarré',
+        'Provider Home Assistant désactivé',
       );
-    } catch (error) {
-      this.log.error(
-        'Impossible de démarrer le provider Matter :',
-        error instanceof Error
-          ? error.message
-          : String(error),
-      );
+
+      return;
     }
 
     if (!haUrl || !token) {

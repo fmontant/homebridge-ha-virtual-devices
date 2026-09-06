@@ -19,9 +19,15 @@ declare const homebridge:
 const { t } =
   useI18n();
 
+const emit = defineEmits<{
+  matterEnabledChanged: [enabled: boolean];
+}>();
+
 type PluginConfiguration = {
   platform?: string;
   name?: string;
+  homeAssistantEnabled?: boolean;
+  matterEnabled?: boolean;
   haUrl?: string;
   token?: string;
   [key: string]: unknown;
@@ -48,6 +54,8 @@ type ConfigurationStatusResponse = {
 
 const defaultConfiguration:
 PluginConfiguration = {
+  homeAssistantEnabled: true,
+  matterEnabled: false,
   haUrl: '',
   token: '',
 };
@@ -103,14 +111,29 @@ const verificationRequired =
   ref(false);
 
 const hasRequiredConfiguration =
-  computed(() =>
-    normalizeText(
-      configuration.value.haUrl,
-    ).length > 0 &&
-    normalizeText(
-      configuration.value.token,
-    ).length > 0,
-  );
+  computed(() => {
+    const homeAssistantEnabled =
+      configuration.value.homeAssistantEnabled !== false;
+    const matterEnabled =
+      configuration.value.matterEnabled === true;
+
+    if (!homeAssistantEnabled && !matterEnabled) {
+      return false;
+    }
+
+    if (!homeAssistantEnabled) {
+      return true;
+    }
+
+    return (
+      normalizeText(
+        configuration.value.haUrl,
+      ).length > 0 &&
+      normalizeText(
+        configuration.value.token,
+      ).length > 0
+    );
+  });
 
 const currentConfigurationKey =
   computed(() =>
@@ -138,8 +161,11 @@ const hasChanges =
 
 const canSubmit =
   computed(() =>
-    hasChanges.value ||
-    verificationRequired.value,
+    hasRequiredConfiguration.value &&
+    (
+      hasChanges.value ||
+      verificationRequired.value
+    ),
   );
 
 const currentAttemptedStatus =
@@ -183,6 +209,12 @@ const status =
       !hasRequiredConfiguration.value
     ) {
       return 'unconfigured';
+    }
+
+    if (
+      configuration.value.homeAssistantEnabled === false
+    ) {
+      return 'connected';
     }
 
     if (verificationRequired.value) {
@@ -272,20 +304,27 @@ Promise<void> {
       ...normalizedConfiguration,
     };
 
+
+    emit(
+      'matterEnabledChanged',
+      normalizedConfiguration.matterEnabled === true,
+    );
     initialConfiguration.value = {
       ...normalizedConfiguration,
     };
 
     persistedConnectionStatus.value =
-      await requestConnectionStatus(
-        normalizedConfiguration,
-      );
+      normalizedConfiguration.homeAssistantEnabled !== false
+        ? await requestConnectionStatus(
+            normalizedConfiguration,
+          )
+        : null;
 
     verificationRequired.value = false;
 
     expanded.value =
-      !persistedConnectionStatus.value
-        .connected;
+      normalizedConfiguration.homeAssistantEnabled !== false &&
+      !persistedConnectionStatus.value?.connected;
   } catch (error: unknown) {
     errorMessage.value =
       getErrorMessage(error);
@@ -314,11 +353,14 @@ Promise<void> {
     );
 
   if (
-    !normalizeText(
-      updatedConfiguration.haUrl,
-    ) ||
-    !normalizeText(
-      updatedConfiguration.token,
+    updatedConfiguration.homeAssistantEnabled !== false &&
+    (
+      !normalizeText(
+        updatedConfiguration.haUrl,
+      ) ||
+      !normalizeText(
+        updatedConfiguration.token,
+      )
     )
   ) {
     attemptedConfigurationKey.value =
@@ -346,99 +388,102 @@ Promise<void> {
   const configurationChanged =
     hasChanges.value;
 
-  checking.value = true;
+  if (updatedConfiguration.homeAssistantEnabled !== false) {
+    checking.value = true;
 
-  try {
-    const connectionStatus =
-      await requestConnectionStatus(
-        updatedConfiguration,
-      );
+    try {
+      const connectionStatus =
+        await requestConnectionStatus(
+          updatedConfiguration,
+        );
 
-    attemptedConfigurationKey.value =
-      currentConfigurationKey.value;
+      attemptedConfigurationKey.value =
+        currentConfigurationKey.value;
 
-    attemptedConnectionStatus.value =
-      connectionStatus;
+      attemptedConnectionStatus.value =
+        connectionStatus;
 
-    if (!connectionStatus.connected) {
+      if (!connectionStatus.connected) {
+        verificationRequired.value = true;
+
+        if (!configurationChanged) {
+          persistedConnectionStatus.value =
+            connectionStatus;
+        }
+
+        errorMessage.value =
+          t(
+            'configuration.messages.notSaved',
+            {
+              message:
+                connectionStatus.message,
+            },
+          );
+
+        expanded.value = true;
+
+        return;
+      }
+    } catch (error: unknown) {
+      const message =
+        getErrorMessage(error);
+
+      attemptedConfigurationKey.value =
+        currentConfigurationKey.value;
+
+      attemptedConnectionStatus.value = {
+        configured: true,
+        connected: false,
+        state: 'unreachable',
+        message,
+      };
+
       verificationRequired.value = true;
 
       if (!configurationChanged) {
         persistedConnectionStatus.value =
-          connectionStatus;
+          attemptedConnectionStatus.value;
       }
 
       errorMessage.value =
         t(
           'configuration.messages.notSaved',
           {
-            message:
-              connectionStatus.message,
+            message,
           },
         );
 
       expanded.value = true;
 
       return;
+    } finally {
+      checking.value = false;
     }
-  } catch (error: unknown) {
-    const message =
-      getErrorMessage(error);
 
-    attemptedConfigurationKey.value =
-      currentConfigurationKey.value;
-
-    attemptedConnectionStatus.value = {
-      configured: true,
-      connected: false,
-      state: 'unreachable',
-      message,
-    };
-
-    verificationRequired.value = true;
+    verificationRequired.value = false;
 
     if (!configurationChanged) {
       persistedConnectionStatus.value =
         attemptedConnectionStatus.value;
+
+      verificationRequired.value = false;
+
+      attemptedConnectionStatus.value =
+        null;
+
+      attemptedConfigurationKey.value =
+        '';
+
+      successMessage.value =
+        t(
+          'configuration.messages.connectionVerified',
+        );
+
+      expanded.value = false;
+
+      return;
     }
 
-    errorMessage.value =
-      t(
-        'configuration.messages.notSaved',
-        {
-          message,
-        },
-      );
-
-    expanded.value = true;
-
-    return;
-  } finally {
-    checking.value = false;
-  }
-
-  verificationRequired.value = false;
-
-  if (!configurationChanged) {
-    persistedConnectionStatus.value =
-      attemptedConnectionStatus.value;
-
-    verificationRequired.value = false;
-
-    attemptedConnectionStatus.value =
-      null;
-
-    attemptedConfigurationKey.value =
-      '';
-
-    successMessage.value =
-      t(
-        'configuration.messages.connectionVerified',
-      );
-
-    expanded.value = false;
-
-    return;
   }
 
   saving.value = true;
@@ -452,9 +497,14 @@ Promise<void> {
         ]
         : [updatedConfiguration];
 
+    const serializableConfigurations =
+      JSON.parse(
+        JSON.stringify(updatedConfigurations),
+      ) as PluginConfiguration[];
+
     await homebridge
       .updatePluginConfig(
-        updatedConfigurations,
+        serializableConfigurations,
       );
 
     await homebridge
@@ -558,12 +608,26 @@ void {
   successMessage.value = '';
 }
 
+function handleMatterEnabledChange():
+void {
+  clearMessages();
+
+  emit(
+    'matterEnabledChanged',
+    configuration.value.matterEnabled === true,
+  );
+}
+
 function normalizeConfiguration(
   value: PluginConfiguration,
 ): PluginConfiguration {
   const normalizedConfiguration:
   PluginConfiguration = {
     ...value,
+    homeAssistantEnabled:
+      value.homeAssistantEnabled !== false,
+    matterEnabled:
+      value.matterEnabled === true,
     haUrl:
       normalizeText(value.haUrl),
     token:
@@ -586,6 +650,10 @@ function comparableConfiguration(
   value: PluginConfiguration,
 ): PluginConfiguration {
   return {
+    homeAssistantEnabled:
+      value.homeAssistantEnabled !== false,
+    matterEnabled:
+      value.matterEnabled === true,
     haUrl:
       normalizeText(value.haUrl),
     token:
@@ -668,7 +736,32 @@ onMounted(() => {
       v-else
       class="configuration-form"
     >
-      <label class="configuration-field">
+      <div class="configuration-options">
+        <label>
+          <input
+            v-model="configuration.homeAssistantEnabled"
+            type="checkbox"
+            :disabled="saving || checking"
+            @change="clearMessages"
+          >
+          <span>Utiliser Home Assistant</span>
+        </label>
+
+        <label>
+          <input
+            v-model="configuration.matterEnabled"
+            type="checkbox"
+            :disabled="saving || checking"
+            @change="handleMatterEnabledChange"
+          >
+          <span>Utiliser Matter</span>
+        </label>
+      </div>
+
+      <label
+        v-if="configuration.homeAssistantEnabled"
+        class="configuration-field"
+      >
         <span>
           {{
             t(
@@ -698,7 +791,10 @@ onMounted(() => {
         >
       </label>
 
-      <label class="configuration-field">
+      <label
+        v-if="configuration.homeAssistantEnabled"
+        class="configuration-field"
+      >
         <span>
           {{
             t(

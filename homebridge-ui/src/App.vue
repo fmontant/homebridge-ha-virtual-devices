@@ -41,6 +41,9 @@ const {
   t,
 } = useI18n();
 
+const matterEnabled =
+  ref(false);
+
 const search =
   ref('');
 
@@ -543,10 +546,15 @@ onUnmounted(() => {
 </header>
 
    <section class="configuration-panel">
-      <ConfigurationPanel />
+      <ConfigurationPanel
+        @matter-enabled-changed="matterEnabled = $event"
+      />
     </section>
 
-    <section class="configuration-panel">
+    <section
+      v-if="matterEnabled"
+      class="configuration-panel"
+    >
       <MatterCommissioningPanel
         @commissioned="handleMatterCommissioned"
       />
