@@ -15,7 +15,7 @@ import type {
   Service,
 } from 'homebridge';
 
-import { MatterProvider } from './matter/provider.js';
+import type { MatterProvider } from './matter/provider.js';
 
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
 
@@ -90,7 +90,7 @@ implements DynamicPlatformPlugin {
   private readonly registryManager:
     RegistryManager;
 
-  private readonly matterProvider:
+  private matterProvider?:
     MatterProvider;
 
   private catalogWatcher?:
@@ -236,19 +236,6 @@ implements DynamicPlatformPlugin {
         ignoredDevices,
       );
 
-    this.matterProvider =
-      new MatterProvider(
-        this.accessoryManager,
-        this.catalogManager,
-        this.registryManager,
-        this.log,
-        join(
-          this.api.user.storagePath(),
-          'ha-virtual-devices',
-          'matter',
-        ),
-      );
-
     const eveHomeKitTypes =
       new EveHomeKitTypes(
         this.api,
@@ -268,6 +255,31 @@ implements DynamicPlatformPlugin {
         await this.didFinishLaunching();
       },
     );
+  }
+
+  private async getMatterProvider():
+    Promise<MatterProvider> {
+    if (this.matterProvider) {
+      return this.matterProvider;
+    }
+
+    const { MatterProvider } =
+      await import('./matter/provider.js');
+
+    this.matterProvider =
+      new MatterProvider(
+        this.accessoryManager,
+        this.catalogManager,
+        this.registryManager,
+        this.log,
+        join(
+          this.api.user.storagePath(),
+          'ha-virtual-devices',
+          'matter',
+        ),
+      );
+
+    return this.matterProvider;
   }
 
   private async didFinishLaunching():
@@ -308,8 +320,10 @@ implements DynamicPlatformPlugin {
     this.startCatalogWatcher();
 
     try {
-      await this.matterProvider.start();
+      const matterProvider =
+        await this.getMatterProvider();
 
+      await matterProvider.start();
       this.log.info(
         'Provider Matter démarré',
       );
@@ -550,7 +564,7 @@ implements DynamicPlatformPlugin {
           .close();
 
         void this.matterProvider
-          .stop()
+          ?.stop()
           .catch(error => {
             this.log.error(
               'Erreur pendant l’arrêt du provider Matter :',
@@ -588,8 +602,11 @@ implements DynamicPlatformPlugin {
       }
 
       try {
+        const matterProvider =
+          await this.getMatterProvider();
+
         const descriptor =
-          await this.matterProvider.commission(
+          await matterProvider.commission(
             request.pairingCode,
           );
 
