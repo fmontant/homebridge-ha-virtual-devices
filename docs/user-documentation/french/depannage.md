@@ -1,307 +1,347 @@
 # Dépannage
 
-Ce document regroupe les problèmes les plus fréquemment rencontrés avec **Homebridge HA Virtual Devices** ainsi que les solutions recommandées.
+Ce document regroupe les vérifications recommandées en cas de problème
+avec **Homebridge HA Virtual Devices V2**.
 
-Avant d'ouvrir une issue sur GitHub, prenez quelques minutes pour consulter cette page. La majorité des difficultés courantes peuvent être résolues rapidement.
+La première question à se poser est désormais : **quelle source est
+concernée ?**
 
----
+-   Home Assistant ;
+-   Matter ;
+-   les deux.
 
-# Avant de commencer
+Cette distinction évite de rechercher un problème Home Assistant
+lorsqu'un appareil provient de Matter, et inversement.
 
-Dans la plupart des cas, les informations nécessaires au diagnostic se trouvent dans les journaux Homebridge.
+------------------------------------------------------------------------
 
-Depuis l'interface Homebridge :
+## Avant de commencer
 
-1. ouvrez **Logs** ;
-2. redémarrez le plugin si nécessaire ;
-3. reproduisez le problème ;
-4. consultez les derniers messages affichés.
+Consultez d'abord les journaux Homebridge :
 
-Les journaux constituent la première source d'information pour comprendre un dysfonctionnement.
+1.  ouvrez **Logs** dans l'interface Homebridge ;
+2.  reproduisez le problème ;
+3.  repérez les messages concernant Homebridge HA Virtual Devices ;
+4.  notez la source et l'appareil concernés.
 
----
+Évitez de supprimer le catalogue ou de réinstaller le plugin avant
+d'avoir identifié la cause.
 
-# Le plugin ne démarre pas
+------------------------------------------------------------------------
 
-## Symptômes
-
-- le plugin apparaît en erreur ;
-- Homebridge signale un échec au démarrage ;
-- aucun accessoire n'est créé.
-
-## Vérifications
-
-Contrôlez :
-
-- la configuration du plugin ;
-- les paramètres de connexion à Home Assistant ;
-- le jeton d'accès utilisé ;
-- la disponibilité du serveur Home Assistant.
-
-Consultez ensuite les journaux Homebridge afin d'identifier le message d'erreur précis.
-
----
-
-# Aucun appareil n'est découvert
-
-## Symptômes
-
-Le catalogue reste vide après le démarrage.
-
-## Causes possibles
-
-- Home Assistant n'est pas joignable ;
-- l'authentification a échoué ;
-- aucun capteur compatible n'est présent ;
-- la connexion WebSocket ne fonctionne pas.
-
-## Vérifications
-
-Assurez-vous que :
-
-- Home Assistant est opérationnel ;
-- le jeton possède les droits nécessaires ;
-- les capteurs sont visibles dans Home Assistant ;
-- le plugin est correctement connecté.
-
----
-
-# Un capteur n'apparaît pas
-
-## Symptômes
-
-Un capteur existe dans Home Assistant mais n'apparaît pas dans le catalogue.
-
-## Vérifications
+## Le plugin ne démarre pas
 
 Vérifiez :
 
-- que le capteur est compatible avec le plugin ;
-- qu'il n'est pas désactivé ;
-- qu'il n'est pas masqué ;
-- que Home Assistant publie correctement son état.
+-   la configuration du plugin ;
+-   qu'au moins une source est activée ;
+-   les messages d'erreur dans les journaux Homebridge.
 
-Consultez également les journaux afin de vérifier que le capteur a bien été découvert.
+Si Home Assistant est activé, vérifiez également son URL et son jeton.
 
----
+Si Matter est activé, recherchez dans les journaux les messages liés au
+provider Matter.
 
-# Le capteur apparaît comme « Manquant »
+------------------------------------------------------------------------
 
-## Symptômes
+## Impossible d'enregistrer la configuration
 
-Le catalogue indique qu'un appareil est **Manquant**.
+Au moins une source doit être active :
 
-## Explication
+-   **Utiliser Home Assistant** ;
+-   **Utiliser Matter**.
 
-Le plugin ne retrouve plus ce capteur lors de la phase de découverte.
+Si Home Assistant est activé, son URL et son jeton doivent être
+renseignés.
 
-Cela peut arriver :
+En mode Matter uniquement, les informations Home Assistant ne sont pas
+nécessaires.
 
-- après une suppression dans Home Assistant ;
-- après un changement d'identifiant ;
-- lorsque le capteur est temporairement indisponible.
+------------------------------------------------------------------------
 
-Le plugin conserve volontairement toutes les préférences de l'appareil afin de permettre sa restauration automatique.
+## Problèmes Home Assistant
 
----
+### Aucun appareil Home Assistant n'est découvert
 
-# L'accessoire indique « Sans réponse » dans Apple Home
+Vérifiez :
 
-## Symptômes
+-   que **Utiliser Home Assistant** est activé ;
+-   que Home Assistant est joignable ;
+-   que l'URL est correcte ;
+-   que le jeton est valide ;
+-   que les capteurs compatibles existent dans Home Assistant ;
+-   que la connexion du plugin à Home Assistant est établie.
 
-Apple Home affiche :
+### Un capteur Home Assistant n'apparaît pas
 
-```
-Sans réponse
-```
+Vérifiez :
 
-## Causes possibles
+-   que le capteur existe toujours dans Home Assistant ;
+-   qu'il fournit une capacité prise en charge ;
+-   qu'il n'est pas ignoré par la configuration ;
+-   son état dans le catalogue ;
+-   les journaux de découverte.
 
-- batterie déchargée ;
-- capteur hors de portée ;
-- problème Zigbee ;
-- problème de communication avec Home Assistant.
+### La température ne se met plus à jour avec Home Assistant
 
-Le plugin conserve l'accessoire et met à jour son état dès que le capteur redevient disponible.
+Comparez :
 
----
+-   la valeur affichée dans Home Assistant ;
+-   la valeur du catalogue/plugin ;
+-   la **Dernière communication** ;
+-   les journaux Homebridge.
 
-# La température ne se met plus à jour
+Si Home Assistant ne reçoit lui-même plus de nouvelle valeur, le plugin
+ne peut pas la transmettre.
 
-## Vérifications
+### Home Assistant redémarre
 
-Contrôlez :
+Le plugin dispose d'une logique de reconnexion à Home Assistant.
 
-- la valeur dans Home Assistant ;
-- la date de la **Dernière communication** ;
-- les journaux Homebridge.
+Après un redémarrage de Home Assistant, laissez quelques instants à la
+connexion pour être rétablie puis vérifiez les journaux si les mises à
+jour ne reprennent pas.
 
-Si Home Assistant ne reçoit plus de données, le plugin ne peut pas créer de nouvelles mises à jour.
+------------------------------------------------------------------------
 
----
+## Problèmes Matter
 
-# La date « Dernière communication » est ancienne
+### Le panneau « Ajouter un capteur Matter » n'apparaît pas
 
-Cette information correspond au dernier événement reçu depuis Home Assistant.
+Vérifiez que **Utiliser Matter** est activé dans la configuration du
+plugin.
 
-Une date ancienne indique généralement :
+Le panneau Matter est masqué lorsque Matter est désactivé.
 
-- un capteur inactif ;
-- une batterie faible ;
-- une perte de communication ;
-- un problème radio.
+### Quel code Matter faut-il saisir ?
 
-Cette information est particulièrement utile pour détecter un capteur bloqué.
+Pour partager avec le plugin un appareil déjà présent dans Apple Home :
 
----
+1.  ouvrez les réglages de l'appareil dans Maison ;
+2.  choisissez **Activer le mode jumelage** ;
+3.  utilisez le **nouveau code de partage Matter** généré par Maison.
 
-# Les favoris disparaissent
+Saisissez ce code dans le panneau **Ajouter un capteur Matter**.
 
-Les favoris sont enregistrés dans le catalogue persistant.
+### L'ajout Matter échoue
 
-S'ils semblent avoir disparu :
+Vérifiez :
 
-- vérifiez que le fichier du catalogue est toujours présent ;
-- assurez-vous que Homebridge possède les droits d'écriture nécessaires ;
-- consultez les journaux afin de détecter une éventuelle erreur de sauvegarde.
+-   que Matter est activé dans le plugin ;
+-   que l'appareil est bien en mode jumelage ;
+-   que le code saisi est le nouveau code de partage généré ;
+-   que le code n'a pas expiré ou cessé d'être utilisable ;
+-   les journaux Homebridge pour obtenir le message d'erreur exact.
 
----
+Si nécessaire, réactivez le mode jumelage dans Maison afin d'obtenir un
+nouveau code.
 
-# Une modification n'apparaît pas immédiatement
+### Le capteur Matter est ajouté mais son nom est générique
 
-Depuis la version **1.0.9**, la majorité des modifications sont synchronisées automatiquement.
+Après l'ajout, utilisez le catalogue pour lui attribuer un nom plus
+explicite lorsque l'interface le permet.
 
-Si une modification ne semble pas prise en compte :
+Le plugin conserve le nom personnalisé lors des redécouvertes Matter.
 
-- patientez quelques secondes ;
-- actualisez l'interface Homebridge ;
-- vérifiez les journaux.
+### Une valeur Matter ne se met plus à jour
 
-Un redémarrage de Homebridge ne devrait être nécessaire que dans des cas exceptionnels.
+Vérifiez :
 
----
+-   la disponibilité du capteur ;
+-   la **Dernière communication** ;
+-   si l'appareil continue de fonctionner normalement dans son
+    écosystème Matter ;
+-   les journaux Homebridge liés au provider Matter.
 
-# L'interface d'administration ne s'affiche pas correctement
+Ne modifiez pas immédiatement le commissioning : commencez par
+déterminer si le problème concerne l'appareil, la communication Matter
+ou uniquement sa publication HomeKit.
 
-## Vérifications
+------------------------------------------------------------------------
 
-Essayez successivement :
+## Le capteur apparaît comme « Manquant »
 
-- actualiser la page ;
-- vider le cache du navigateur ;
-- redémarrer Homebridge ;
-- vérifier que l'installation du plugin est complète.
+Un appareil **Manquant** est connu du catalogue mais n'est plus retrouvé
+par sa source.
 
----
+Cela peut notamment arriver après :
 
-# Une mise à jour du plugin s'est mal passée
+-   la suppression ou le renommage technique d'une entité Home Assistant
+    ;
+-   la disparition d'un appareil de la source ;
+-   une indisponibilité prolongée ou un problème de découverte.
+
+Le catalogue conserve les préférences de l'appareil.
+
+Avant de supprimer quoi que ce soit, identifiez sa **source** et
+vérifiez si elle le voit encore.
+
+------------------------------------------------------------------------
+
+## L'accessoire indique « Sans réponse » dans Apple Home
+
+Les causes possibles dépendent de la source et du capteur :
+
+-   batterie déchargée ;
+-   capteur hors de portée ;
+-   problème radio ;
+-   Home Assistant indisponible pour un appareil HA ;
+-   problème de communication Matter pour un appareil Matter ;
+-   Homebridge ou le plugin indisponible.
+
+Commencez par vérifier la valeur et la disponibilité dans la source
+concernée, puis les journaux Homebridge.
+
+------------------------------------------------------------------------
+
+## La date « Dernière communication » est ancienne
+
+Une date ancienne signifie qu'aucune communication plus récente n'a été
+enregistrée pour l'appareil.
+
+Elle peut révéler :
+
+-   un capteur inactif ;
+-   une batterie faible ou déchargée ;
+-   une perte de communication ;
+-   un problème de connexion avec la source.
+
+Utilisez la source affichée dans le catalogue pour orienter le
+diagnostic.
+
+------------------------------------------------------------------------
+
+## Les favoris, noms ou préférences semblent avoir disparu
+
+Les préférences sont enregistrées dans le catalogue persistant.
+
+Vérifiez :
+
+-   que le catalogue est toujours présent ;
+-   que Homebridge possède les droits nécessaires pour l'utiliser ;
+-   les journaux pour détecter une erreur de lecture ou d'écriture ;
+-   que vous consultez bien le même appareil/source.
+
+Évitez de supprimer le catalogue tant que le diagnostic n'est pas
+terminé.
+
+------------------------------------------------------------------------
+
+## La pièce du plugin ne change pas la pièce dans Apple Maison
+
+C'est le comportement attendu.
+
+La pièce enregistrée dans le catalogue est une préférence interne au
+plugin. Homebridge ne peut pas, par le fonctionnement normal d'un
+plugin, affecter automatiquement un accessoire à une pièce de
+l'application Maison.
+
+Pour déplacer l'accessoire dans Apple Home, effectuez l'opération
+directement dans l'app Maison.
+
+------------------------------------------------------------------------
+
+## Une modification n'apparaît pas immédiatement
+
+Actualisez d'abord l'interface Homebridge et laissez quelques secondes à
+la synchronisation.
+
+Si le problème persiste :
+
+-   vérifiez les journaux ;
+-   identifiez si la modification concerne une préférence du catalogue
+    ou une valeur provenant d'une source ;
+-   vérifiez l'état de la source concernée.
+
+Un redémarrage ne doit pas être la première méthode de diagnostic.
+
+------------------------------------------------------------------------
+
+## L'interface d'administration ne s'affiche pas correctement
+
+Essayez :
+
+-   d'actualiser la page ;
+-   de rouvrir la configuration du plugin ;
+-   de vérifier les journaux Homebridge ;
+-   de redémarrer Homebridge si l'interface reste indisponible.
+
+En cas de problème après une mise à jour, vérifiez également la version
+réellement installée.
+
+------------------------------------------------------------------------
+
+## Une mise à jour du plugin s'est mal passée
 
 Après une mise à jour :
 
-1. vérifiez la version installée ;
-2. redémarrez Homebridge ;
-3. consultez les journaux.
+1.  vérifiez la version installée ;
+2.  consultez les journaux ;
+3.  vérifiez que la configuration a été conservée ;
+4.  vérifiez les sources activées ;
+5.  redémarrez Homebridge si nécessaire.
 
-Le catalogue utilisateur est conservé entre deux versions et ne doit normalement pas être perdu.
+Une configuration provenant de la version 1.x sans paramètres de source
+explicites est interprétée avec Home Assistant activé et Matter
+désactivé.
 
----
+------------------------------------------------------------------------
 
-# Vérifier la version installée
+## Vérifier la version installée
 
 Depuis le terminal :
 
-```bash
+``` bash
 npm list homebridge-ha-virtual-devices
 ```
 
-Vous pouvez également consulter la page du plugin dans l'interface Homebridge.
+La version est également visible dans l'interface Homebridge.
 
----
+------------------------------------------------------------------------
 
-# Recompiler le projet
+## Réinstallation
 
-Pour les développeurs :
+Une réinstallation ne doit intervenir qu'après les vérifications
+précédentes.
 
-Compilation complète :
+Si elle est nécessaire, utilisez de préférence les mécanismes
+d'installation de Homebridge afin de conserver une installation
+cohérente avec votre environnement.
 
-```bash
-npm run build:all
-```
+La suppression du plugin ne doit pas être confondue avec la suppression
+volontaire de ses données persistantes.
 
-Compilation du plugin uniquement :
+------------------------------------------------------------------------
 
-```bash
-npm run build
-```
+## Collecter les informations avant de demander de l'aide
 
-Compilation de l'interface graphique :
+Préparez :
 
-```bash
-npm run build:ui
-```
+-   version du plugin ;
+-   version de Homebridge ;
+-   version de Node.js ;
+-   système d'exploitation ;
+-   source concernée : Home Assistant, Matter ou les deux ;
+-   version de Home Assistant si elle est concernée ;
+-   type de capteur ;
+-   extrait pertinent des journaux ;
+-   description précise du problème ;
+-   étapes permettant de le reproduire.
 
-Analyse du code :
+Ne publiez pas votre jeton d'accès Home Assistant ni d'autres
+informations d'authentification.
 
-```bash
-npm run lint
-```
+------------------------------------------------------------------------
 
----
+## Si le problème persiste
 
-# Réinstaller le plugin
+Avant d'ouvrir une issue GitHub :
 
-En cas de doute, une réinstallation propre peut résoudre certains problèmes.
+1.  vérifiez qu'un problème identique n'est pas déjà signalé ;
+2.  rassemblez les informations de diagnostic ;
+3.  décrivez le résultat attendu et le résultat observé ;
+4.  joignez uniquement les extraits de journaux utiles, après avoir
+    retiré les informations sensibles.
 
-Exemple :
-
-```bash
-npm uninstall homebridge-ha-virtual-devices
-npm install homebridge-ha-virtual-devices
-```
-
-Ou, pour une archive locale :
-
-```bash
-npm install ./homebridge-ha-virtual-devices-x.y.z.tgz
-```
-
----
-
-# Collecter des informations avant de demander de l'aide
-
-Avant d'ouvrir une issue sur GitHub, essayez de réunir les informations suivantes :
-
-- version du plugin ;
-- version de Homebridge ;
-- version de Home Assistant ;
-- version de Node.js ;
-- système d'exploitation ;
-- extrait des journaux ;
-- description précise du problème ;
-- étapes permettant de reproduire le comportement observé.
-
-Ces informations facilitent considérablement le diagnostic.
-
----
-
-# Bonnes pratiques
-
-Pour limiter les problèmes :
-
-- maintenez Homebridge à jour ;
-- maintenez Home Assistant à jour ;
-- utilisez une version récente de Node.js ;
-- surveillez les batteries des capteurs ;
-- consultez régulièrement les journaux du plugin.
-
----
-
-# Si le problème persiste
-
-Si aucune des solutions proposées ne résout votre problème :
-
-1. vérifiez que celui-ci n'a pas déjà été signalé sur GitHub ;
-2. ouvrez une nouvelle issue en joignant toutes les informations utiles ;
-3. ajoutez les journaux correspondants ainsi que le contexte permettant de reproduire le problème.
-
-Plus le rapport sera précis, plus il sera facile d'identifier et de corriger l'origine du dysfonctionnement.
+Un rapport précis permet d'identifier beaucoup plus rapidement l'origine
+du problème.
