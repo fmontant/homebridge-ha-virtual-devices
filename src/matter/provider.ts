@@ -16,6 +16,9 @@ import { MatterController } from './controller.js';
 import { MatterDeviceDiscovery } from './discovery.js';
 import { MatterDeviceMapper } from './mapper.js';
 import {
+  MatterDeviceNameStore,
+} from './deviceNameStore.js';
+import {
   MatterDeviceCatalogMapper,
 } from './catalogMapper.js';
 import {
@@ -41,6 +44,9 @@ export class MatterProvider {
   private readonly subscriptions =
     new MatterSubscriptionManager();
 
+  private readonly deviceNameStore:
+    MatterDeviceNameStore;
+
   public constructor(
     private readonly accessoryManager:
       AccessoryManager,
@@ -52,10 +58,16 @@ export class MatterProvider {
 
     private readonly log: Logging,
     private readonly storagePath: string,
+    private readonly deviceNameStorePath: string,
   ) {
     this.controller =
       new MatterController(
         this.storagePath,
+      );
+
+    this.deviceNameStore =
+      new MatterDeviceNameStore(
+        this.deviceNameStorePath,
       );
   }
 
@@ -112,11 +124,38 @@ export class MatterProvider {
               );
 
 
-    await this.catalogManager
-      .synchronizeDiscoveredDevices(
-        discoveredCatalogDevices,
-        'matter',
-      );
+    const synchronizationResult =
+      await this.catalogManager
+        .synchronizeDiscoveredDevices(
+          discoveredCatalogDevices,
+          'matter',
+        );
+
+    let restoredDeviceName = false;
+
+    for (const catalogDevice of synchronizationResult.added) {
+      const uniqueId =
+        catalogDevice.metadata.uniqueId?.trim();
+
+      if (!uniqueId) {
+        continue;
+      }
+
+      const storedName =
+        (await this.deviceNameStore.getName(uniqueId))?.trim();
+
+      if (!storedName) {
+        continue;
+      }
+
+      catalogDevice.preferences.homeKitName =
+        storedName;
+      restoredDeviceName = true;
+    }
+
+    if (restoredDeviceName) {
+      await this.catalogManager.save();
+    }
 
     const publishedDevices = [];
 

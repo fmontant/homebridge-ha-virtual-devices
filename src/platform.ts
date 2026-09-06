@@ -277,6 +277,11 @@ implements DynamicPlatformPlugin {
           'ha-virtual-devices',
           'matter',
         ),
+        join(
+          this.api.user.storagePath(),
+          'ha-virtual-devices',
+          'matter-device-names.json',
+        ),
       );
 
     return this.matterProvider;

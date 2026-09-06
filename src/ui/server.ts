@@ -26,6 +26,10 @@ import {
   MatterCommissioningStore,
 } from '../matter/commissioningStore.js';
 
+import {
+  MatterDeviceNameStore,
+} from '../matter/deviceNameStore.js';
+
 import type {
   CatalogApiDevice,
 } from './catalogApi.js';
@@ -123,6 +127,9 @@ export class HAVirtualDevicesUiServer
 
   private matterCommissioningStore?:
         MatterCommissioningStore;
+
+  private matterDeviceNameStore?:
+        MatterDeviceNameStore;
 
   private matterCommissioningInProgress =
     false;
@@ -269,6 +276,7 @@ export class HAVirtualDevicesUiServer
                   pluginStateFilePath,
                 );
 
+
       this.matterCommissioningStore =
                 new MatterCommissioningStore(
                   join(
@@ -278,6 +286,14 @@ export class HAVirtualDevicesUiServer
                   join(
                     this.catalogDirectoryPath,
                     'matter-commissioning-response.json',
+                  ),
+                );
+
+      this.matterDeviceNameStore =
+                new MatterDeviceNameStore(
+                  join(
+                    this.catalogDirectoryPath,
+                    'matter-device-names.json',
                   ),
                 );
 
@@ -687,6 +703,31 @@ export class HAVirtualDevicesUiServer
       throw new Error(
         `Appareil introuvable : ${request.id}`,
       );
+    }
+
+    const device =
+      devices[deviceIndex];
+
+    if (
+      device.source === 'matter' &&
+      device.metadata.uniqueId &&
+      device.preferences.homeKitName?.trim() &&
+      device.preferences.homeKitName.trim() !==
+        device.name.trim()
+    ) {
+      if (
+        !this.matterDeviceNameStore
+      ) {
+        throw new Error(
+          'Référentiel de noms Matter non initialisé',
+        );
+      }
+
+      await this.matterDeviceNameStore
+        .saveName(
+          device.metadata.uniqueId,
+          device.preferences.homeKitName.trim(),
+        );
     }
 
     devices.splice(
