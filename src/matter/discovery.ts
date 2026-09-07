@@ -11,6 +11,10 @@ export class MatterDeviceDiscovery {
     const devices: MatterDeviceDescriptor[] = [];
 
     for (const peer of node.peers) {
+      if (!peer.peerAddress) {
+        continue;
+      }
+
 
       devices.push(
         await this.createDescriptor(peer),
