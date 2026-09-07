@@ -121,6 +121,12 @@
       "unconfigured": "Non configuré"
     },
     "fields": {
+      "homeAssistantEnabled": {
+        "label": "Utiliser Home Assistant"
+      },
+      "matterEnabled": {
+        "label": "Utiliser Matter"
+      },
       "address": {
         "label": "Adresse Home Assistant",
         "ariaLabel": "Adresse du serveur Home Assistant"

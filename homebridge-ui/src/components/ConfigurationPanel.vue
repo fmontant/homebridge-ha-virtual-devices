@@ -744,7 +744,7 @@ onMounted(() => {
             :disabled="saving || checking"
             @change="clearMessages"
           >
-          <span>Utiliser Home Assistant</span>
+          <span>{{ t('configuration.fields.homeAssistantEnabled.label') }}</span>
         </label>
 
         <label>
@@ -754,7 +754,7 @@ onMounted(() => {
             :disabled="saving || checking"
             @change="handleMatterEnabledChange"
           >
-          <span>Utiliser Matter</span>
+          <span>{{ t('configuration.fields.matterEnabled.label') }}</span>
         </label>
       </div>
 

@@ -121,6 +121,12 @@
       "unconfigured": "Sin configurar"
     },
     "fields": {
+      "homeAssistantEnabled": {
+        "label": "Usar Home Assistant"
+      },
+      "matterEnabled": {
+        "label": "Usar Matter"
+      },
       "address": {
         "label": "Dirección de Home Assistant",
         "ariaLabel": "Dirección del servidor Home Assistant"
@@ -153,24 +159,24 @@
   },
 
   "matter": {
-    "title": "Conexión Matter",
-    "description": "Añada directamente al plugin un dispositivo Matter que ya esté presente en su hogar",
+    "title": "Añadir un sensor Matter",
+    "description": "Añada directamente al plugin un sensor Matter ya instalado en Apple Casa, sin utilizar Home Assistant.",
     "fields": {
       "pairingCode": {
         "label": "Código para compartir Matter",
         "ariaLabel": "Código para compartir Matter",
-        "placeholder": "1234-12-1234"
+        "placeholder": "1234-123-1234"
       }
     },
     "actions": {
-      "commission": "Añadir dispositivo",
-      "commissioning": "Añadiendo dispositivo…"
+      "commission": "Añadir sensor",
+      "commissioning": "Añadiendo sensor…"
     },
     "messages": {
-      "instructions": "En la app Casa, active el modo de emparejamiento del dispositivo, genere un nuevo código para compartir Matter e introdúzcalo aquí.",
+      "instructions": "En la app Casa, abra los ajustes del sensor que desea añadir y seleccione «Activar el modo de emparejamiento». Casa generará entonces un nuevo código para compartir Matter. Copie este código, introdúzcalo a continuación y haga clic en «Añadir sensor».",
       "missingCode": "Introduzca el código para compartir Matter.",
-      "success": "El dispositivo Matter se ha añadido correctamente.",
-      "failed": "No se ha podido añadir el dispositivo Matter: {message}."
+      "success": "El sensor Matter se ha añadido correctamente. Ahora aparece en la lista de dispositivos. Puede cambiarle el nombre para identificarlo más fácilmente.",
+      "failed": "No se ha podido añadir el sensor Matter: {message}."
     }
   },
 
