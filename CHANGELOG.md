@@ -27,6 +27,14 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 
 ---
 
+## [2.0.1] - 2026-09-07
+
+### Changed
+
+- Fixed a Matter discovery issue that could prevent the provider from starting when a commissioned device does not yet have a network address. Matter devices without an address are now temporarily skipped without blocking the discovery and synchronization of other devices.
+
+---
+
 ## [2.0.0] - 2026-09-07
 
 ### Changed
@@ -187,6 +195,14 @@ Future features and planned improvements are documented in **ROADMAP.md**.
 ### Changed
 
 - Décrire les changements inclus dans cette version.
+
+---
+
+## [2.0.1] - 2026-09-07
+
+### Changed
+
+- Correction d’un problème de découverte Matter pouvant empêcher le démarrage du provider lorsqu’un appareil commissionné ne dispose pas encore d’une adresse réseau. Les appareils Matter sans adresse sont désormais ignorés temporairement sans bloquer la découverte et la synchronisation des autres appareils.
 
 ---
 
