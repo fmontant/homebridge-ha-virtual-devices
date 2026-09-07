@@ -121,6 +121,12 @@
       "unconfigured": "Not configured"
     },
     "fields": {
+      "homeAssistantEnabled": {
+        "label": "Use Home Assistant"
+      },
+      "matterEnabled": {
+        "label": "Use Matter"
+      },
       "address": {
         "label": "Home Assistant address",
         "ariaLabel": "Home Assistant server address"
@@ -142,7 +148,7 @@
       "checking": "Checking…",
       "saving": "Saving…"
     },
-    "messages": {
+        "messages": {
       "missingAddressOrToken": "Address or token is missing",
       "incomplete": "The configuration is incomplete.",
       "notSaved": "Configuration not saved: {message}.",
@@ -151,6 +157,29 @@
       "saveFailed": "The configuration could not be saved."
     }
   },
+
+  "matter": {
+    "title": "Add a Matter sensor",
+    "description": "Add a Matter sensor already installed in Apple Home directly to the plugin, without using Home Assistant.",
+    "fields": {
+      "pairingCode": {
+        "label": "Matter sharing code",
+        "ariaLabel": "Matter sharing code",
+        "placeholder": "1234-123-1234"
+      }
+    },
+    "actions": {
+      "commission": "Add sensor",
+      "commissioning": "Adding sensor…"
+    },
+    "messages": {
+      "instructions": "In the Home app, open the settings of the sensor you want to add and select “Turn On Pairing Mode”. Home then generates a new Matter sharing code. Copy this code, enter it below, then click “Add sensor”.",
+      "missingCode": "Enter the Matter sharing code.",
+      "success": "The Matter sensor was added successfully. It now appears in the device list. You can rename it to make it easier to identify.",
+      "failed": "Unable to add the Matter sensor: {message}."
+    }
+  },
+
   "states": {
     "enabled": "Active",
     "disabled": "Disabled",

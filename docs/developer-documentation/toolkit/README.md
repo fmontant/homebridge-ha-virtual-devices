@@ -1,180 +1,270 @@
 # Developer Toolkit
 
-The **Developer Toolkit** provides the scripts and documentation required to build, validate, release and deploy **Homebridge HA Virtual Devices**.
+The **Developer Toolkit** provides the scripts and documentation used to validate, prepare, publish, deploy, diagnose, and inspect **Homebridge HA Virtual Devices**.
 
-It was created to make every release reproducible, reduce manual operations and ensure that every published version follows the same quality standards.
-
----
-
-## Background
-
-The Developer Toolkit replaces a manual release workflow with a reproducible and automated process.
-
-It centralizes the release scripts, validation steps and deployment utilities required to publish official project releases.
+Its purpose is to make development and release operations reproducible while keeping official publication separate from the maintainer-specific NAS workflow.
 
 ---
 
 ## Overview
 
-The toolkit supports the complete release workflow:
+The toolkit currently covers four complementary workflows:
 
 ```text
-Development
-      │
-      ▼
-prepare-release.sh
-      │
-      ▼
-Git validation
-      │
-      ▼
-release.sh
-      │
-      ▼
-Release validation
-      │
-      ▼
-npm publication
-      │
-      ▼
-Git tag creation
-      │
-      ▼
-GitHub publication
-      │
-      ▼
-install-on-nas.sh
-      │
-      ▼
-NAS deployment (optional)
+Quality validation
+    │
+    └── npm run verify
+
+Release
+    │
+    ├── npm run prepare-release
+    └── npm run release
+
+NAS development / deployment
+    │
+    ├── npm run install-on-nas
+    ├── npm run dev
+    └── npm run doctor
+
+Diagnostics
+    │
+    ├── npm run doctor
+    └── npm run logs
+```
+
+A complete orchestrated publication flow is also available through:
+
+```text
+npm run toolkit:publish
 ```
 
 ---
 
-## Objectives
+## Main Commands
 
-The toolkit has four primary objectives:
+| Command | Purpose |
+|---|---|
+| `npm run verify` | Run lint, complete build, and `git diff --check`. |
+| `npm run prepare-release` | Prepare the version, changelog, release commit, and push it to GitHub. |
+| `npm run release` | Validate and publish the package to npm, create the Git tag, and create the GitHub Release. |
+| `npm run install-on-nas` | Build, package, transfer, and install the current project on the development NAS. |
+| `npm run doctor` | Diagnose the local/remote Homebridge development installation. |
+| `npm run logs` | Access Homebridge logs, optionally filtered by text. |
+| `npm run dev` | Deploy to the NAS and immediately run the diagnostic. |
+| `npm run toolkit:publish` | Orchestrate preparation, official release, and NAS installation. |
 
-- automate repetitive development tasks;
-- prevent common release mistakes;
-- guarantee reproducible releases;
-- standardize the release workflow.
+Toolkit aliases are also exposed for the specialized scripts:
+
+```text
+toolkit:prepare
+toolkit:release
+toolkit:install
+toolkit:logs
+toolkit:doctor
+toolkit:dev
+```
 
 ---
 
-## Toolkit Components
+## Release Workflow
 
-### Release Preparation
+The normal official release path is:
 
-The `prepare-release.sh` script prepares a new project version.
+```text
+Development
+    │
+    ▼
+npm run verify
+    │
+    ▼
+npm run prepare-release
+    │
+    ▼
+release preparation commit
+    │
+    ▼
+npm run release
+    │
+    ├── npm publication
+    ├── Git tag
+    └── GitHub Release
+```
 
-Its responsibilities include:
+NAS installation is a separate environment-specific operation and is not required to define an npm/GitHub release.
 
-- selecting the next version;
-- validating Semantic Versioning;
-- updating the project version;
-- creating the release commit;
-- pushing the changes to GitHub.
+The complete maintainer workflow can nevertheless be orchestrated by `scripts/publish.sh`.
 
 ---
 
-### Release
+## Release Preparation
 
-The `release.sh` script publishes an official project release.
+`scripts/prepare-release.sh` is responsible for preparing the repository for an official release.
 
-Before publishing, it verifies:
+It verifies the development environment and repository state, prepares the release notes, runs quality checks, updates the version and changelog, verifies the expected modified files, creates the preparation commit, and pushes that commit to GitHub.
+
+The expected next command after successful preparation is:
+
+```text
+npm run release
+```
+
+---
+
+## Release Publication
+
+`scripts/release.sh` performs the official publication phase.
+
+Before publishing, it validates:
 
 - required tools;
-- current Git branch;
-- repository status;
+- Git branch and repository state;
 - GitHub synchronization;
 - npm authentication;
+- GitHub authentication;
 - version availability;
-- code quality;
-- project build;
-- generated files;
-- package contents.
+- release notes;
+- lint and build;
+- generated repository state;
+- npm package contents.
 
-After explicit confirmation, it:
-
-- publishes the package to npm;
-- creates the Git tag;
-- pushes the tag to GitHub.
+After confirmation it publishes to npm, creates and pushes the Git tag, and creates the corresponding GitHub Release.
 
 ---
 
-### NAS Deployment
+## Complete Publication Orchestrator
 
-The `install-on-nas.sh` script provides deployment utilities specific to the development environment.
+`scripts/publish.sh` is the high-level toolkit orchestrator.
 
-NAS deployment intentionally remains separate from the generic release workflow because it depends on the maintainer's TerraMaster Homebridge installation.
+It delegates the complete sequence to the specialized scripts:
+
+```text
+prepare-release.sh
+        │
+        ▼
+release.sh
+        │
+        ▼
+install-on-nas.sh
+```
+
+The specialized scripts remain independently usable.
 
 ---
 
-### Shared Library
+## NAS Deployment
 
-Shared Bash functions are centralized in:
+`scripts/install-on-nas.sh` handles deployment to the maintainer's Homebridge installation.
+
+Its workflow includes local lint/build validation, npm package creation, SSH transfer, automatic Homebridge container detection, installation inside the container, and container restart.
+
+The deployment logic deliberately remains separate from the generic release process because the NAS, SSH alias, Docker path, and Homebridge container environment are specific to the development installation.
+
+---
+
+## Development Deployment
+
+`scripts/dev.sh` provides the convenient development workflow:
+
+```text
+npm run install-on-nas
+        │
+        ▼
+npm run doctor
+```
+
+It deploys the current working project to the NAS and then verifies the resulting installation.
+
+---
+
+## Diagnostics
+
+### Doctor
+
+`scripts/doctor.sh` checks the local and remote environment used by the development toolkit.
+
+It verifies the required tools, SSH access, Homebridge container discovery, and the software/plugin state inside the container.
+
+### Logs
+
+`scripts/logs.sh` connects to the Homebridge logs after automatically locating the Homebridge container.
+
+It supports optional free-text filtering, for example:
+
+```text
+npm run logs -- homekit
+npm run logs -- catalog
+npm run logs -- Terrasse
+```
+
+---
+
+## Automatic Homebridge Container Detection
+
+Deployment, diagnostics, and log access reuse shared Homebridge container-detection logic.
+
+The toolkit therefore does not depend on a hard-coded container instance name such as a particular `homebridge-homebridge_vXX` value.
+
+This is important because the generated Docker container name may change when the Homebridge installation is recreated or upgraded.
+
+---
+
+## Shared Library
+
+Shared Bash functionality is centralized in:
 
 ```text
 scripts/lib/common.sh
 ```
 
-This library provides:
+The common library provides reusable validation and environment helpers used by the specialized toolkit scripts.
 
-- console output helpers;
-- Git validation;
-- npm validation;
-- version management;
-- confirmation prompts;
-- quality checks;
-- common utilities.
-
-Centralizing shared logic guarantees consistent behaviour across the toolkit scripts.
+This keeps Git/npm validation, console behavior, and Homebridge/Docker environment handling consistent across commands.
 
 ---
 
 ## Design Principles
 
-The toolkit follows these design principles:
+The toolkit follows these principles:
 
-- one responsibility per script;
-- shared code in a single location;
-- fail fast on unexpected situations;
-- explicit confirmation before publication;
-- deterministic release process;
-- readable console output;
-- reproducible builds.
+- one clear responsibility per specialized script;
+- common behavior centralized in shared helpers;
+- fail fast when prerequisites are not satisfied;
+- validate before modifying or publishing;
+- explicit official release stages;
+- reproducible package generation;
+- automatic Homebridge environment detection where appropriate;
+- separation between generic publication and maintainer-specific NAS deployment.
 
 ---
 
 ## Documentation
 
 | Document | Description |
-|----------|-------------|
-| [Getting Started](GettingStarted.md) | Preparing a development environment. |
-| [Release Workflow](ReleaseWorkflow.md) | Preparing, publishing and verifying a release. |
-| [Deployment](Deployment.md) | Deploying a published version to the development NAS. |
-| [Reference](Reference.md) | Responsibilities of the toolkit scripts. |
-| [Troubleshooting](Troubleshooting.md) | Diagnosing common development, release and deployment issues. |
+|---|---|
+| [Toolkit](Toolkit.md) | Detailed reference for the current toolkit commands and scripts. |
+| [Getting Started](GettingStarted.md) | Preparing the development environment. |
+| [Release Workflow](ReleaseWorkflow.md) | Preparing, publishing, and verifying a release. |
+| [Deployment](Deployment.md) | Development NAS deployment workflow. |
+| [Reference](Reference.md) | Toolkit command and script reference. |
+| [Troubleshooting](Troubleshooting.md) | Diagnosing development, release, and deployment problems. |
+| [Publication Policy](PublicationPolicy.md) | Rules governing official publication. |
+
+Release-note templates are also available in this directory for English and French GitHub releases.
 
 ---
 
 ## Related Documentation
 
+- [Developer Documentation](../README.md)
 - [Architecture](../architecture/README.md)
 - [Architecture Decision Records](../adr/README.md)
 - [Diagrams](../diagrams/README.md)
+- [Matter](../Matter/README.md)
 
 ---
 
-## Status
+## Current Status
 
-The Developer Toolkit is production-ready and is used for official releases of **Homebridge HA Virtual Devices**.
+The toolkit is the maintained development and release workflow for **Homebridge HA Virtual Devices**.
 
----
-
-## Version
-
-This documentation applies to the Developer Toolkit introduced with **Homebridge HA Virtual Devices 1.1.6**.
-
-It will evolve together with the toolkit in future releases.
+This documentation describes the current toolkit behavior and should evolve with the scripts rather than remain tied to the version in which the toolkit was originally introduced.

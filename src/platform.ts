@@ -15,11 +15,14 @@ import type {
   Service,
 } from 'homebridge';
 
+import type { MatterProvider } from './matter/provider.js';
+
 import { EveHomeKitTypes } from 'homebridge-lib/EveHomeKitTypes';
 
 import { DeviceCatalog } from './catalog/deviceCatalog.js';
 import { DeviceCatalogStore } from './catalog/deviceCatalogStore.js';
 import { PluginStateStore } from './catalog/pluginStateStore.js';
+import { MatterCommissioningStore } from './matter/commissioningStore.js';
 import { AccessoryFactory } from './factories/accessoryFactory.js';
 import { HomeAssistantClient } from './homeassistant/client.js';
 import { HomeAssistantWebSocketClient } from './homeassistant/websocketClient.js';
@@ -75,6 +78,8 @@ implements DynamicPlatformPlugin {
   private readonly pluginStateStore:
     PluginStateStore;
 
+  private readonly matterCommissioningStore:
+    MatterCommissioningStore;
 
   private readonly deviceCatalog:
     DeviceCatalog;
@@ -85,11 +90,17 @@ implements DynamicPlatformPlugin {
   private readonly registryManager:
     RegistryManager;
 
+  private matterProvider?:
+    MatterProvider;
+
   private catalogWatcher?:
     FSWatcher;
 
   private catalogReloadTimer?:
     NodeJS.Timeout;
+
+  private matterCommissioningInProgress =
+    false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public readonly CustomServices: any;
@@ -169,6 +180,20 @@ implements DynamicPlatformPlugin {
         pluginStateFilePath,
       );
 
+    this.matterCommissioningStore =
+      new MatterCommissioningStore(
+        join(
+          this.api.user.storagePath(),
+          'ha-virtual-devices',
+          'matter-commissioning-request.json',
+        ),
+        join(
+          this.api.user.storagePath(),
+          'ha-virtual-devices',
+          'matter-commissioning-response.json',
+        ),
+      );
+
     this.deviceCatalog =
       new DeviceCatalog(
         this.deviceCatalogStore,
@@ -232,11 +257,49 @@ implements DynamicPlatformPlugin {
     );
   }
 
+  private async getMatterProvider():
+    Promise<MatterProvider> {
+    if (this.matterProvider) {
+      return this.matterProvider;
+    }
+
+    const { MatterProvider } =
+      await import('./matter/provider.js');
+
+    this.matterProvider =
+      new MatterProvider(
+        this.accessoryManager,
+        this.catalogManager,
+        this.registryManager,
+        this.log,
+        join(
+          this.api.user.storagePath(),
+          'ha-virtual-devices',
+          'matter',
+        ),
+        join(
+          this.api.user.storagePath(),
+          'ha-virtual-devices',
+          'matter-device-names.json',
+        ),
+      );
+
+    return this.matterProvider;
+  }
+
   private async didFinishLaunching():
     Promise<void> {
     this.log.info(
       'HA Virtual Devices démarré',
     );
+
+    const homeAssistantEnabled =
+      this.config.homeAssistantEnabled !==
+        false;
+
+    const matterEnabled =
+      this.config.matterEnabled ===
+        true;
 
     const haUrl =
       typeof this.config.haUrl ===
@@ -249,16 +312,6 @@ implements DynamicPlatformPlugin {
         'string'
         ? this.config.token.trim()
         : '';
-
-    if (!haUrl || !token) {
-      this.log.warn(
-        'Configuration Home Assistant incomplète. ' +
-        'Renseignez l’adresse et le jeton ' +
-        'dans les réglages du plugin.',
-      );
-
-      return;
-    }
 
     try {
       await this.deviceCatalog.load();
@@ -278,6 +331,42 @@ implements DynamicPlatformPlugin {
     }
 
     this.startCatalogWatcher();
+
+    if (matterEnabled) {
+      try {
+        const matterProvider =
+          await this.getMatterProvider();
+
+        await matterProvider.start();
+        this.log.info(
+          'Provider Matter démarré',
+        );
+      } catch (error) {
+        this.log.error(
+          'Impossible de démarrer le provider Matter :',
+          error instanceof Error
+            ? error.message
+            : String(error),
+        );
+      }
+    }
+
+    if (!homeAssistantEnabled) {
+      this.log.info(
+        'Provider Home Assistant désactivé',
+      );
+
+      return;
+    }
+
+    if (!haUrl || !token) {
+      this.log.warn(
+        'Configuration Home Assistant incomplète. ' +
+        'Le provider Home Assistant ne sera pas démarré.',
+      );
+
+      return;
+    }
 
     this.log.info(
       'Test de connexion à Home Assistant...',
@@ -415,6 +504,24 @@ implements DynamicPlatformPlugin {
           filename,
         ) => {
           if (
+            filename ===
+            'matter-commissioning-request.json'
+          ) {
+            void this
+              .processMatterCommissioningRequest()
+              .catch(error => {
+                this.log.error(
+                  'Erreur pendant le commissioning Matter :',
+                  error instanceof Error
+                    ? error.message
+                    : String(error),
+                );
+              });
+
+            return;
+          }
+
+          if (
             filename &&
             filename !==
             'device-catalog.json'
@@ -479,11 +586,84 @@ implements DynamicPlatformPlugin {
         this.homeAssistantWebSocketClient
           .close();
 
+        void this.matterProvider
+          ?.stop()
+          .catch(error => {
+            this.log.error(
+              'Erreur pendant l’arrêt du provider Matter :',
+              error instanceof Error
+                ? error.message
+                : String(error),
+            );
+          });
+
         this.catalogWatcher?.close();
         this.catalogWatcher =
           undefined;
       },
     );
+  }
+
+  private async processMatterCommissioningRequest():
+    Promise<void> {
+    if (
+      this.matterCommissioningInProgress
+    ) {
+      return;
+    }
+
+    this.matterCommissioningInProgress =
+      true;
+
+    try {
+      const request =
+        await this.matterCommissioningStore
+          .loadRequest();
+
+      if (!request) {
+        return;
+      }
+
+      try {
+        const matterProvider =
+          await this.getMatterProvider();
+
+        const descriptor =
+          await matterProvider.commission(
+            request.pairingCode,
+          );
+
+        await this.matterCommissioningStore
+          .saveResponse({
+            id: request.id,
+            success: true,
+            completedAt:
+              new Date().toISOString(),
+            deviceId:
+              descriptor.id,
+            deviceName:
+              descriptor.name,
+          });
+      } catch (error) {
+        await this.matterCommissioningStore
+          .saveResponse({
+            id: request.id,
+            success: false,
+            completedAt:
+              new Date().toISOString(),
+            error:
+              error instanceof Error
+                ? error.message
+                : String(error),
+          });
+      } finally {
+        await this.matterCommissioningStore
+          .deleteRequest();
+      }
+    } finally {
+      this.matterCommissioningInProgress =
+        false;
+    }
   }
 
   private readIgnoredDevices():

@@ -7,9 +7,7 @@
   "schema": {
     "type": "object",
     "required": [
-      "name",
-      "haUrl",
-      "token"
+      "name"
     ],
     "additionalProperties": false,
     "properties": {
@@ -18,6 +16,18 @@
         "type": "string",
         "default": "HA Virtual Devices",
         "description": "Nom de la plateforme affiché dans Homebridge."
+      },
+      "homeAssistantEnabled": {
+        "title": "Utiliser Home Assistant",
+        "type": "boolean",
+        "default": true,
+        "description": "Utilise Home Assistant comme source pour découvrir les capteurs."
+      },
+      "matterEnabled": {
+        "title": "Utiliser Matter",
+        "type": "boolean",
+        "default": false,
+        "description": "Utilise Matter comme source pour découvrir les capteurs."
       },
       "haUrl": {
         "title": "Adresse de Home Assistant",

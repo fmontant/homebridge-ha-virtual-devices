@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n';
 
 import { catalogApi } from './api/catalogApi';
 import ConfigurationPanel from './components/ConfigurationPanel.vue';
+import MatterCommissioningPanel from './components/MatterCommissioningPanel.vue';
 import DeviceDetails from './components/DeviceDetails.vue';
 import DeviceRow from './components/DeviceRow.vue';
 import PluginSummary from './components/PluginSummary.vue';
@@ -39,6 +40,9 @@ const {
   locale,
   t,
 } = useI18n();
+
+const matterEnabled =
+  ref(false);
 
 const search =
   ref('');
@@ -363,6 +367,26 @@ void {
   roomFilter.value = '';
 }
 
+async function handleMatterCommissioned(
+  deviceId: string,
+): Promise<void> {
+  await loadDevices();
+
+  const device =
+    devices.value.find(
+      candidate =>
+        candidate.id === deviceId,
+    );
+
+  if (!device) {
+    return;
+  }
+
+  await selectDevice(
+    device,
+  );
+}
+
 async function selectDevice(
   device: CatalogDevice,
 ): Promise<void> {
@@ -521,12 +545,23 @@ onUnmounted(() => {
   />
 </header>
 
-    <section class="configuration-panel">
-      <ConfigurationPanel />
+   <section class="configuration-panel">
+      <ConfigurationPanel
+        @matter-enabled-changed="matterEnabled = $event"
+      />
     </section>
 
-   <PluginSummary
-    :devices="devices"
+    <section
+      v-if="matterEnabled"
+      class="configuration-panel"
+    >
+      <MatterCommissioningPanel
+        @commissioned="handleMatterCommissioned"
+      />
+    </section>
+
+    <PluginSummary
+      :devices="devices"
     :last-synchronization-at="lastSynchronizationAt"
   />
     <section class="toolbar">

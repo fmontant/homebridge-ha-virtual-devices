@@ -1,0 +1,69 @@
+flowchart LR
+
+    START["Homebridge startup"]
+
+    START --> CONFIG["Read provider configuration"]
+
+    CONFIG --> HA_ENABLED{"Home Assistant enabled?"}
+    CONFIG --> MATTER_ENABLED{"Matter enabled?"}
+
+    subgraph HA["Home Assistant pipeline"]
+        HACONN["Connect / authenticate"]
+        HAREG["Device + Entity Registries"]
+        HADISC["DiscoveryManager"]
+        HABUILD["ClimateDeviceBuilder"]
+        HAMGR["ClimateDeviceManager"]
+        HADEV["ClimateDevice"]
+        HACAT["CatalogManager<br/>source: home-assistant"]
+    end
+
+    subgraph MATTER["Matter pipeline"]
+        MP["MatterProvider.start()"]
+        MC["MatterController.start()"]
+        MD["MatterDeviceDiscovery"]
+        MCM["MatterDeviceCatalogMapper"]
+        MM["MatterDeviceMapper"]
+        MDEV["PublishedClimateDevice"]
+        MS["MatterSubscriptionManager"]
+        MCAT["CatalogManager<br/>source: matter"]
+    end
+
+    subgraph COMMON["Common V2 publication pipeline"]
+        CATALOG["Shared DeviceCatalog"]
+        RM["RegistryManager"]
+        AM["AccessoryManager"]
+        CA["ClimateAccessory"]
+        HK["HomeKit Thermostat"]
+        HOME["Apple Home"]
+    end
+
+    HA_ENABLED -->|yes| HACONN
+    HACONN --> HAREG
+    HAREG --> HADISC
+    HADISC --> HABUILD
+    HABUILD --> HAMGR
+    HAMGR --> HADEV
+    HADEV --> HACAT
+
+    MATTER_ENABLED -->|yes| MP
+    MP --> MC
+    MC --> MD
+    MD --> MCM
+    MCM --> MCAT
+    MD --> MM
+    MM --> MDEV
+    MP --> MS
+
+    HACAT --> CATALOG
+    MCAT --> CATALOG
+
+    HADEV --> RM
+    MDEV --> RM
+    CATALOG --> RM
+
+    RM --> AM
+    AM --> CA
+    CA --> HK
+    HK --> HOME
+
+    MS -. live temperature / humidity / battery .-> AM

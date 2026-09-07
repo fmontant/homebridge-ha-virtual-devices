@@ -1,0 +1,46 @@
+sequenceDiagram
+    autonumber
+
+    participant Provider as Provider (HA or Matter)
+    participant CM as CatalogManager
+    participant DC as DeviceCatalog
+    participant Store as DeviceCatalogStore
+    participant RM as RegistryManager
+    participant AM as AccessoryManager
+    participant HK as HomeKit
+
+    Provider->>CM: synchronizeDiscoveredDevices(devices, source)
+    CM->>DC: synchronize(devices, source)
+
+    DC->>DC: add / update discovered devices
+    DC->>DC: mark missing only for current source
+    DC-->>CM: synchronization result
+
+    CM->>Store: save(catalog)
+    Store->>Store: serialize save through saveQueue
+    Store->>Store: write temporary file
+    Store->>Store: rename temporary file
+    Store-->>CM: persisted
+
+    Provider->>RM: rememberPublishedClimateDevices(runtime devices)
+
+    RM->>AM: apply publication changes
+
+    loop each affected device
+        AM->>DC: evaluate catalog device / shouldPublish
+
+        alt enabled and not archived
+            AM->>HK: create, restore, or update accessory
+        else not publishable
+            AM->>HK: remove accessory if present
+        end
+    end
+
+    Note over DC,RM: UI-driven catalog changes can trigger a later refreshFromCatalog()
+
+    RM->>CM: reload catalog
+    CM->>Store: load()
+    Store-->>CM: persisted devices
+    CM-->>RM: current catalog
+    RM->>RM: compare catalogPublicationState
+    RM->>AM: apply only relevant publication changes

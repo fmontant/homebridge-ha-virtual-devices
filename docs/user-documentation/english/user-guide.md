@@ -2,325 +2,365 @@
 
 Welcome to **Homebridge HA Virtual Devices**.
 
-This guide explains how to install, configure and use the plugin on a daily basis.
+This guide explains how to install, configure and use version 2 of the plugin with **Home Assistant**, **Matter**, or both simultaneously, to publish compatible sensors in **Apple Home**.
 
-Unlike the Architecture and Developer Guide documents, this guide focuses entirely on the end-user experience.
+No development knowledge is required.
 
----
+------------------------------------------------------------------------
 
-# What does this plugin do?
+## Overview
 
-The plugin automatically discovers compatible environmental sensors from Home Assistant and exposes them to Apple Home through Homebridge.
+Homebridge HA Virtual Devices transforms compatible sensor data into HomeKit accessories designed for display in Apple Home.
 
-Instead of creating multiple HomeKit accessories for a single physical sensor, the plugin intelligently groups them into one native thermostat accessory.
+Version 2 can use two independent sources:
 
-Example:
+- **Home Assistant**, through its API and WebSocket connection.
+- **Matter**, by directly integrating a compatible Matter device into the plugin.
 
-Without the plugin:
+Both sources can be enabled simultaneously. Devices discovered from either source are managed through the same plugin catalog.
 
-```
-Living Room Temperature
-Living Room Humidity
-Living Room Battery
-```
+The plugin is designed to:
 
-With the plugin:
+- simplify sensor integration into Apple Home;
+- avoid manually creating virtual accessories;
+- preserve user preferences;
+- provide a simple graphical interface;
+- allow Matter to be used without requiring Home Assistant.
 
-```
-Living Room
-(Thermostat)
-```
+------------------------------------------------------------------------
 
-The result is a cleaner Apple Home interface.
+## Main features
 
----
+The plugin provides:
 
-# Supported devices
+- selection of Home Assistant, Matter, or both sources;
+- automatic discovery of compatible Home Assistant sensors;
+- Matter sensor addition from the plugin interface;
+- publication as HomeKit accessories;
+- favorites management;
+- device enable and disable controls;
+- device hiding;
+- persistent custom names;
+- an internal catalog room assignment;
+- availability and last communication tracking;
+- persistent user preferences;
+- dynamic value synchronization.
 
-The plugin currently supports environmental sensors exposing one or more of the following information:
+------------------------------------------------------------------------
 
-- Temperature
-- Relative Humidity
-- Battery Level
+## Installation
 
-Support for additional sensor types will be added over time.
+### Prerequisites
 
----
+You need:
 
-# Installation
+- Homebridge installed and working;
+- a Node.js version compatible with your Homebridge installation;
+- for Home Assistant: an accessible Home Assistant server and a Long-Lived Access Token;
+- for Matter: a compatible Matter sensor that can be placed in pairing mode.
 
-Install the plugin from the Homebridge Plugin Manager or manually using npm.
+Home Assistant is not required when using Matter only.
 
-```
+### Installation from Homebridge
+
+1. Open the Homebridge interface.
+2. Go to **Plugins**.
+3. Search for `homebridge-ha-virtual-devices`.
+4. Click **Install**.
+
+### Installation with npm
+
+```bash
 npm install -g homebridge-ha-virtual-devices
 ```
 
-Restart Homebridge after installation.
+------------------------------------------------------------------------
 
----
+## Initial configuration
 
-# Initial configuration
+Open the plugin settings and select at least one source:
 
-Configure the plugin with your Home Assistant address and a Long-Lived Access Token.
+- **Use Home Assistant**
+- **Use Matter**
 
-Example:
+You can enable both.
 
-```json
-{
-  "platform": "HomeAssistantVirtualDevices",
-  "name": "Home Assistant Virtual Devices",
-  "host": "http://homeassistant.local:8123",
-  "token": "YOUR_TOKEN"
-}
-```
+A configuration with both sources disabled is not valid.
 
-Once Homebridge starts, discovery begins automatically.
+### Home Assistant only
 
-No device configuration is required.
+Enable **Use Home Assistant** and disable **Use Matter**.
 
----
+Enter:
 
-# First startup
+- the Home Assistant address;
+- the Long-Lived Access Token.
 
-During startup the plugin:
+Then save the configuration.
 
-1. Connects to Home Assistant.
-2. Discovers compatible entities.
-3. Groups related entities.
-4. Builds the device catalog.
-5. Restores cached HomeKit accessories.
-6. Publishes new accessories when necessary.
+### Matter only
 
-The first startup may take a few seconds depending on the number of devices.
+Disable **Use Home Assistant** and enable **Use Matter**.
 
----
+Home Assistant connection settings are not required.
 
-# Using the Homebridge UI
+The **Add a Matter sensor** panel becomes available in the interface.
 
-The integrated Homebridge interface is the recommended way to manage your devices.
+### Home Assistant and Matter
 
-From the UI you can:
+Enable both options.
 
-- browse discovered devices;
-- search by name;
-- sort devices;
-- filter by room;
-- mark favorites;
-- enable or disable publication;
-- hide devices;
-- inspect device details.
+The plugin then uses both providers and adds devices from Home Assistant and Matter to the same catalog.
 
-Changes are applied automatically.
+------------------------------------------------------------------------
 
-No Homebridge restart is required.
+## Adding a Matter sensor
 
----
+A Matter sensor already installed in Apple Home can be shared with the plugin using Matter pairing mode.
 
-# Device information
+In the **Home** app:
 
-Selecting a device displays detailed information including:
+1. Open the settings of the sensor you want to add.
+2. Select **Turn On Pairing Mode**.
+3. Home generates a new Matter sharing code.
+4. Copy this code.
 
-- Device name
-- Home Assistant entity
-- Room
-- Availability
-- Publication state
-- Favorite
-- Discovery date
-- Last communication
-- Supported capabilities
+In the plugin interface:
 
-This information is read directly from the persistent catalog.
+1. Make sure **Use Matter** is enabled.
+2. Open **Add a Matter sensor**.
+3. Enter the new sharing code.
+4. Click **Add sensor**.
 
----
+After a successful addition, the sensor appears in the device list.
 
-# Favorites
+You can then rename it to make it easier to identify.
 
-Frequently used devices can be marked as favorites.
+> The code used here is the new sharing code generated when pairing mode is enabled, not necessarily the code originally printed on the device.
 
-Favorites make large installations easier to navigate.
+------------------------------------------------------------------------
 
-Favorite status is preserved across:
+## Home Assistant discovery
 
-- Homebridge restarts
-- Plugin upgrades
-- Home Assistant restarts
+When Home Assistant is enabled, the plugin automatically searches for compatible sensors.
 
----
+No individual sensor configuration is required.
 
-# Rooms
+Each discovered device is added to the persistent catalog.
 
-Devices can be assigned to rooms.
+If Home Assistant is disabled, the plugin does not attempt to connect to it.
 
-Room information is used by the Homebridge UI for filtering and organization.
+------------------------------------------------------------------------
 
-Changing a room updates the persistent catalog immediately.
+## Common catalog
 
----
+The catalog centralizes the devices known to the plugin, regardless of their source.
 
-# Publishing devices
+For each device, the interface can be used to:
 
-Each discovered device has its own publication state.
+- enable or disable it;
+- hide it;
+- add it to favorites;
+- change its name when supported;
+- manage its internal plugin room;
+- view its source and detailed information.
 
-Enabled devices are published to Apple Home.
+Preferences are preserved across synchronizations and restarts.
 
-Disabled devices remain in the catalog but are not exposed to HomeKit.
+### About rooms
 
-This allows users to keep unwanted sensors without deleting them.
+The room stored in the catalog is an internal plugin setting.
 
----
+It does not automatically move the accessory to a room in the Apple Home app. HomeKit room assignment remains managed directly in Home.
 
-# Hidden devices
+------------------------------------------------------------------------
 
-Devices can also be hidden.
+## Favorites
 
-Hidden devices remain stored in the catalog while being removed from the normal working view.
+Favorites make it easier to find the most important devices.
 
-This is useful for obsolete or rarely used sensors.
+Use the ★ icon in the catalog to add or remove a favorite.
 
----
+The change is stored in the persistent catalog.
 
-# Availability
+------------------------------------------------------------------------
 
-The plugin continuously tracks device availability.
+## Device states
 
-Typical situations include:
+### Active
 
-- battery replacement;
-- temporary Zigbee outage;
-- Home Assistant restart;
-- coordinator restart.
+The device is enabled in the plugin and can be published to HomeKit.
 
-Availability changes are automatically reflected inside the catalog.
+### Disabled
 
-When possible, HomeKit also reflects communication failures.
+The device remains known to the catalog but is no longer published as an active device.
 
----
+### Hidden
 
-# Last communication
+The device is intentionally hidden from the interface to simplify the display.
 
-Each device records the timestamp of its latest successful communication.
+### Missing
 
-This information helps identify:
+The plugin previously knew the device but can no longer find it during synchronization with its source.
 
-- sleeping devices;
-- disconnected sensors;
-- communication issues;
-- battery-related problems.
+Stored preferences are retained so that the device can be recovered if it reappears.
 
----
+------------------------------------------------------------------------
 
-# Automatic synchronization
+## Availability
 
-One of the major advantages of version 1.0.9 is dynamic synchronization.
+Availability indicates whether the source is currently providing usable information for the device.
 
-Changing a preference immediately updates HomeKit.
+An unavailable device is not automatically removed from the catalog.
 
-Examples:
+When a sensor becomes available again, its new values can be synchronized again.
 
-- enable publication;
-- disable publication;
-- change favorite;
-- modify room.
+------------------------------------------------------------------------
 
-There is no need to restart Homebridge.
+## Last communication
 
----
+**Last communication** indicates the most recent activity recorded for the sensor.
 
-# Updating the plugin
+An old date can indicate:
 
-Updating is straightforward.
+- a sensor that is no longer communicating;
+- a depleted battery;
+- a connection loss;
+- a problem between the plugin and the sensor source.
+
+The interpretation depends on the source used: Home Assistant or Matter.
+
+------------------------------------------------------------------------
+
+## Administration interface
+
+The graphical interface allows you to:
+
+- select the sources to use;
+- add a Matter sensor;
+- search for a device;
+- filter the catalog;
+- sort the results;
+- view device details;
+- modify preferences.
+
+The Matter panel is displayed only when Matter is enabled.
+
+------------------------------------------------------------------------
+
+## Search and sorting
+
+The search field makes it easy to find a device.
+
+The catalog can also be sorted using the criteria provided by the interface, such as name, room, state, or favorites.
+
+------------------------------------------------------------------------
+
+## Device details
+
+Depending on the device and its source, the details panel can display:
+
+- name;
+- identifier;
+- source;
+- internal plugin room;
+- state;
+- available capabilities;
+- availability;
+- last communication.
+
+------------------------------------------------------------------------
+
+## Synchronization
+
+The plugin receives changes from its sources and updates the corresponding devices.
+
+With Home Assistant, changes are received through the WebSocket connection.
+
+With Matter, devices integrated through the Matter provider send their changes to the plugin.
+
+Catalog preferences remain independent from these value updates.
+
+------------------------------------------------------------------------
+
+## Upgrade from version 1.x
+
+Version 2 introduces source selection.
+
+To preserve historical behavior, an existing configuration that does not yet contain the new source settings is interpreted as follows:
+
+- Home Assistant: **enabled**
+- Matter: **disabled**
+
+Migration therefore does not require an existing Home Assistant installation to be reconfigured immediately.
+
+------------------------------------------------------------------------
+
+## Updating the plugin
+
+When updating:
 
 1. Install the new version.
-2. Restart Homebridge.
+2. Restart Homebridge if the interface or Homebridge requests it.
+3. Check the logs if you notice unusual behavior.
 
-The persistent catalog preserves:
+The persistent catalog is designed to preserve user preferences.
 
-- favorites;
-- rooms;
-- publication state;
-- hidden devices;
-- discovery history.
+------------------------------------------------------------------------
 
-No additional migration is normally required.
+## Best practices
 
----
+We recommend:
 
-# Best practices
+- enabling only the sources you actually use;
+- keeping Homebridge and related components up to date;
+- monitoring sensor batteries;
+- checking Last communication when a sensor appears to be frozen;
+- using favorites and hiding to keep the catalog easy to navigate;
+- checking Homebridge logs before performing major corrective actions.
 
-For the best experience:
+------------------------------------------------------------------------
 
-- keep Home Assistant updated;
-- keep Homebridge updated;
-- use stable Zigbee routing;
-- replace batteries before they are completely depleted;
-- avoid deleting devices unless necessary.
+## FAQ
 
-The plugin is designed to recover automatically from temporary failures.
+### Why are my sensors displayed as thermostats?
 
----
+Apple Home does not provide a dedicated environmental sensor accessory presentation for this type of data.
 
-# Frequently Asked Questions
+The thermostat service provides a suitable native HomeKit presentation for these sensors.
 
-## Why are my sensors displayed as thermostats?
+### Can I remove a device?
 
-Because Apple Home does not provide a dedicated environmental sensor accessory.
+You can disable a device from the plugin interface without removing it from the persistent catalog.
 
-The thermostat service offers the best native experience.
+The device remains known to the plugin and can be managed again later.
 
----
-
-## Can I remove a device?
+### Can I restore it later?
 
 Yes.
 
-Simply disable its publication from the Homebridge UI.
+If a device becomes available again, its existing catalog entry and stored preferences are retained.
 
-The device remains stored in the catalog.
-
----
-
-## Can I restore it later?
-
-Yes.
-
-Re-enable publication and the accessory will be synchronized automatically.
-
----
-
-## Will I lose my favorites?
+### Will I lose my favorites?
 
 No.
 
-Favorites are stored in the persistent catalog.
+Favorites are stored in the persistent catalog and are preserved across synchronizations and Homebridge restarts.
 
----
-
-## Do I need to restart Homebridge after every change?
+### Do I need to restart Homebridge after every change?
 
 No.
 
-Since version 1.0.9, almost every configuration change is synchronized automatically.
+Changes to catalog preferences and publication settings are synchronized automatically. A Homebridge restart should not normally be required.
 
----
+------------------------------------------------------------------------
 
-# Need help?
+## Support
 
 If you encounter a problem:
 
-1. Enable debug logging.
-2. Reproduce the issue.
-3. Consult the Troubleshooting guide.
-4. Open a GitHub Issue if necessary.
-
-Including logs and reproduction steps will greatly help diagnose the problem.
-
----
-
-# Summary
-
-Homebridge HA Virtual Devices is designed around one simple objective:
-
-Provide the cleanest possible Apple Home experience while remaining entirely based on native HomeKit services.
-
-The plugin takes care of discovery, synchronization and persistence so that users can focus on using their smart home—not maintaining it.
+1. Consult the [Troubleshooting guide](troubleshooting.md).
+2. Check the Homebridge logs.
+3. Identify the affected source: Home Assistant, Matter, or both.
+4. Record the plugin and Homebridge versions.
+5. Open a GitHub issue if the problem persists.

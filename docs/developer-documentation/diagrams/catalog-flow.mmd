@@ -1,0 +1,74 @@
+flowchart LR
+
+    subgraph HA["Home Assistant"]
+        HREG["Device + Entity Registries"]
+        HDISC["DiscoveryManager"]
+        HBUILD["ClimateDeviceBuilder"]
+        HDEV["ClimateDevice"]
+    end
+
+    subgraph MATTER["Matter"]
+        MPEER["Matter peers"]
+        MDISC["MatterDeviceDiscovery"]
+        MDESC["MatterDeviceDescriptor"]
+        MCMAP["MatterDeviceCatalogMapper"]
+    end
+
+    subgraph NORMALIZED["Normalized catalog input"]
+        HINPUT["DiscoveredCatalogDevice<br/>source: home-assistant"]
+        MINPUT["DiscoveredCatalogDevice<br/>source: matter"]
+    end
+
+    subgraph CATALOG["Shared Device Catalog"]
+        CM["CatalogManager"]
+        DC["DeviceCatalog"]
+        SYNC["synchronize(devices, source)"]
+        STORE["DeviceCatalogStore"]
+        FILE["device-catalog.json"]
+    end
+
+    subgraph LIFECYCLE["Source-aware lifecycle"]
+        ADDED["added"]
+        UPDATED["updated"]
+        MISSING["missing<br/>only for current source"]
+    end
+
+    subgraph PREFS["Persistent preferences"]
+        ENABLED["enabled"]
+        HIDDEN["hidden"]
+        FAVORITE["favorite"]
+        ARCHIVED["archived"]
+        HKNAME["homeKitName"]
+        ROOM["room"]
+    end
+
+    HREG --> HDISC
+    HDISC --> HBUILD
+    HBUILD --> HDEV
+    HDEV --> HINPUT
+
+    MPEER --> MDISC
+    MDISC --> MDESC
+    MDESC --> MCMAP
+    MCMAP --> MINPUT
+
+    HINPUT --> CM
+    MINPUT --> CM
+    CM --> SYNC
+    SYNC --> DC
+
+    DC --> ADDED
+    DC --> UPDATED
+    DC --> MISSING
+
+    DC --> ENABLED
+    DC --> HIDDEN
+    DC --> FAVORITE
+    DC --> ARCHIVED
+    DC --> HKNAME
+    DC --> ROOM
+
+    DC --> STORE
+    STORE --> FILE
+    FILE --> STORE
+    STORE --> DC

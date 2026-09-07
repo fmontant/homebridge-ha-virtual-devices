@@ -38,6 +38,7 @@ export class DeviceCatalog {
   public synchronize(
     discoveredDevices:
       DiscoveredCatalogDevice[],
+    source: string,
   ): CatalogSynchronizationResult {
     const result =
       new CatalogSynchronizationResult();
@@ -57,6 +58,7 @@ export class DeviceCatalog {
 
     this.markMissingDevices(
       discoveredIds,
+      source,
       now,
       result,
     );
@@ -140,16 +142,24 @@ export class DeviceCatalog {
 
   private markMissingDevices(
     discoveredIds:
-      Set<string>,
+    Set<string>,
+    source:
+    string,
     now:
-      string,
+    string,
     result:
-      CatalogSynchronizationResult,
+    CatalogSynchronizationResult,
   ): void {
     for (
       const existingDevice
       of this.devices.values()
     ) {
+      if (
+        existingDevice.source !== source
+      ) {
+        continue;
+      }
+
       if (
         discoveredIds.has(
           existingDevice.id,
@@ -160,19 +170,19 @@ export class DeviceCatalog {
 
       if (
         existingDevice.state ===
-        CatalogDeviceState.Missing
+      CatalogDeviceState.Missing
       ) {
         continue;
       }
 
       existingDevice.state =
-        CatalogDeviceState.Missing;
+      CatalogDeviceState.Missing;
 
       existingDevice.timestamps.missingSince ??=
-        now;
+      now;
 
       existingDevice.timestamps.lastUpdated =
-        now;
+      now;
 
       result.missing.push(
         existingDevice,

@@ -22,6 +22,14 @@ import {
   PluginStateStore,
 } from '../catalog/pluginStateStore.js';
 
+import {
+  MatterCommissioningStore,
+} from '../matter/commissioningStore.js';
+
+import {
+  MatterDeviceNameStore,
+} from '../matter/deviceNameStore.js';
+
 import type {
   CatalogApiDevice,
 } from './catalogApi.js';
@@ -71,6 +79,17 @@ interface DeleteDeviceResponsePayload {
     id: string;
 }
 
+interface MatterCommissioningRequestPayload {
+  pairingCode: string;
+}
+
+interface MatterCommissioningResponsePayload {
+  success: boolean;
+  deviceId?: string;
+  deviceName?: string;
+  error?: string;
+}
+
 interface ViewedRequestPayload {
     id: string;
 }
@@ -105,6 +124,15 @@ export class HAVirtualDevicesUiServer
 
   private pluginStateStore?:
         PluginStateStore;
+
+  private matterCommissioningStore?:
+        MatterCommissioningStore;
+
+  private matterDeviceNameStore?:
+        MatterDeviceNameStore;
+
+  private matterCommissioningInProgress =
+    false;
 
   private catalogWatcher?:
         ReturnType<typeof watch>;
@@ -163,6 +191,13 @@ export class HAVirtualDevicesUiServer
           .getInformation(),
     );
 
+    this.onRequest(
+      '/matter/commission',
+      async payload =>
+        this.commissionMatterDevice(
+          payload,
+        ),
+    );
 
     this.onRequest(
       '/catalog/preferences',
@@ -241,6 +276,27 @@ export class HAVirtualDevicesUiServer
                   pluginStateFilePath,
                 );
 
+
+      this.matterCommissioningStore =
+                new MatterCommissioningStore(
+                  join(
+                    this.catalogDirectoryPath,
+                    'matter-commissioning-request.json',
+                  ),
+                  join(
+                    this.catalogDirectoryPath,
+                    'matter-commissioning-response.json',
+                  ),
+                );
+
+      this.matterDeviceNameStore =
+                new MatterDeviceNameStore(
+                  join(
+                    this.catalogDirectoryPath,
+                    'matter-device-names.json',
+                  ),
+                );
+
       await mkdir(
         this.catalogDirectoryPath,
         {
@@ -274,12 +330,23 @@ export class HAVirtualDevicesUiServer
     }
 
     this.catalogWatcher =
-            watch(
-              this.catalogDirectoryPath,
-              () => {
-                this.scheduleCatalogPublication();
-              },
-            );
+                        watch(
+                          this.catalogDirectoryPath,
+                          (
+                            _eventType,
+                            filename,
+                          ) => {
+                            if (
+                              filename &&
+                  filename !==
+                  'device-catalog.json'
+                            ) {
+                              return;
+                            }
+
+                            this.scheduleCatalogPublication();
+                          },
+                        );
 
     this.catalogWatcher.on(
       'error',
@@ -497,6 +564,111 @@ export class HAVirtualDevicesUiServer
     return { device: this.catalogApiMapper.toApiDevice(device) };
   }
 
+  private async commissionMatterDevice(
+    payload: MatterCommissioningRequestPayload,
+  ): Promise<MatterCommissioningResponsePayload> {
+    if (
+      !this.matterCommissioningStore
+    ) {
+      throw new Error(
+        'Commissioning Matter non initialisé',
+      );
+    }
+
+    const pairingCode =
+      payload.pairingCode?.trim();
+
+    if (!pairingCode) {
+      return {
+        success: false,
+        error:
+          'Code de partage Matter manquant',
+      };
+    }
+
+    if (
+      this.matterCommissioningInProgress
+    ) {
+      return {
+        success: false,
+        error:
+          'Un commissioning Matter est déjà en cours',
+      };
+    }
+
+    this.matterCommissioningInProgress =
+      true;
+
+    try {
+      const requestId =
+      crypto.randomUUID();
+
+      await this.matterCommissioningStore
+        .deleteResponse();
+
+      await this.matterCommissioningStore
+        .saveRequest({
+          id: requestId,
+          pairingCode,
+          createdAt:
+          new Date().toISOString(),
+        });
+
+      const deadline =
+      Date.now() + 190000;
+
+      while (
+        Date.now() < deadline
+      ) {
+        const response =
+        await this.matterCommissioningStore
+          .loadResponse();
+
+        if (
+          response?.id === requestId
+        ) {
+          await this.matterCommissioningStore
+            .deleteResponse();
+
+          return {
+            success:
+            response.success,
+            deviceId:
+            response.deviceId,
+            deviceName:
+            response.deviceName,
+            error:
+            response.error,
+          };
+        }
+
+        await new Promise(
+          resolve =>
+            setTimeout(
+              resolve,
+              500,
+            ),
+        );
+      }
+
+
+      await this.matterCommissioningStore
+        .deleteRequest();
+
+      await this.matterCommissioningStore
+        .deleteResponse();
+
+      return {
+        success: false,
+        error:
+        'Délai de commissioning Matter dépassé',
+      };
+    } finally {
+      this.matterCommissioningInProgress =
+        false;
+    }
+  }
+
   private async deleteDevice(
     payload: unknown,
   ): Promise<DeleteDeviceResponsePayload> {
@@ -531,6 +703,31 @@ export class HAVirtualDevicesUiServer
       throw new Error(
         `Appareil introuvable : ${request.id}`,
       );
+    }
+
+    const device =
+      devices[deviceIndex];
+
+    if (
+      device.source === 'matter' &&
+      device.metadata.uniqueId &&
+      device.preferences.homeKitName?.trim() &&
+      device.preferences.homeKitName.trim() !==
+        device.name.trim()
+    ) {
+      if (
+        !this.matterDeviceNameStore
+      ) {
+        throw new Error(
+          'Référentiel de noms Matter non initialisé',
+        );
+      }
+
+      await this.matterDeviceNameStore
+        .saveName(
+          device.metadata.uniqueId,
+          device.preferences.homeKitName.trim(),
+        );
     }
 
     devices.splice(

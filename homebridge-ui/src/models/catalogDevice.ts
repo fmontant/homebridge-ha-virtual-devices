@@ -16,6 +16,10 @@ export interface CatalogDevice {
   enabled: boolean;
   archived: boolean;
   capabilities: string[];
+  metadata?: {
+    manufacturer?: string;
+    uniqueId?: string;
+  };
   available: boolean;
   lastCommunication?: string;
   firstViewedAt?: string;

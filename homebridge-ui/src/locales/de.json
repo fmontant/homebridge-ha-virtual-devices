@@ -121,6 +121,12 @@
       "unconfigured": "Nicht konfiguriert"
     },
     "fields": {
+      "homeAssistantEnabled": {
+        "label": "Home Assistant verwenden"
+      },
+      "matterEnabled": {
+        "label": "Matter verwenden"
+      },
       "address": {
         "label": "Home-Assistant-Adresse",
         "ariaLabel": "Adresse des Home-Assistant-Servers"
@@ -142,7 +148,7 @@
       "checking": "Wird geprüft…",
       "saving": "Wird gespeichert…"
     },
-    "messages": {
+        "messages": {
       "missingAddressOrToken": "Adresse oder Token fehlt",
       "incomplete": "Die Konfiguration ist unvollständig.",
       "notSaved": "Konfiguration nicht gespeichert: {message}.",
@@ -151,6 +157,29 @@
       "saveFailed": "Die Konfiguration konnte nicht gespeichert werden."
     }
   },
+
+  "matter": {
+    "title": "Matter-Sensor hinzufügen",
+    "description": "Fügen Sie einen bereits in Apple Home installierten Matter-Sensor direkt zum Plugin hinzu, ohne Home Assistant zu verwenden.",
+    "fields": {
+      "pairingCode": {
+        "label": "Matter-Freigabecode",
+        "ariaLabel": "Matter-Freigabecode",
+        "placeholder": "1234-123-1234"
+      }
+    },
+    "actions": {
+      "commission": "Sensor hinzufügen",
+      "commissioning": "Sensor wird hinzugefügt…"
+    },
+    "messages": {
+      "instructions": "Öffnen Sie in der Home-App die Einstellungen des Sensors, den Sie hinzufügen möchten, und wählen Sie „Kopplungsmodus aktivieren“. Home generiert daraufhin einen neuen Matter-Freigabecode. Kopieren Sie diesen Code, geben Sie ihn unten ein und klicken Sie anschließend auf „Sensor hinzufügen“.",
+      "missingCode": "Geben Sie den Matter-Freigabecode ein.",
+      "success": "Der Matter-Sensor wurde erfolgreich hinzugefügt. Er erscheint jetzt in der Geräteliste. Sie können ihn umbenennen, damit er leichter zu identifizieren ist.",
+      "failed": "Der Matter-Sensor konnte nicht hinzugefügt werden: {message}."
+    }
+  },
+
   "states": {
     "enabled": "Aktiv",
     "disabled": "Deaktiviert",

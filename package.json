@@ -73,6 +73,9 @@
   },
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^2.2.5",
+    "@matter/general": "0.17.9",
+    "@matter/node": "0.17.9",
+    "@matter/nodejs": "0.17.9",
     "homebridge-lib": "^8.0.1"
   },
   "devDependencies": {

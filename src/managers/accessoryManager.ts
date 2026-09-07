@@ -1,4 +1,8 @@
 import type {
+  ClimateAccessory,
+} from '../accessories/climateAccessory.js';
+
+import type {
   API,
   Logging,
   PlatformAccessory,
@@ -15,6 +19,10 @@ import {
 import type {
   CatalogDevice,
 } from '../catalog/catalogDevice.js';
+
+import type {
+  PublishedClimateDevice,
+} from '../models/publishedClimateDevice.js';
 
 import type {
   CatalogSynchronizationResult,
@@ -52,6 +60,9 @@ export class AccessoryManager {
   private readonly entityIndex =
     new AccessoryEntityIndex();
 
+  private readonly climateAccessoriesByDeviceId =
+    new Map<string, ClimateAccessory>();
+
   constructor(
     private readonly api: API,
     private readonly log: Logging,
@@ -64,11 +75,12 @@ export class AccessoryManager {
   ) { }
 
   public restoreClimateAccessories(
-    climateDevices: ClimateDevice[],
+    climateDevices: PublishedClimateDevice[],
     deviceCatalog: DeviceCatalog,
   ): void {
-    this.clearDiscoveryState();
-
+    this.clearDiscoveryState(
+      'home-assistant',
+    );
     let publishedDeviceCount = 0;
     let unpublishedDeviceCount = 0;
     let missingDeviceCount = 0;
@@ -168,7 +180,7 @@ export class AccessoryManager {
   }
 
   public applyCatalogDevice(
-    climateDevice: ClimateDevice,
+    climateDevice: PublishedClimateDevice,
     catalogDevice: CatalogDevice,
     deviceCatalog: DeviceCatalog,
   ): void {
@@ -204,7 +216,7 @@ export class AccessoryManager {
   }
 
   public applyClimateSynchronization(
-    climateDevices: ClimateDevice[],
+    climateDevices: PublishedClimateDevice[],
     synchronizationResult:
       CatalogSynchronizationResult,
     deviceCatalog: DeviceCatalog,
@@ -313,7 +325,7 @@ export class AccessoryManager {
   }
 
   public registerClimateAccessory(
-    device: ClimateDevice,
+    device: PublishedClimateDevice,
   ): void {
     const uuid =
       this.getClimateAccessoryUUID(
@@ -390,6 +402,11 @@ export class AccessoryManager {
           accessory,
         );
 
+    this.climateAccessoriesByDeviceId.set(
+      device.id,
+      climateAccessory,
+    );
+
     for (
       const entityId
       of this.getClimateEntityIds(
@@ -426,6 +443,10 @@ export class AccessoryManager {
       uuid,
     );
 
+    this.climateAccessoriesByDeviceId.delete(
+      deviceId,
+    );
+
     if (!accessory) {
       return false;
     }
@@ -443,6 +464,60 @@ export class AccessoryManager {
     this.accessories.delete(
       uuid,
     );
+
+    return true;
+  }
+
+  public updateTemperature(
+    deviceId: string,
+    value: number,
+  ): boolean {
+    const accessory =
+      this.climateAccessoriesByDeviceId.get(
+        deviceId,
+      );
+
+    if (!accessory) {
+      return false;
+    }
+
+    accessory.updateTemperature(value);
+
+    return true;
+  }
+
+  public updateHumidity(
+    deviceId: string,
+    value: number,
+  ): boolean {
+    const accessory =
+      this.climateAccessoriesByDeviceId.get(
+        deviceId,
+      );
+
+    if (!accessory) {
+      return false;
+    }
+
+    accessory.updateHumidity(value);
+
+    return true;
+  }
+
+  public updateBattery(
+    deviceId: string,
+    value: number,
+  ): boolean {
+    const accessory =
+      this.climateAccessoriesByDeviceId.get(
+        deviceId,
+      );
+
+    if (!accessory) {
+      return false;
+    }
+
+    accessory.updateBattery(value);
 
     return true;
   }
@@ -520,6 +595,15 @@ export class AccessoryManager {
       const [uuid, accessory]
       of this.accessories
     ) {
+
+      const device =
+        accessory.context.device as
+        PublishedClimateDevice | undefined;
+
+      if (device?.source === 'matter') {
+        continue;
+      }
+
       if (
         this.activeAccessoryUUIDs.has(
           uuid,
@@ -558,10 +642,63 @@ export class AccessoryManager {
     );
   }
 
-  public clearDiscoveryState():
-    void {
-    this.activeAccessoryUUIDs.clear();
+  public clearDiscoveryState(
+    source: string,
+  ): void {
+    for (
+      const uuid
+      of [...this.activeAccessoryUUIDs]
+    ) {
+      const accessory =
+      this.accessories.get(uuid);
+
+      const device =
+      accessory?.context.device as
+        PublishedClimateDevice | undefined;
+
+      if (
+        device?.source &&
+      device.source !== source
+      ) {
+        continue;
+      }
+
+      this.activeAccessoryUUIDs.delete(
+        uuid,
+      );
+    }
+
     this.entityIndex.clear();
+
+    for (
+      const deviceId
+      of [
+        ...this.climateAccessoriesByDeviceId
+          .keys(),
+      ]
+    ) {
+      const uuid =
+      this.getClimateAccessoryUUID(
+        deviceId,
+      );
+
+      const accessory =
+      this.accessories.get(uuid);
+
+      const device =
+      accessory?.context.device as
+        PublishedClimateDevice | undefined;
+
+      if (
+        device?.source &&
+      device.source !== source
+      ) {
+        continue;
+      }
+
+      this.climateAccessoriesByDeviceId
+        .delete(deviceId);
+    }
   }
 
   private markClimateAccessoryMissing(
@@ -616,6 +753,11 @@ export class AccessoryManager {
           device,
           accessory,
         );
+
+    this.climateAccessoriesByDeviceId.set(
+      device.id,
+      climateAccessory,
+    );
 
     for (
       const entityId
@@ -689,11 +831,12 @@ export class AccessoryManager {
   }
 
   private createPublishedClimateDevice(
-    climateDevice: ClimateDevice,
+    climateDevice: PublishedClimateDevice,
     catalogDevice: CatalogDevice,
-  ): ClimateDevice {
+  ): PublishedClimateDevice {
     return {
       ...climateDevice,
+      source: catalogDevice.source,
       name:
         catalogDevice.preferences.homeKitName?.trim() ||
         DisplayNameFormatter.format(
@@ -703,8 +846,8 @@ export class AccessoryManager {
   }
 
   private indexClimateDevices(
-    climateDevices: ClimateDevice[],
-  ): Map<string, ClimateDevice> {
+    climateDevices: PublishedClimateDevice[],
+  ): Map<string, PublishedClimateDevice> {
     return new Map(
       climateDevices.map(
         climateDevice => [
@@ -716,12 +859,21 @@ export class AccessoryManager {
   }
 
   private getClimateEntityIds(
-    device: ClimateDevice,
+    device: PublishedClimateDevice,
   ): string[] {
+    if (
+      !('temperatureEntity' in device)
+    ) {
+      return [];
+    }
+
+    const homeAssistantDevice =
+      device as ClimateDevice;
+
     return [
-      device.temperatureEntity,
-      device.humidityEntity,
-      device.batteryEntity,
+      homeAssistantDevice.temperatureEntity,
+      homeAssistantDevice.humidityEntity,
+      homeAssistantDevice.batteryEntity,
     ].filter(
       (
         entityId,

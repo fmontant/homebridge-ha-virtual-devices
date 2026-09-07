@@ -3,13 +3,29 @@ import type {
   Service,
 } from 'homebridge';
 
+import type {
+  ClimateDevice,
+} from '../models/climateDevice.js';
+import type {
+  PublishedClimateDevice,
+} from '../models/publishedClimateDevice.js';
 
+type ClimateAccessoryDevice =
+  PublishedClimateDevice &
+  Partial<
+    Pick<
+      ClimateDevice,
+      | 'temperatureEntity'
+      | 'humidityEntity'
+      | 'batteryEntity'
+    >
+  >;
 
-import type { ClimateDevice } from '../models/climateDevice.js';
 import type { HAVirtualDevicesPlatform } from '../platform.js';
 
 export class ClimateAccessory {
-  private readonly device: ClimateDevice;
+  private readonly device:
+    ClimateAccessoryDevice;
 
   private readonly thermostatService: Service;
 
@@ -81,8 +97,7 @@ export class ClimateAccessory {
     }
   }
 
-  public updateAvailability(
-    entityId: string,
+  public updateDeviceAvailability(
     available: boolean,
   ): void {
     this.thermostatService
@@ -102,6 +117,15 @@ export class ClimateAccessory {
           : this.platform.Characteristic
             .StatusFault.GENERAL_FAULT,
       );
+  }
+
+  public updateAvailability(
+    entityId: string,
+    available: boolean,
+  ): void {
+    this.updateDeviceAvailability(
+      available,
+    );
 
     if (available) {
       return;
@@ -192,7 +216,7 @@ export class ClimateAccessory {
   ): void {
     if (
       !this.includeHumidity ||
-      !this.device.humidityEntity ||
+      !this.device.supportsHumidity ||
       !Number.isFinite(humidity)
     ) {
       return;
@@ -225,7 +249,7 @@ export class ClimateAccessory {
   ): void {
     if (
       !this.includeBattery ||
-      !this.device.batteryEntity ||
+      !this.device.supportsBattery ||
       !Number.isFinite(batteryLevel)
     ) {
       return;
@@ -288,6 +312,7 @@ export class ClimateAccessory {
 
     const serialNumber =
       this.device.serialNumber ??
+      this.device.uniqueId ??
       this.device.id;
 
     const softwareVersion =
@@ -414,7 +439,7 @@ export class ClimateAccessory {
 
     if (
       this.includeHumidity &&
-      this.device.humidityEntity
+      this.device.supportsHumidity
     ) {
       service.addOptionalCharacteristic(
         humidityCharacteristic,
@@ -465,7 +490,7 @@ export class ClimateAccessory {
 
     if (
       this.includeBattery &&
-      this.device.batteryEntity
+      this.device.supportsBattery
     ) {
       service.addOptionalCharacteristic(
         batteryLevel,
@@ -632,9 +657,15 @@ export class ClimateAccessory {
       );
     }
 
-    this.updateAvailability(
-      this.device.temperatureEntity,
-      this.device.available,
-    );
+    if (this.device.temperatureEntity) {
+      this.updateAvailability(
+        this.device.temperatureEntity,
+        this.device.available,
+      );
+    } else {
+      this.updateDeviceAvailability(
+        this.device.available,
+      );
+    }
   }
 }
