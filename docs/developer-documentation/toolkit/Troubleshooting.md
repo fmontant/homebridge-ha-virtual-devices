@@ -1,132 +1,114 @@
 # Troubleshooting
 
-This guide describes common issues that may occur while developing, releasing or deploying **Homebridge HA Virtual Devices**.
+This guide describes how to diagnose problems in the **Homebridge HA Virtual Devices** Developer Toolkit.
 
-It is intended for maintainers and contributors who encounter unexpected behaviour during the development workflow.
-
-After reading this guide, you should be able to identify the most common problems and apply the appropriate solution.
+The objective is to identify the failing stage before changing the repository, NAS installation, or persistent plugin state.
 
 ---
 
-## General Approach
+## Diagnostic Principle
 
-When an issue occurs:
+When a toolkit operation fails, first determine which layer is responsible:
 
-1. Read the complete error message.
-2. Identify the step that failed.
-3. Verify the project state.
-4. Apply the recommended solution.
-5. Retry the operation.
-
-Avoid bypassing validation checks. They are designed to prevent inconsistent releases.
-
----
-
-## The Repository Is Not Clean
-
-### Symptoms
-
-The toolkit refuses to continue before starting a release.
-
-### Cause
-
-The Git working tree contains modified or untracked files.
-
-### Solution
-
-Check the repository status.
-
-```bash
-git status
+```text
+Git / repository
+        │
+npm / build
+        │
+release
+        │
+SSH
+        │
+Docker / container detection
+        │
+NAS installation
+        │
+Homebridge runtime
+        │
+plugin runtime
 ```
 
-Commit, stash or discard the remaining changes before running the toolkit again.
+Do not immediately reinstall the plugin, delete its catalog, or alter persistent state when the failure has not yet been identified.
 
 ---
 
-## The Repository Is Not Synchronized
+## First Checks
 
-### Symptoms
-
-The release preparation stops with a synchronization error.
-
-### Cause
-
-The local repository is ahead of or behind the remote repository.
-
-### Solution
-
-Synchronize the repository.
+For a local development problem, start with:
 
 ```bash
-git pull
-
-git push
+npm run verify
 ```
 
-Verify that both repositories are synchronized before retrying.
+For a NAS/environment problem, start with:
+
+```bash
+npm run doctor
+```
+
+For a runtime problem, inspect targeted logs:
+
+```bash
+npm run logs -- <filter>
+```
+
+These three commands cover most first-level diagnosis.
 
 ---
 
-## npm Authentication Failed
+## Repository Is Not Clean
 
-### Symptoms
+### Symptom
 
-The release process stops before publication.
+`prepare-release` or `release` refuses to continue because the working tree contains changes.
 
-### Cause
+### Diagnosis
 
-The current user is not authenticated with npm.
-
-### Solution
-
-Authenticate again.
+Run:
 
 ```bash
-npm login
+git status --short
 ```
 
-Verify the authentication.
+### Resolution
 
-```bash
-npm whoami
-```
+Review the reported files.
+
+Commit intended changes, or deliberately restore/stash changes that should not be part of the release.
+
+Do not blindly discard files merely to satisfy the release script.
+
+A clean repository is required because the toolkit must know exactly which changes belong to the release.
 
 ---
 
-## Build Failed
+## Repository Is Not Synchronized
 
-### Symptoms
+### Symptom
 
-The project cannot be compiled.
+Release preparation or publication reports that the local branch is not synchronized with GitHub.
 
-### Cause
+### Diagnosis
 
-One or more source files contain errors.
+Inspect the current branch and remote relationship before changing anything.
 
-### Solution
+### Resolution
 
-Run the build manually.
+Determine whether the local branch is ahead, behind, or diverged from the remote.
 
-```bash
-npm run build:all
-```
+Synchronize appropriately.
 
-Correct every reported error before continuing.
+Do not automatically run an unrestricted `git pull` followed by `git push` without first understanding the divergence, especially on a release branch.
 
 ---
 
-## Lint Failed
+## Lint Failure
 
-### Symptoms
+### Symptom
 
-The quality checks fail.
+`verify`, deployment, preparation, or release stops during ESLint validation.
 
-### Cause
-
-The source code does not comply with the project's coding standards.
-
-### Solution
+### Diagnosis
 
 Run:
 
@@ -134,60 +116,432 @@ Run:
 npm run lint
 ```
 
-Correct every reported issue before preparing a release.
+### Resolution
+
+Correct the reported lint errors.
+
+Automatic fixing is available through:
+
+```bash
+npm run lint:fix
+```
+
+or:
+
+```bash
+npm run fix
+```
+
+Review automatic changes before committing them.
+
+Note that the NAS installation workflow itself currently performs a lint-fix pass before its strict lint validation.
 
 ---
 
-## Publication Failed
+## Build Failure
 
-### Symptoms
+### Symptom
 
-The package is not published on npm.
+The TypeScript plugin or custom UI does not compile.
+
+### Diagnosis
+
+Run the complete build:
+
+```bash
+npm run build:all
+```
+
+If necessary, isolate the failing side:
+
+```bash
+npm run build
+```
+
+or:
+
+```bash
+npm run build:ui
+```
+
+### Resolution
+
+Correct the reported compiler/build error before deployment or release.
+
+---
+
+## `git diff --check` Failure
+
+### Symptom
+
+`npm run verify` or a manual documentation check reports whitespace errors.
+
+### Diagnosis
+
+Run:
+
+```bash
+git diff --check
+```
+
+Git reports the affected file and line.
+
+### Resolution
+
+Correct the whitespace problem and rerun the check.
+
+This validation does not prove functional correctness; it verifies the Git diff formatting.
+
+---
+
+## npm Authentication Failure
+
+### Symptom
+
+`release.sh` stops during npm authentication.
+
+### Diagnosis
+
+Run:
+
+```bash
+npm whoami
+```
+
+### Resolution
+
+If authentication is missing or expired:
+
+```bash
+npm login
+```
+
+Then rerun the authentication check before restarting the release workflow.
+
+---
+
+## GitHub Authentication Failure
+
+### Symptom
+
+`release.sh` cannot validate the GitHub account or create the GitHub Release.
+
+### Diagnosis
+
+Check GitHub CLI authentication.
+
+### Resolution
+
+Restore a valid `gh` authentication session before continuing.
+
+Do not replace the automated release stage with ad-hoc manual GitHub operations unless the release state has first been assessed.
+
+---
+
+## Version Already Published
+
+### Symptom
+
+The release process reports that the package version or corresponding release already exists.
 
 ### Cause
 
-The release process was interrupted before completion.
+The version may already be present on npm or GitHub, or a previous release attempt may have completed partially.
 
-### Solution
+### Resolution
 
-Review the complete output produced by the toolkit.
+Inspect the actual state of:
 
-Correct the reported problem before restarting the publication process.
+```text
+package.json
+npm
+local Git tags
+remote Git tags
+GitHub Releases
+```
 
-Never attempt to publish a partially prepared release manually.
+Do not simply retry publication with the same version until the existing state is understood.
 
----
-
-## Deployment Failed
-
-### Symptoms
-
-The plugin does not start after installation.
-
-### Cause
-
-The deployment was incomplete or the installed package is incorrect.
-
-### Solution
-
-Verify:
-
-- the published version;
-- the installed package;
-- the Homebridge logs;
-- the plugin configuration.
-
-Redeploy the package if necessary.
+Published npm versions and release tags should be treated as immutable artifacts.
 
 ---
 
-## Still Having Problems?
+## Release Interrupted
 
-If the issue cannot be resolved:
+### Symptom
 
-- collect the complete console output;
-- identify the failed step;
-- describe the actions that produced the issue;
-- include the relevant error messages when reporting the problem.
+`release.sh` stops after one or more publication actions have already completed.
 
-Providing complete diagnostic information significantly reduces troubleshooting time.
+### Risk
+
+A release may be partially published, for example:
+
+```text
+npm package published
+but
+Git tag or GitHub Release not yet completed
+```
+
+### Resolution
+
+Determine exactly which publication steps succeeded before taking any corrective action.
+
+Do not restart the entire release workflow blindly and do not increment the version until the partial state has been assessed.
+
+---
+
+## SSH Connection Failure
+
+### Symptom
+
+`install-on-nas`, `doctor`, or `logs` cannot connect to the NAS.
+
+### Current Default
+
+```text
+REMOTE_HOST=homebridge-nas
+```
+
+### Diagnosis
+
+Verify that the SSH host is reachable and that the configured SSH alias or override is correct.
+
+### Resolution
+
+Restore SSH connectivity before investigating Docker or Homebridge.
+
+A Docker diagnostic cannot succeed if the SSH layer itself is unavailable.
+
+---
+
+## Docker Command Failure
+
+### Symptom
+
+The toolkit reaches the NAS but cannot execute Docker operations.
+
+### Current Default Docker Path
+
+```text
+/Volume1/@apps/DockerEngine/dockerd/bin/docker
+```
+
+### Diagnosis
+
+Run:
+
+```bash
+npm run doctor
+```
+
+The diagnostic uses the same remote environment assumptions as the deployment tooling.
+
+### Resolution
+
+Verify the configured `DOCKER_BIN` and remote Docker installation.
+
+Do not assume that `docker` is available directly from the NAS shell `PATH`.
+
+---
+
+## Homebridge Container Not Detected
+
+### Symptom
+
+Deployment, diagnostics, or logs cannot identify the Homebridge container.
+
+### Architecture
+
+The toolkit deliberately uses automatic Homebridge container detection rather than a fixed container name.
+
+Therefore, a changing name such as:
+
+```text
+homebridge-homebridge_vXX
+```
+
+should not require editing every toolkit script.
+
+### Diagnosis
+
+Use:
+
+```bash
+npm run doctor
+```
+
+If detection still fails, investigate the Docker environment and the shared detection logic rather than hard-coding the currently observed container name.
+
+---
+
+## NAS Deployment Failure
+
+### Symptom
+
+`npm run install-on-nas` stops before completing installation.
+
+### Identify the Stage
+
+The deployment path is approximately:
+
+```text
+lint/fix
+   │
+lint
+   │
+build
+   │
+npm pack
+   │
+SSH transfer
+   │
+container detection
+   │
+npm install
+   │
+container restart
+```
+
+Use the last successful step in the console output to locate the failure.
+
+### Resolution
+
+Correct that specific stage before redeploying.
+
+A deployment failure does not automatically mean the npm package or plugin runtime is defective.
+
+---
+
+## `npm run dev` Failure
+
+### Architecture
+
+`dev.sh` runs:
+
+```text
+install-on-nas
+      │
+      ▼
+doctor
+```
+
+### Diagnosis
+
+Determine whether the failure occurred during:
+
+1. deployment; or
+2. the post-deployment diagnostic.
+
+If installation succeeded but `doctor` failed, do not unnecessarily rebuild/redeploy until the diagnostic failure is understood.
+
+---
+
+## Plugin Does Not Start after Deployment
+
+### Diagnosis
+
+First run:
+
+```bash
+npm run doctor
+```
+
+Then inspect the relevant runtime logs:
+
+```bash
+npm run logs -- homebridge-ha-virtual-devices
+```
+
+or use a more specific filter related to the observed problem.
+
+### Resolution
+
+Distinguish between:
+
+- installation failure;
+- Homebridge startup failure;
+- plugin configuration error;
+- provider startup error;
+- runtime/device synchronization error.
+
+Do not delete the persistent device catalog as a generic first response.
+
+---
+
+## Home Assistant Provider Problem
+
+For a V2 runtime problem specific to Home Assistant, use targeted log terms associated with the connection, WebSocket, registry, device, or catalog path.
+
+Remember that V2 can run with Home Assistant disabled.
+
+A Home Assistant connection failure is therefore relevant only when that provider is enabled.
+
+---
+
+## Matter Provider Problem
+
+For a V2 runtime problem specific to Matter, inspect Matter-related logs without assuming that Home Assistant is involved.
+
+Matter commissioning and Matter runtime synchronization are separate from the Home Assistant WebSocket path.
+
+Do not recommission a working Matter device merely because an unrelated catalog or HomeKit presentation problem is observed.
+
+---
+
+## Log Filtering
+
+The toolkit accepts free-text filters.
+
+Examples:
+
+```bash
+npm run logs -- homekit
+npm run logs -- ws
+npm run logs -- device
+npm run logs -- catalog
+npm run logs -- event
+npm run logs -- matter
+npm run logs -- Terrasse
+```
+
+Prefer a narrow filter when the full Homebridge output is too large to diagnose comfortably.
+
+---
+
+## Persistent State
+
+The plugin maintains persistent runtime/catalog information in the Homebridge environment.
+
+When troubleshooting, treat that data as diagnostic evidence.
+
+Avoid deleting it until there is a demonstrated reason to reset state.
+
+This is particularly important for V2 because the persistent catalog can contain devices and user preferences originating from different providers.
+
+---
+
+## Information to Collect
+
+If the problem remains unresolved, collect only the information relevant to the failing stage:
+
+```text
+command executed
+last successful step
+exact error
+Git state, if relevant
+doctor output, if relevant
+targeted logs, if relevant
+```
+
+Focused diagnostic output is generally more useful than an unfiltered dump of the entire Homebridge log.
+
+---
+
+## Related Documentation
+
+- [Toolkit Overview](README.md)
+- [Toolkit Reference](Toolkit.md)
+- [Command Reference](Reference.md)
+- [Deployment](Deployment.md)
+- [Release Workflow](ReleaseWorkflow.md)
+- [Publication Policy](PublicationPolicy.md)

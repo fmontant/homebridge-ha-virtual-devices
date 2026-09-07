@@ -1,97 +1,94 @@
 # Modèle de publication GitHub
 
-## Objectif
+Ce modèle est utilisé pour rédiger les notes de publication des GitHub Releases de Homebridge HA Virtual Devices.
 
-Ce document définit le modèle officiel utilisé pour rédiger les notes de publication (GitHub Releases) de **Homebridge HA Virtual Devices**.
+La GitHub Release accompagne une version publiée. Elle met en avant les évolutions importantes de la version sans remplacer le CHANGELOG.
 
-Les GitHub Releases accompagnent chaque nouvelle version publiée. Elles mettent en valeur les nouveautés, les améliorations et les corrections apportées au projet.
-
-Contrairement au **CHANGELOG**, qui fournit un historique factuel et synthétique des versions, les GitHub Releases adoptent un style plus descriptif et orienté utilisateur.
+Le CHANGELOG conserve l'historique factuel et complet des changements. La GitHub Release en présente une synthèse lisible et orientée utilisateur.
 
 ---
 
-## Champ d'application
-
-Ce modèle s'applique à toutes les versions publiées du projet.
-
-Il est destiné à être utilisé lors de la création d'une nouvelle GitHub Release après la publication d'une version sur GitHub et npm.
-
----
-
-## Recommandations de rédaction
+## Principes de rédaction
 
 Les notes de publication doivent :
 
+- décrire uniquement les changements réellement inclus dans la version publiée ;
 - mettre en avant les évolutions les plus importantes ;
-- expliquer les bénéfices pour les utilisateurs ;
-- rester concises et faciles à lire ;
-- éviter les détails techniques excessifs ;
-- être rédigées dans un style positif et professionnel.
-
-Le contenu doit compléter le **CHANGELOG** sans le dupliquer.
+- expliquer les changements utiles aux utilisateurs ;
+- rester concises et faciles à parcourir ;
+- éviter de reproduire intégralement le CHANGELOG ;
+- ne pas présenter de fonctionnalité future comme une fonctionnalité livrée.
 
 ---
 
 # Modèle
 
+## Points forts
+
+Présentez brièvement les évolutions les plus importantes livrées dans cette version.
+
+---
+
 ## Nouveautés
 
-Présentez en quelques lignes les principales évolutions de cette version.
+### Ajouts
 
----
+- Fonctionnalités réellement livrées dans cette version.
+- Nouvelles capacités réellement livrées dans cette version.
+- Nouvelles intégrations ou prises en charge réellement livrées dans cette version.
 
-## Ajouts
+### Modifications
 
-- Nouvelle fonctionnalité.
-- Nouvelle capacité.
-- Nouvelle prise en charge.
+- Évolutions du comportement visibles par l'utilisateur.
+- Évolutions de configuration.
+- Évolutions architecturales ou opérationnelles importantes pour les utilisateurs.
 
----
+### Améliorations
 
-## Modifications
-
-- Amélioration de l'expérience utilisateur.
-- Évolution du comportement.
-- Simplification de la configuration.
-
----
-
-## Améliorations
-
-- Performances.
 - Fiabilité.
+- Performances.
 - Interface utilisateur.
-- Architecture.
+- Maintenance ou architecture lorsque cela présente un intérêt pour les utilisateurs ou les contributeurs.
 
----
-
-## Corrections
+### Corrections
 
 - Corrections de bugs.
-- Amélioration de la stabilité.
+- Corrections de stabilité.
 - Corrections de compatibilité.
 
 ---
 
 ## Documentation
 
-- Documentation utilisateur.
-- Documentation développeur.
-- Nouveaux guides.
+Indiquez les documentations nouvelles ou significativement mises à jour dans cette version.
 
 ---
 
 ## Informations de mise à niveau
 
-Indiquez ici toute information importante concernant la mise à jour :
+Indiquez uniquement les actions ou points d'attention nécessaires lors de la mise à jour.
+
+Exemples :
 
 - changement de configuration ;
 - action requise ;
 - compatibilité ;
-- recommandations.
+- migration.
+
+Si aucune action particulière n'est nécessaire, cette section peut être supprimée.
 
 ---
 
 ## Remerciements
 
-Remerciez les personnes ayant contribué à cette version par leurs développements, leurs tests, leurs retours ou leur documentation.
+Remerciez les personnes ayant contribué à cette version par leurs développements, leur documentation, leurs tests, leurs retours ou toute autre contribution significative.
+
+---
+
+## Règles de rédaction
+
+- Décrire uniquement les changements inclus dans la version publiée.
+- Ne pas annoncer de fonctionnalité prévue ou future.
+- Ne pas reproduire intégralement le CHANGELOG.
+- Adapter le niveau de détail technique à son intérêt pour les utilisateurs.
+- Vérifier que la version décrite correspond au package npm et à la GitHub Release.

@@ -1,0 +1,153 @@
+classDiagram
+
+    class Device {
+        <<interface>>
+        +string id
+        +string name
+    }
+
+    class PublishedClimateDevice {
+        <<interface>>
+        +string source
+        +number temperature
+        +number humidity
+        +number batteryLevel
+        +boolean available
+        +boolean supportsHumidity
+        +boolean supportsBattery
+        +string manufacturer
+        +string model
+        +string serialNumber
+        +string uniqueId
+        +string softwareVersion
+        +string hardwareVersion
+    }
+
+    class ClimateDevice {
+        <<interface>>
+        +string temperatureEntity
+        +string humidityEntity
+        +string batteryEntity
+    }
+
+    Device <|-- PublishedClimateDevice
+    PublishedClimateDevice <|-- ClimateDevice
+
+    class MatterDeviceDescriptor {
+        <<interface>>
+        +string id
+        +string peerId
+        +string name
+        +string nodeId
+        +number temperatureEndpointId
+        +number humidityEndpointId
+        +number batteryEndpointId
+    }
+
+    class MatterDeviceState {
+        <<interface>>
+        +number temperature
+        +number humidity
+        +number batteryLevel
+        +boolean available
+    }
+
+    class MatterProvider {
+        +start()
+        +commission(pairingCode)
+        +stop()
+    }
+
+    class MatterController {
+        +start()
+        +commission(pairingCode)
+        +stop()
+        +getNode()
+    }
+
+    class MatterDeviceDiscovery {
+        +discover(node)
+    }
+
+    class MatterDeviceMapper {
+        +readState(peer, descriptor)
+        +toPublishedClimateDevice(descriptor, state)
+    }
+
+    class MatterDeviceCatalogMapper {
+        +toDiscoveredCatalogDevices(descriptors)
+    }
+
+    class MatterSubscriptionManager {
+        +subscribe(peer, descriptor, callbacks)
+        +stop()
+    }
+
+    MatterProvider --> MatterController
+    MatterProvider --> MatterDeviceDiscovery
+    MatterProvider --> MatterDeviceMapper
+    MatterProvider --> MatterDeviceCatalogMapper
+    MatterProvider --> MatterSubscriptionManager
+    MatterDeviceDiscovery --> MatterDeviceDescriptor
+    MatterDeviceMapper --> MatterDeviceState
+    MatterDeviceMapper --> PublishedClimateDevice
+
+    class CatalogManager {
+        +load()
+        +save()
+        +synchronizeDiscoveredDevices(devices, source)
+    }
+
+    class DeviceCatalog {
+        +load()
+        +save()
+        +synchronize(devices, source)
+        +shouldPublish(device)
+    }
+
+    class DeviceCatalogStore {
+        +load()
+        +save(devices)
+    }
+
+    CatalogManager --> DeviceCatalog
+    DeviceCatalog --> DeviceCatalogStore
+
+    class RegistryManager {
+        +handleDeviceRegistry(devices)
+        +handleEntityRegistry(entries)
+        +rememberPublishedClimateDevices(devices)
+        +refreshFromCatalog()
+    }
+
+    class AccessoryManager {
+        +restoreClimateAccessories(devices, catalog)
+        +applyCatalogDevice(device, catalogDevice)
+        +registerClimateAccessory(device)
+        +removeClimateAccessory(deviceId)
+        +updateTemperature(deviceId, value)
+        +updateHumidity(deviceId, value)
+        +updateBattery(deviceId, value)
+    }
+
+    class ClimateAccessory {
+        +updateTemperature(value)
+        +updateHumidity(value)
+        +updateBattery(value)
+        +updateDeviceAvailability(available)
+    }
+
+    RegistryManager --> CatalogManager
+    RegistryManager --> AccessoryManager
+    RegistryManager --> PublishedClimateDevice
+    AccessoryManager --> PublishedClimateDevice
+    AccessoryManager --> ClimateAccessory
+
+    class CatalogApi {
+        +getDevices()
+        +getDevice(id)
+        +markDeviceViewed(id)
+        +updatePreferences(id, preferences)
+    }
+
+    CatalogApi --> CatalogManager

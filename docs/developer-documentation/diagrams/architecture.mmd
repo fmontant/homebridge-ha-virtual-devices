@@ -1,0 +1,82 @@
+flowchart LR
+
+    subgraph Providers["Providers"]
+        HA["Home Assistant"]
+        MATTER["Matter"]
+    end
+
+    subgraph HARuntime["Home Assistant runtime"]
+        WS["WebSocket / Registries"]
+        DISC["DiscoveryManager"]
+        BUILDER["ClimateDeviceBuilder"]
+        CDM["ClimateDeviceManager"]
+        CLIMATE["ClimateDevice"]
+    end
+
+    subgraph MatterRuntime["Matter runtime"]
+        MP["MatterProvider"]
+        MC["MatterController"]
+        MD["MatterDeviceDiscovery"]
+        MM["MatterDeviceMapper"]
+        MS["MatterSubscriptionManager"]
+        MCM["MatterDeviceCatalogMapper"]
+        PM["PublishedClimateDevice"]
+    end
+
+    subgraph Catalog["Shared persistent catalog"]
+        CM["CatalogManager"]
+        DC["DeviceCatalog"]
+        STORE["DeviceCatalogStore"]
+        JSON["device-catalog.json"]
+    end
+
+    subgraph Coordination["Runtime coordination"]
+        RM["RegistryManager"]
+        AM["AccessoryManager"]
+    end
+
+    subgraph HomeKit["HomeKit publication"]
+        CA["ClimateAccessory"]
+        TH["HomeKit Thermostat"]
+        HOME["Apple Home"]
+    end
+
+    subgraph UI["Custom plugin UI"]
+        CAPI["CatalogApi"]
+        UIAPP["Configuration / Catalog UI"]
+    end
+
+    HA --> WS
+    WS --> DISC
+    DISC --> BUILDER
+    BUILDER --> CDM
+    CDM --> CLIMATE
+
+    MATTER --> MC
+    MC --> MP
+    MP --> MD
+    MD --> MM
+    MM --> PM
+    MP --> MS
+    MD --> MCM
+
+    CLIMATE --> RM
+    PM --> RM
+
+    CLIMATE --> CM
+    MCM --> CM
+
+    CM --> DC
+    DC --> STORE
+    STORE --> JSON
+
+    RM --> AM
+    CM --> RM
+
+    AM --> CA
+    CA --> TH
+    TH --> HOME
+
+    UIAPP --> CAPI
+    CAPI --> CM
+    JSON -. file watch .-> RM

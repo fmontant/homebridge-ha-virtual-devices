@@ -1,0 +1,39 @@
+flowchart LR
+
+    DEVICE["PublishedClimateDevice"]
+    CATALOG["CatalogDevice"]
+    AM["AccessoryManager"]
+    UUID["Deterministic HomeKit UUID<br/>sensor-v2:&lt;deviceId&gt;"]
+    PA["PlatformAccessory"]
+    CA["ClimateAccessory"]
+    TH["Thermostat Service"]
+    TEMP["CurrentTemperature"]
+    HUM["CurrentRelativeHumidity<br/>(when supported)"]
+    BAT["Battery characteristics<br/>(when supported)"]
+    AVAIL["StatusActive / StatusFault"]
+    HOME["Apple Home"]
+
+    DEVICE --> AM
+    CATALOG --> AM
+
+    AM -->|"shouldPublish = enabled && !archived"| UUID
+    UUID --> PA
+    PA --> CA
+    CA --> TH
+
+    TH --> TEMP
+    TH --> HUM
+    TH --> BAT
+    TH --> AVAIL
+
+    TH --> HOME
+
+    CATALOG -. "homeKitName / preferences" .-> CA
+
+    LEGACYTEMP["Legacy TemperatureSensor"]
+    LEGACYHUM["Legacy HumiditySensor"]
+    LEGACYBAT["Legacy Battery service"]
+
+    LEGACYTEMP -. removed .-> CA
+    LEGACYHUM -. removed .-> CA
+    LEGACYBAT -. removed .-> CA
