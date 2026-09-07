@@ -1,338 +1,308 @@
 # Troubleshooting
 
-This guide helps diagnose and resolve the most common issues encountered when using **Homebridge HA Virtual Devices**.
+This document covers the recommended checks when you encounter a problem with **Homebridge HA Virtual Devices V2**.
 
-Most problems can be identified quickly using Homebridge logs together with the Home Assistant Developer Tools.
+The first question to ask is now: **which source is concerned?**
 
----
+- Home Assistant
+- Matter
+- both
 
-# Before you start
+This distinction avoids looking for a Home Assistant problem when a device comes from Matter, and vice versa.
 
-Before investigating an issue, verify:
+------------------------------------------------------------------------
 
-- Homebridge is running.
-- Home Assistant is running.
-- Both systems can communicate over the network.
-- The plugin is enabled.
-- Your Long-Lived Access Token is still valid.
+## Before you start
 
-Many problems are caused by network connectivity or authentication failures.
+First check the Homebridge logs:
 
----
+1. Open **Logs** in the Homebridge interface.
+2. Reproduce the problem.
+3. Look for messages concerning Homebridge HA Virtual Devices.
+4. Note the source and device concerned.
 
-# Enable debug logging
+Avoid deleting the catalog or reinstalling the plugin before identifying the cause.
 
-When reporting a problem, enable the plugin's debug logging first.
+------------------------------------------------------------------------
 
-Restart Homebridge after enabling debug mode.
+## The plugin does not start
 
-The logs usually provide enough information to identify:
+Check:
 
-- connection problems;
-- discovery issues;
-- synchronization failures;
-- accessory lifecycle events.
+- the plugin configuration;
+- that at least one source is enabled;
+- the error messages in the Homebridge logs.
 
----
+If Home Assistant is enabled, also check its URL and token.
 
-# Home Assistant connection
+If Matter is enabled, look for messages related to the Matter provider.
 
-## Symptoms
+------------------------------------------------------------------------
 
-- No devices are discovered.
-- The plugin repeatedly reconnects.
-- Homebridge logs show connection errors.
+## Unable to save the configuration
 
-## Possible causes
+At least one source must be enabled:
 
-- Incorrect Home Assistant URL.
-- Invalid access token.
-- Firewall restrictions.
-- Home Assistant unavailable.
+- **Use Home Assistant**
+- **Use Matter**
 
-## Resolution
+If Home Assistant is enabled, its URL and token must be provided.
 
-Verify:
+In Matter-only mode, Home Assistant information is not required.
 
-- the configured URL;
-- the Long-Lived Access Token;
-- Home Assistant accessibility from the Homebridge host.
+------------------------------------------------------------------------
 
----
+## Home Assistant problems
 
-# No devices discovered
+### No Home Assistant device is discovered
 
-## Symptoms
+Check:
 
-The catalog remains empty.
+- that **Use Home Assistant** is enabled;
+- that Home Assistant is reachable;
+- that the URL is correct;
+- that the token is valid;
+- that compatible sensors exist in Home Assistant;
+- that the plugin connection to Home Assistant is established.
 
-## Possible causes
+### A Home Assistant sensor does not appear
 
-- No supported sensors exist.
-- Discovery failed.
-- Home Assistant connection failed.
+Check:
 
-## Resolution
+- that the sensor still exists in Home Assistant;
+- that it provides a supported capability;
+- that it is not ignored by the configuration;
+- its state in the catalog;
+- the discovery logs.
 
-Verify that your sensors expose supported entities such as:
+### The temperature no longer updates with Home Assistant
 
-- temperature;
-- humidity;
-- battery level.
+Compare:
 
-Then restart Homebridge and review the logs.
+- the value displayed in Home Assistant;
+- the value displayed in the plugin catalog;
+- **Last communication**;
+- the Homebridge logs.
 
----
+If Home Assistant itself is no longer receiving a new value, the plugin cannot transmit it.
 
-# Accessory not visible in Apple Home
+### Home Assistant restarts
 
-## Symptoms
+The plugin has a reconnection mechanism for Home Assistant.
 
-The device exists in the catalog but does not appear in Apple Home.
+After a Home Assistant restart, allow a few moments for the connection to be restored, then check the logs if updates do not resume.
 
-## Verify
+------------------------------------------------------------------------
 
-- Publication is enabled.
-- The device is not hidden.
-- Homebridge completed synchronization.
-- Apple Home has refreshed.
+## Matter problems
 
-If necessary, wait a few seconds after changing the publication state.
+### The “Add a Matter sensor” panel does not appear
 
-Since version 1.0.9, synchronization is automatic.
+Check that **Use Matter** is enabled in the plugin configuration.
 
----
+The Matter panel is hidden when Matter is disabled.
 
-# Temperature does not update
+### Which Matter code should I enter?
 
-## Symptoms
+To share a device already present in Apple Home with the plugin:
 
-Apple Home shows an old temperature.
+1. Open the device settings in the Home app.
+2. Select **Turn On Pairing Mode**.
+3. Use the **new Matter sharing code** generated by Home.
 
-## Verify
+Enter this code in the **Add a Matter sensor** panel.
 
-- Home Assistant receives new values.
-- The sensor is available.
-- The WebSocket connection is active.
+### Adding the Matter sensor fails
 
-If Home Assistant itself is not updating, the plugin cannot receive new values.
+Check:
 
----
+- that Matter is enabled in the plugin;
+- that the device is in pairing mode;
+- that the code entered is the new sharing code generated by Home;
+- that the code has not expired or become unusable;
+- the Homebridge logs for the exact error message.
 
-# Humidity missing
+If necessary, enable pairing mode again in Home to obtain a new code.
 
-## Possible causes
+### The Matter sensor is added but its name is generic
 
-- The sensor has no humidity entity.
-- Humidity publication is disabled.
-- Discovery occurred before the humidity entity became available.
+After adding the sensor, use the catalog to assign a more explicit name when the interface allows it.
 
-Restarting Homebridge usually forces a complete rediscovery.
+The plugin preserves the custom name during Matter rediscovery.
 
----
+### A Matter value no longer updates
 
-# Battery level missing
+Check:
 
-Battery information is displayed only when:
+- the sensor availability;
+- **Last communication**;
+- whether the device continues to operate normally in its Matter ecosystem;
+- Homebridge logs related to the Matter provider.
 
-- Home Assistant exposes a battery entity;
-- battery support is enabled;
-- the battery entity belongs to the same physical device.
+Do not immediately change the commissioning. First determine whether the problem concerns the device, Matter communication, or only its HomeKit publication.
 
----
+------------------------------------------------------------------------
 
-# Device unavailable
+## The sensor appears as “Missing”
 
-## Symptoms
+A **Missing** device is known to the catalog but is no longer found by its source.
 
-The device appears unavailable.
+This can happen after:
 
-## Typical causes
+- the technical removal or renaming of a Home Assistant entity;
+- a device disappears from its source;
+- prolonged unavailability or a discovery problem.
 
-- Battery replacement.
-- Zigbee routing changes.
-- Coordinator restart.
-- Home Assistant restart.
+The catalog keeps the device preferences.
 
-Normally no action is required.
+Before deleting anything, identify its **source** and check whether the source still sees the device.
 
-Once communication resumes, the accessory automatically recovers.
+------------------------------------------------------------------------
 
----
+## The accessory shows “No Response” in Apple Home
 
-# Device disappeared
+Possible causes depend on the source and the sensor:
 
-The plugin intentionally keeps catalog entries.
+- depleted battery;
+- sensor out of range;
+- radio problem;
+- Home Assistant unavailable for a Home Assistant device;
+- Matter communication problem for a Matter device;
+- Homebridge or plugin unavailable.
 
-This preserves:
+Start by checking the value and availability in the relevant source, then check the Homebridge logs.
 
-- favorites;
-- rooms;
-- publication state;
-- discovery history.
+------------------------------------------------------------------------
 
-If the sensor returns later, the existing catalog entry is reused.
+## The “Last communication” date is old
 
----
+An old date means that no more recent communication has been recorded for the device.
 
-# Publication changes not applied
+It can indicate:
 
-Since version 1.0.9, publication changes are synchronized automatically.
+- an inactive sensor;
+- a low or depleted battery;
+- a communication loss;
+- a connection problem with the source.
 
-If synchronization does not occur:
+Use the source displayed in the catalog to guide the diagnosis.
 
-1. Verify the catalog was updated.
-2. Verify Homebridge logs.
-3. Wait a few seconds.
-4. Restart Homebridge only if synchronization still does not occur.
+------------------------------------------------------------------------
 
-Restarting should be considered a last resort.
+## Favorites, names or preferences appear to have disappeared
 
----
+Preferences are stored in the persistent catalog.
 
-# Home Assistant restarted
+Check:
 
-The plugin automatically reconnects.
+- that the catalog is still present;
+- that Homebridge has the required permissions to use it;
+- the logs for a read or write error;
+- that you are looking at the same device/source.
 
-Expected behavior:
+Avoid deleting the catalog until the diagnosis is complete.
 
-- reconnect;
-- rediscover devices;
-- refresh values;
-- continue synchronization.
+------------------------------------------------------------------------
 
-No manual intervention should normally be required.
+## The plugin room does not change the room in Apple Home
 
----
+This is expected behavior.
 
-# Apple Home still shows old values
+The room stored in the catalog is an internal plugin preference. Under normal plugin operation, Homebridge cannot automatically assign an accessory to a room in the Apple Home app.
 
-Apple Home occasionally caches values.
+To move the accessory in Apple Home, perform the operation directly in the Home app.
 
-Verify first that:
+------------------------------------------------------------------------
 
-- Home Assistant displays the correct value;
-- Homebridge logs show updated values.
+## A change does not appear immediately
 
-If both are correct, Apple Home generally refreshes automatically after a short delay.
+First refresh the Homebridge interface and allow a few seconds for synchronization.
 
----
+If the problem persists:
 
-# Duplicate accessories
+- check the logs;
+- determine whether the change concerns a catalog preference or a value coming from a source;
+- check the state of the relevant source.
 
-Duplicate accessories are usually caused by:
+A restart should not be the first diagnostic method.
 
-- multiple Homebridge instances;
-- multiple plugin installations;
-- HomeKit cache inconsistencies.
+------------------------------------------------------------------------
 
-Verify that only one instance of the plugin manages a given Home Assistant installation.
+## The administration interface does not display correctly
 
----
+Try:
 
-# UI does not refresh
+- refreshing the page;
+- reopening the plugin configuration;
+- checking the Homebridge logs;
+- restarting Homebridge if the interface remains unavailable.
 
-If the Homebridge UI does not immediately display changes:
+If the problem appeared after an update, also check the version actually installed.
 
-- reload the page;
-- verify Homebridge is running;
-- verify the plugin has started correctly.
+------------------------------------------------------------------------
 
-Real-time synchronization requires the UI backend to be running normally.
+## A plugin update went wrong
 
----
+After an update:
 
-# Catalog inconsistencies
+1. Check the installed version.
+2. Check the logs.
+3. Check that the configuration was preserved.
+4. Check the enabled sources.
+5. Restart Homebridge if necessary.
 
-If the catalog appears inconsistent:
+A configuration from version 1.x without explicit source settings is interpreted with Home Assistant enabled and Matter disabled.
 
-- stop Homebridge;
-- verify the catalog file exists;
-- inspect its JSON structure;
-- restart Homebridge.
+------------------------------------------------------------------------
 
-Do not manually edit the catalog unless you understand its structure.
+## Check the installed version
 
----
+From the terminal:
 
-# Reading the logs
-
-Useful log messages include:
-
-```
-Loading accessory from cache
-
-Restoring HomeKit accessory
-
-Accessory configured
-
-Catalog synchronized
-
-Availability updated
-
-Device discovered
-
-Accessory unpublished
-
-Accessory published
+```bash
+npm list homebridge-ha-virtual-devices
 ```
 
-These messages generally indicate where the synchronization process currently is.
+The version is also visible in the Homebridge interface.
 
----
+------------------------------------------------------------------------
 
-# Collecting diagnostic information
+## Reinstallation
 
-Before opening an issue, collect:
+Reinstallation should only be considered after the previous checks.
 
+If it is necessary, preferably use the Homebridge installation mechanisms to keep the installation consistent with your environment.
+
+Removing the plugin must not be confused with intentionally removing its persistent data.
+
+------------------------------------------------------------------------
+
+## Collect information before asking for help
+
+Prepare:
+
+- plugin version;
 - Homebridge version;
 - Node.js version;
-- Home Assistant version;
-- plugin version;
 - operating system;
-- complete error message;
-- relevant log excerpts;
-- steps to reproduce.
+- affected source: Home Assistant, Matter, or both;
+- Home Assistant version if relevant;
+- sensor type;
+- relevant log excerpt;
+- precise description of the problem;
+- steps required to reproduce it.
 
-The more information provided, the easier the diagnosis.
+Do not publish your Home Assistant access token or other authentication information.
 
----
+------------------------------------------------------------------------
 
-# Known limitations
+## If the problem persists
 
-The plugin intentionally relies only on native HomeKit capabilities.
+Before opening a GitHub issue:
 
-Some Apple Home behaviors cannot be modified, including:
+1. Check whether an identical problem has already been reported.
+2. Gather the diagnostic information.
+3. Describe the expected result and the observed result.
+4. Include only useful log excerpts, after removing sensitive information.
 
-- internal HomeKit caching;
-- refresh timing;
-- thermostat presentation;
-- accessory layout inside Apple Home.
-
-These limitations originate from HomeKit itself rather than the plugin.
-
----
-
-# Reporting an issue
-
-When reporting an issue on GitHub, include:
-
-1. A clear description of the problem.
-2. What you expected to happen.
-3. What actually happened.
-4. Relevant logs.
-5. Steps required to reproduce the issue.
-
-Screenshots of Apple Home and the Homebridge UI are often extremely helpful.
-
----
-
-# Final advice
-
-Most reported issues are resolved by checking three things:
-
-1. Home Assistant is providing the expected values.
-2. Homebridge is receiving and logging those values.
-3. Apple Home has refreshed after synchronization.
-
-Following this order avoids unnecessary troubleshooting and quickly identifies where the problem actually occurs.
+A precise report makes it much easier to identify the cause of the problem.
